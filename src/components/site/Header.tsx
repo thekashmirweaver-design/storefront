@@ -20,13 +20,17 @@ export function Header() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <header className={`${isHome ? "absolute" : "relative"} top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm`}>
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-5 grid grid-cols-[auto_1fr_auto] items-center gap-6">
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          <img src={logoAsset.url} alt="GULRIZA" className="h-9 w-9" />
-          <div className="flex flex-col leading-tight">
-            <span className="font-display text-xl tracking-[0.3em] text-cream">GULRIZA</span>
-            <span className="hidden sm:block text-[0.55rem] tracking-[0.35em] text-gold/80 mt-0.5">TIMELESS · NATURAL · LUXURIOUS</span>
+    <header className={`${isHome ? "absolute" : "relative"} top-0 left-0 right-0 z-40 bg-background/70 backdrop-blur-md border-b border-border/30`}>
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 md:px-10 py-4 sm:py-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">
+        <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
+          <img
+            src={logoAsset.url}
+            alt="GULRIZA"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg shadow-[0_6px_20px_-4px_rgba(201,162,76,0.45),0_2px_6px_rgba(0,0,0,0.4)] ring-1 ring-gold/30 bg-ink/40 p-1 backdrop-blur-sm"
+          />
+          <div className="flex flex-col leading-tight min-w-0">
+            <span className="font-display text-lg sm:text-xl tracking-[0.25em] sm:tracking-[0.3em] text-cream truncate">GULRIZA</span>
+            <span className="hidden sm:block text-[0.55rem] tracking-[0.35em] text-gold/80 mt-0.5 truncate">TIMELESS · NATURAL · LUXURIOUS</span>
           </div>
         </Link>
 
@@ -43,7 +47,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-5 text-foreground/80 justify-end">
+        <div className="flex items-center gap-3.5 sm:gap-5 text-foreground/80 justify-end">
           <button onClick={() => setSearchOpen(true)} className="hover:text-gold transition-colors" aria-label="Search"><Search className="h-4 w-4" /></button>
           <Link to="/wishlist" className="hover:text-gold transition-colors hidden sm:flex relative" aria-label="Wishlist">
             <Heart className="h-4 w-4" />
