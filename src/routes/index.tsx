@@ -38,7 +38,7 @@ const valueProps = [
 
 const legacyPillars = [
   { Icon: Hand, title: "Heritage Craft", desc: "Centuries-old Kashmiri artistry" },
-  { Icon: Home, title: "Pristine Origin", desc: "Sourced from the Himalayan highlands" },
+  { Icon: HomeIcon, title: "Pristine Origin", desc: "Sourced from the Himalayan highlands" },
   { Icon: Heart, title: "Made with Care", desc: "Every piece is woven with love and precision" },
   { Icon: InfinityIcon, title: "Timeless Beauty", desc: "Designed to be treasured forever" },
 ];
