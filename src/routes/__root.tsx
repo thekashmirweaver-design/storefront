@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { StoreProvider } from "@/lib/store";
+import { CartDrawer } from "@/components/site/CartDrawer";
+import { SearchDialog } from "@/components/site/SearchDialog";
 
 function NotFoundComponent() {
   return (
