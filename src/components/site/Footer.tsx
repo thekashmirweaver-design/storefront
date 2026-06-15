@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Youtube, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import logoAsset from "@/assets/gulriza-logo.png.asset.json";
 
 const cols = [
@@ -45,6 +47,17 @@ const cols = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    toast.success("You're on the list", { description: "Welcome to the GULRIZA atelier." });
+    setEmail("");
+  };
   return (
     <footer className="border-t border-border/60 bg-ink mt-24">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
@@ -84,9 +97,12 @@ export function Footer() {
           <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
             Be the first to know about new arrivals and exclusive offers.
           </p>
-          <form className="flex border border-border" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex border border-border" onSubmit={submit}>
             <input
               type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="bg-transparent flex-1 min-w-0 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
             />

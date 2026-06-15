@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { products, colors } from "@/lib/products";
+import { useMemo, useState } from "react";
+import { products, colors, type Product } from "@/lib/products";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Eyebrow } from "@/components/site/Eyebrow";
 
@@ -28,7 +29,53 @@ function FilterGroup({ title, children, defaultOpen = true }: { title: string; c
   );
 }
 
+type Sort = "featured" | "price-asc" | "price-desc" | "name";
+type Category = Product["category"];
+
 function ShopPage() {
+  const [selectedCats, setCats] = useState<Set<Category>>(new Set());
+  const [selectedColors, setColors] = useState<Set<string>>(new Set());
+  const [maxPrice, setMaxPrice] = useState(1000);
+  const [sort, setSort] = useState<Sort>("featured");
+  const [page, setPage] = useState(1);
+  const perPage = 9;
+
+  const filtered = useMemo(() => {
+    let list = products.filter((p) => {
+      if (selectedCats.size && !selectedCats.has(p.category)) return false;
+      if (selectedColors.size && !selectedColors.has(p.colorHex)) return false;
+      if (p.price > maxPrice) return false;
+      return true;
+    });
+    if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
+    if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
+    if (sort === "name") list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    return list;
+  }, [selectedCats, selectedColors, maxPrice, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+
+  const toggleCat = (c: Category) => {
+    const next = new Set(selectedCats);
+    next.has(c) ? next.delete(c) : next.add(c);
+    setCats(next); setPage(1);
+  };
+  const toggleColor = (hex: string) => {
+    const next = new Set(selectedColors);
+    next.has(hex) ? next.delete(hex) : next.add(hex);
+    setColors(next); setPage(1);
+  };
+  const clearAll = () => { setCats(new Set()); setColors(new Set()); setMaxPrice(1000); setPage(1); };
+
+  const cats: { value: Category; label: string }[] = [
+    { value: "signature", label: "Signature" },
+    { value: "lightweight", label: "Lightweight" },
+    { value: "bridal", label: "Bridal" },
+    { value: "limited", label: "Limited Editions" },
+  ];
+
   return (
     <>
       <section className="border-b border-border/40 bg-ink">
@@ -43,66 +90,78 @@ function ShopPage() {
         <aside className="space-y-1">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <h2 className="text-[0.7rem] tracking-[0.25em] uppercase text-gold">Filter</h2>
-            <button className="text-[0.65rem] tracking-wider uppercase text-muted-foreground hover:text-gold">Clear all</button>
+            <button onClick={clearAll} className="text-[0.65rem] tracking-wider uppercase text-muted-foreground hover:text-gold">Clear all</button>
           </div>
           <FilterGroup title="Category">
-            {["Shawls", "Wraps", "Stoles"].map((c) => (
-              <label key={c} className="flex items-center gap-2 cursor-pointer hover:text-cream">
-                <input type="checkbox" className="accent-[--gold]" /> {c}
+            {cats.map((c) => (
+              <label key={c.value} className="flex items-center gap-2 cursor-pointer hover:text-cream">
+                <input type="checkbox" checked={selectedCats.has(c.value)} onChange={() => toggleCat(c.value)} className="accent-[--gold]" /> {c.label}
               </label>
             ))}
           </FilterGroup>
           <FilterGroup title="Color">
             <div className="grid grid-cols-6 gap-2">
               {colors.map((c) => (
-                <button key={c.name} title={c.name} className="h-6 w-6 rounded-full border border-border hover:ring-2 hover:ring-gold transition-all" style={{ background: c.hex }} />
+                <button
+                  key={c.name}
+                  title={c.name}
+                  onClick={() => toggleColor(c.hex)}
+                  className={`h-6 w-6 rounded-full border ${selectedColors.has(c.hex) ? "ring-2 ring-gold" : "border-border"} hover:ring-2 hover:ring-gold transition-all`}
+                  style={{ background: c.hex }}
+                />
               ))}
             </div>
           </FilterGroup>
-          <FilterGroup title="Material">
-            {["100% Pashmina", "Pashmina Silk Blend"].map((c) => (
-              <label key={c} className="flex items-center gap-2 cursor-pointer hover:text-cream">
-                <input type="checkbox" className="accent-[--gold]" /> {c}
-              </label>
-            ))}
-          </FilterGroup>
           <FilterGroup title="Price">
             <div className="px-1">
-              <input type="range" min="0" max="1000" defaultValue="600" className="w-full accent-[--gold]" />
+              <input type="range" min={0} max={1000} value={maxPrice} onChange={(e) => { setMaxPrice(Number(e.target.value)); setPage(1); }} className="w-full accent-[--gold]" />
               <div className="flex justify-between mt-2 text-[0.65rem] text-muted-foreground">
-                <span>$0</span><span>$1000+</span>
+                <span>$0</span><span>${maxPrice}{maxPrice === 1000 ? "+" : ""}</span>
               </div>
             </div>
-          </FilterGroup>
-          <FilterGroup title="Size">
-            {["All Sizes", "70 x 200", "100 x 200"].map((c) => (
-              <label key={c} className="flex items-center gap-2 cursor-pointer hover:text-cream">
-                <input type="radio" name="size" className="accent-[--gold]" /> {c}
-              </label>
-            ))}
           </FilterGroup>
         </aside>
 
         <div>
           <div className="flex justify-between items-center mb-6 pb-3 border-b border-border/40">
-            <p className="text-xs text-muted-foreground">{products.length} products</p>
+            <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "product" : "products"}</p>
             <div className="flex items-center gap-2 text-xs">
               <span className="text-[0.65rem] tracking-[0.25em] uppercase text-muted-foreground">Sort by</span>
-              <button className="flex items-center gap-2 text-cream border border-border px-3 py-1.5">
-                Featured <ChevronDown className="h-3 w-3" />
-              </button>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as Sort)}
+                className="bg-transparent text-cream border border-border px-3 py-1.5 focus:outline-none focus:border-gold"
+              >
+                <option value="featured">Featured</option>
+                <option value="price-asc">Price: Low → High</option>
+                <option value="price-desc">Price: High → Low</option>
+                <option value="name">Name (A–Z)</option>
+              </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
-            {products.map((p) => <ProductCard key={p.slug} product={p} />)}
-          </div>
+          {visible.length === 0 ? (
+            <div className="py-20 text-center text-sm text-muted-foreground">
+              No pieces match your filters.{" "}
+              <button onClick={clearAll} className="text-gold hover:underline">Clear filters</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
+              {visible.map((p) => <ProductCard key={p.slug} product={p} />)}
+            </div>
+          )}
 
-          <div className="flex items-center justify-center gap-2 mt-16">
-            {[1,2,3,"…",8].map((n,i) => (
-              <button key={i} className={`h-8 w-8 text-xs ${n === 1 ? "border border-gold text-gold" : "text-muted-foreground hover:text-gold"}`}>{n}</button>
-            ))}
-          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-16">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`h-8 w-8 text-xs ${n === safePage ? "border border-gold text-gold" : "text-muted-foreground hover:text-gold"}`}
+                >{n}</button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

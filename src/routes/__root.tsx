@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { StoreProvider } from "@/lib/store";
+import { CartDrawer } from "@/components/site/CartDrawer";
+import { SearchDialog } from "@/components/site/SearchDialog";
 
 function NotFoundComponent() {
   return (
@@ -111,14 +114,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-        <Toaster />
-      </div>
+      <StoreProvider>
+        <div className="min-h-screen flex flex-col bg-background">
+          <Header />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+          <Toaster />
+          <CartDrawer />
+          <SearchDialog />
+        </div>
+      </StoreProvider>
     </QueryClientProvider>
   );
 }
