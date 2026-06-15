@@ -47,24 +47,24 @@ function Home() {
   return (
     <>
       {/* HERO */}
-      <section className="relative min-h-[760px] lg:min-h-[860px] overflow-hidden">
-        <img src={heroImg} alt="Woman wrapped in a Kashmiri pashmina shawl at dusk" width={1920} height={1088}
-          className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-background/10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+      <section className="relative min-h-[640px] sm:min-h-[720px] lg:min-h-[860px] overflow-hidden">
+        <img src={heroImg} alt="Woman elegantly styling a Kashmiri pashmina shawl" width={1920} height={1080}
+          className="absolute inset-0 h-full w-full object-cover object-[70%_center] lg:object-[right_center]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10 lg:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
-        <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 pt-48 lg:pt-52 pb-24">
+        <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 pt-36 sm:pt-44 lg:pt-52 pb-20 lg:pb-24">
           <div className="max-w-xl">
             <Eyebrow>Exquisite by Nature</Eyebrow>
-            <h1 className="mt-6 font-display text-5xl md:text-6xl lg:text-7xl text-cream leading-[1.05]">
+            <h1 className="mt-6 font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-cream leading-[1.05]">
               The Finest Pashmina<br />Woven by Heritage
             </h1>
-            <p className="mt-7 text-base text-foreground/80 leading-relaxed max-w-md">
-              Luxuriously soft. Exceptionally rare.<br />
-              A timeless wrap of elegance and comfort.
+            <p className="mt-6 sm:mt-7 text-sm sm:text-base text-foreground/80 leading-relaxed max-w-md">
+              Luxuriously soft. Exceptionally rare.<br className="hidden sm:block" />
+              {" "}A timeless wrap of elegance and comfort.
             </p>
             <Link to="/collections"
-              className="mt-10 inline-flex items-center gap-3 border border-gold/70 px-8 py-4 text-[0.7rem] tracking-[0.3em] uppercase text-gold hover:bg-gold hover:text-primary-foreground transition-colors">
+              className="mt-8 sm:mt-10 inline-flex items-center gap-3 border border-gold/70 px-6 sm:px-8 py-3.5 sm:py-4 text-[0.7rem] tracking-[0.3em] uppercase text-gold hover:bg-gold hover:text-primary-foreground transition-colors">
               Explore Collection <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
