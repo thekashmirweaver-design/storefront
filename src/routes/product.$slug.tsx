@@ -116,12 +116,14 @@ function ProductPage() {
 
           <div className="space-y-2 pt-2">
             <button
-              onClick={() => toast.success(`${product.name} added to bag`, { description: `Quantity: ${qty}` })}
+              onClick={() => { addToCart(product.slug, qty); setCartOpen(true); toast.success(`${product.name} added to bag`, { description: `Quantity: ${qty}` }); }}
               className="w-full bg-gold text-primary-foreground py-3.5 text-[0.7rem] tracking-[0.3em] uppercase hover:bg-gold-soft transition-colors">
               Add to Bag
             </button>
-            <button className="w-full border border-border py-3.5 text-[0.7rem] tracking-[0.3em] uppercase text-cream hover:border-gold hover:text-gold transition-colors">
-              Add to Wishlist
+            <button
+              onClick={() => { toggleWishlist(product.slug); toast(liked ? "Removed from wishlist" : "Saved to wishlist"); }}
+              className="w-full border border-border py-3.5 text-[0.7rem] tracking-[0.3em] uppercase text-cream hover:border-gold hover:text-gold transition-colors flex items-center justify-center gap-2">
+              <Heart className={`h-3.5 w-3.5 ${liked ? "fill-gold text-gold" : ""}`} /> {liked ? "Saved" : "Add to Wishlist"}
             </button>
           </div>
 
