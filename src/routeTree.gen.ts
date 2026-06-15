@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as OurStoryRouteImport } from './routes/our-story'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -21,6 +22,11 @@ import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as JournalSlugRouteImport } from './routes/journal.$slug'
 import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
 
+const WishlistRoute = WishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRouteWithChildren
   '/our-story': typeof OurStoryRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRouteWithChildren
   '/our-story': typeof OurStoryRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRouteWithChildren
   '/our-story': typeof OurStoryRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
   '/collections/$slug': typeof CollectionsSlugRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/our-story'
     | '/shop'
+    | '/wishlist'
     | '/collections/$slug'
     | '/journal/$slug'
     | '/product/$slug'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/our-story'
     | '/shop'
+    | '/wishlist'
     | '/collections/$slug'
     | '/journal/$slug'
     | '/product/$slug'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/our-story'
     | '/shop'
+    | '/wishlist'
     | '/collections/$slug'
     | '/journal/$slug'
     | '/product/$slug'
@@ -168,11 +180,19 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRouteWithChildren
   OurStoryRoute: typeof OurStoryRoute
   ShopRoute: typeof ShopRoute
+  WishlistRoute: typeof WishlistRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -285,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRouteWithChildren,
   OurStoryRoute: OurStoryRoute,
   ShopRoute: ShopRoute,
+  WishlistRoute: WishlistRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
