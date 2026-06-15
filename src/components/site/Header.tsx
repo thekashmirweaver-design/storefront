@@ -47,7 +47,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-5 text-foreground/80 justify-end">
+        <div className="flex items-center gap-3.5 sm:gap-5 text-foreground/80 justify-end">
           <button onClick={() => setSearchOpen(true)} className="hover:text-gold transition-colors" aria-label="Search"><Search className="h-4 w-4" /></button>
           <Link to="/wishlist" className="hover:text-gold transition-colors hidden sm:flex relative" aria-label="Wishlist">
             <Heart className="h-4 w-4" />
