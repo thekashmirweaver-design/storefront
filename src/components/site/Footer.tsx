@@ -62,8 +62,8 @@ export function Footer() {
     <footer className="border-t border-border/60 bg-ink mt-24">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
         <div className="lg:col-span-1">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoAsset.url} alt="GULRIZA" className="h-8 w-8" />
+          <Link to="/" className="flex flex-col items-start gap-2">
+            <img src={logoAsset.url} alt="GULRIZA" className="h-12 w-12 rounded-lg" />
             <span className="font-display text-lg tracking-[0.3em] text-cream">GULRIZA</span>
           </Link>
           <p className="text-[0.6rem] tracking-[0.3em] text-gold/70 mt-2">TIMELESS · NATURAL · LUXURIOUS</p>
