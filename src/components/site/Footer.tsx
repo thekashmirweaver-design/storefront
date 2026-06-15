@@ -97,9 +97,12 @@ export function Footer() {
           <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
             Be the first to know about new arrivals and exclusive offers.
           </p>
-          <form className="flex border border-border" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex border border-border" onSubmit={submit}>
             <input
               type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="bg-transparent flex-1 min-w-0 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
