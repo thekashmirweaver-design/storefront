@@ -43,19 +43,24 @@ export function Footer() {
             {formatBrandTagline(brand.tagline)}
           </p>
           <p className="text-xs text-muted-foreground mt-6 leading-relaxed max-w-xs">
-            Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for
-            generations.
+            {brand.footerDescription}
           </p>
           <div className="flex gap-3 mt-6 text-muted-foreground">
-            <a href="#" aria-label="Instagram" className="hover:text-gold">
-              <Instagram className="h-4 w-4" />
-            </a>
-            <a href="#" aria-label="Facebook" className="hover:text-gold">
-              <Facebook className="h-4 w-4" />
-            </a>
-            <a href="#" aria-label="YouTube" className="hover:text-gold">
-              <Youtube className="h-4 w-4" />
-            </a>
+            {brand.social.instagram && (
+              <a href={brand.social.instagram} aria-label="Instagram" className="hover:text-gold">
+                <Instagram className="h-4 w-4" />
+              </a>
+            )}
+            {brand.social.facebook && (
+              <a href={brand.social.facebook} aria-label="Facebook" className="hover:text-gold">
+                <Facebook className="h-4 w-4" />
+              </a>
+            )}
+            {brand.social.youtube && (
+              <a href={brand.social.youtube} aria-label="YouTube" className="hover:text-gold">
+                <Youtube className="h-4 w-4" />
+              </a>
+            )}
           </div>
         </div>
 
@@ -81,10 +86,10 @@ export function Footer() {
 
         <div>
           <h4 className="text-[0.7rem] tracking-[0.25em] uppercase text-gold font-sans font-medium mb-5">
-            Stay Connected
+            {brand.newsletter.title}
           </h4>
           <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-            Be the first to know about new arrivals and exclusive offers.
+            {brand.newsletter.description}
           </p>
           <form className="flex border border-border" onSubmit={submit}>
             <input
@@ -92,7 +97,7 @@ export function Footer() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder={brand.newsletter.placeholder}
               className="bg-transparent flex-1 min-w-0 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             <button

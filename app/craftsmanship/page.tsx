@@ -4,16 +4,19 @@ import handloomImg from "@/assets/journal-handloom.jpg";
 import wovenImg from "@/assets/collection-woven.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
-export const metadata: Metadata = {
-  title: "Craftsmanship",
-  description: "The slow, patient art of weaving pashmina by hand in Kashmir.",
-  openGraph: {
-    title: "Craftsmanship — GULRIZA",
-    description: "The slow, patient art of weaving pashmina by hand.",
-    images: [{ url: handloomImg.src, width: handloomImg.width, height: handloomImg.height }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  return buildPageMetadata(brand, {
+    title: "Craftsmanship",
+    description: "The slow, patient art of weaving pashmina by hand in Kashmir.",
+    openGraph: {
+      description: "The slow, patient art of weaving pashmina by hand.",
+      images: [{ url: handloomImg.src, width: handloomImg.width, height: handloomImg.height }],
+    },
+  });
+}
 
 const steps = [
   {

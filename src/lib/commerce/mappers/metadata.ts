@@ -12,6 +12,34 @@ export function formatBrandTagline(tagline: string): string {
     .toUpperCase();
 }
 
+export function formatPageTitle(brand: BrandConfig, segment: string): string {
+  return brand.seo.titleTemplate.replace("%s", segment);
+}
+
+export type PageMetadataOptions = {
+  title: string;
+  description?: string;
+  openGraph?: {
+    title?: string;
+    description?: string;
+    images?: NonNullable<NonNullable<Metadata["openGraph"]>["images"]>;
+  };
+};
+
+export function buildPageMetadata(brand: BrandConfig, options: PageMetadataOptions): Metadata {
+  const { title, description, openGraph } = options;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: openGraph?.title ?? formatPageTitle(brand, title),
+      description: openGraph?.description ?? description,
+      ...(openGraph?.images ? { images: openGraph.images } : {}),
+    },
+  };
+}
+
 export function buildMetadataFromBrand(brand: BrandConfig): Metadata {
   return {
     metadataBase: new URL(brand.siteUrl),

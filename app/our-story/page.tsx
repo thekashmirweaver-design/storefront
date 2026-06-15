@@ -5,17 +5,19 @@ import mountainImg from "@/assets/journal-mountain.jpg";
 import legacyImg from "@/assets/legacy-stilllife.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
-export const metadata: Metadata = {
-  title: "Our Story",
-  description:
-    "From the highlands of Kashmir to your shoulders — the story of GULRIZA's heritage and craft.",
-  openGraph: {
-    title: "Our Story — GULRIZA",
-    description: "The story of a centuries-old craft.",
-    images: [{ url: heroImg.src, width: heroImg.width, height: heroImg.height }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  return buildPageMetadata(brand, {
+    title: "Our Story",
+    description: `From the highlands of Kashmir to your shoulders — the story of ${brand.name}'s heritage and craft.`,
+    openGraph: {
+      description: "The story of a centuries-old craft.",
+      images: [{ url: heroImg.src, width: heroImg.width, height: heroImg.height }],
+    },
+  });
+}
 
 export default function OurStoryPage() {
   return (

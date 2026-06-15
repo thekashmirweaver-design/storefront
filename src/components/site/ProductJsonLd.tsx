@@ -1,7 +1,14 @@
 import type { CommerceProduct } from "@/lib/commerce";
 
-export function ProductJsonLd({ product }: { product: CommerceProduct }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gulriza.com";
+export function ProductJsonLd({
+  product,
+  brandName,
+  siteUrl,
+}: {
+  product: CommerceProduct;
+  brandName: string;
+  siteUrl: string;
+}) {
   const image = product.images[0];
   const jsonLd = {
     "@context": "https://schema.org",
@@ -9,7 +16,7 @@ export function ProductJsonLd({ product }: { product: CommerceProduct }) {
     name: product.name,
     description: product.description,
     image: image?.src.startsWith("http") ? image.src : `${siteUrl}${image?.src}`,
-    brand: { "@type": "Brand", name: "GULRIZA" },
+    brand: { "@type": "Brand", name: brandName },
     offers: {
       "@type": "Offer",
       price: product.price.amount,

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { commerce } from "@/lib/commerce";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -15,10 +15,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = await commerce.getArticleBySlug(slug);
+  const [article, brand] = await Promise.all([
+    commerce.getArticleBySlug(slug),
+    commerce.getBrand(),
+  ]);
   if (!article) return { title: "Article Not Found" };
 
-  return {
+  return buildPageMetadata(brand, {
     title: `${article.title} — Journal`,
     description: article.excerpt,
     openGraph: {
@@ -32,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         },
       ],
     },
-  };
+  });
 }
 
 export default async function ArticleDetailPage({ params }: Props) {

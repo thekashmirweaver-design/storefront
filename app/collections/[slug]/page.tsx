@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 
 import { ProductCard } from "@/components/site/ProductCard";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { commerce, commerceColors } from "@/lib/commerce";
+import { commerce, commerceColors, buildPageMetadata } from "@/lib/commerce";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,17 +16,19 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = await commerce.getCollectionBySlug(slug);
+  const [data, brand] = await Promise.all([
+    commerce.getCollectionBySlug(slug),
+    commerce.getBrand(),
+  ]);
   if (!data) return { title: "Collection Not Found" };
 
-  return {
+  return buildPageMetadata(brand, {
     title: data.collection.title,
     description: data.collection.tagline,
     openGraph: {
-      title: `${data.collection.title} — GULRIZA`,
       description: data.collection.tagline,
     },
-  };
+  });
 }
 
 export default async function CollectionDetailPage({ params }: Props) {

@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gulriza.com";
+import { commerce } from "@/lib/commerce";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const brand = await commerce.getBrand();
+
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${brand.siteUrl}/sitemap.xml`,
   };
 }

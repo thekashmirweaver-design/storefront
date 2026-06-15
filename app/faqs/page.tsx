@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import { ChevronDown } from "lucide-react";
 
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { commerce } from "@/lib/commerce";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
-export const metadata: Metadata = {
-  title: "FAQs",
-  description: "Frequently asked questions about shipping, returns, care and authenticity.",
-  openGraph: {
-    title: "FAQs — GULRIZA",
-    description: "Frequently asked questions.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  return buildPageMetadata(brand, {
+    title: "FAQs",
+    description: "Frequently asked questions about shipping, returns, care and authenticity.",
+    openGraph: {
+      description: "Frequently asked questions.",
+    },
+  });
+}
 
 export default async function FaqsPage() {
   const faqs = await commerce.getFaqs();

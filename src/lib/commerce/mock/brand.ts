@@ -80,4 +80,11 @@ export const mockBrand: BrandConfig = {
       ],
     },
   ],
+  footerDescription:
+    "Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for generations.",
+  newsletter: {
+    title: "Stay Connected",
+    description: "Be the first to know about new arrivals and exclusive offers.",
+    placeholder: "Enter your email",
+  },
 };

@@ -20,17 +20,23 @@ import wovenImg from "@/assets/collection-woven.jpg";
 import seasonalImg from "@/assets/collection-seasonal.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
-export const metadata: Metadata = {
-  title: "The Finest Pashmina, Woven by Heritage",
-  description:
-    "Luxuriously soft. Exceptionally rare. Handwoven Kashmiri pashmina shawls crafted from 100% natural fibers.",
-  openGraph: {
-    title: "GULRIZA — The Finest Pashmina, Woven by Heritage",
-    description: "Luxuriously soft. Exceptionally rare. A timeless wrap of elegance and comfort.",
-    images: [{ url: heroImg.src, width: heroImg.width, height: heroImg.height }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  const title = "The Finest Pashmina, Woven by Heritage";
+
+  return buildPageMetadata(brand, {
+    title,
+    description:
+      "Luxuriously soft. Exceptionally rare. Handwoven Kashmiri pashmina shawls crafted from 100% natural fibers.",
+    openGraph: {
+      title: `${brand.name} — ${title}`,
+      description: "Luxuriously soft. Exceptionally rare. A timeless wrap of elegance and comfort.",
+      images: [{ url: heroImg.src, width: heroImg.width, height: heroImg.height }],
+    },
+  });
+}
 
 const collections = [
   {

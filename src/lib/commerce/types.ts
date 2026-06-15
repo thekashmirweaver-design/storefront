@@ -121,4 +121,10 @@ export type BrandConfig = {
   };
   footerMenus: { title: string; links: { label: string; href: string }[] }[];
   headerNav: { label: string; href: string }[];
+  footerDescription: string;
+  newsletter: {
+    title: string;
+    description: string;
+    placeholder: string;
+  };
 };

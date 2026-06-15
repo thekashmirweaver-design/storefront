@@ -9,16 +9,19 @@ import seasonalImg from "@/assets/collection-seasonal.jpg";
 import legacyImg from "@/assets/legacy-stilllife.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
-export const metadata: Metadata = {
-  title: "Collections",
-  description:
-    "Discover our timeless pashmina collections, crafted with heritage, woven with care.",
-  openGraph: {
-    title: "Collections — GULRIZA",
-    description: "Discover our timeless pashmina collections.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  return buildPageMetadata(brand, {
+    title: "Collections",
+    description:
+      "Discover our timeless pashmina collections, crafted with heritage, woven with care.",
+    openGraph: {
+      description: "Discover our timeless pashmina collections.",
+    },
+  });
+}
 
 const tiles = [
   {
