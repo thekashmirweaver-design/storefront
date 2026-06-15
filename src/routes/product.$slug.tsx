@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ChevronDown, Minus, Plus, Check, Leaf, Hexagon, Feather } from "lucide-react";
+import { ChevronDown, Minus, Plus, Check, Leaf, Hexagon, Feather, Heart } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { products } from "@/lib/products";
 import { ProductCard } from "@/components/site/ProductCard";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: ({ params }) => {
