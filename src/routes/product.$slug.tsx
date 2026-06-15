@@ -44,6 +44,8 @@ function Accordion({ title, children }: { title: string; children: React.ReactNo
 function ProductPage() {
   const product = Route.useLoaderData();
   const [qty, setQty] = useState(1);
+  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useStore();
+  const liked = inWishlist(product.slug);
   const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
 
   return (
