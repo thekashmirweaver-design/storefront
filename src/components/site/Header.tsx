@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, X, Heart } from "lucide-react";
 import { useState } from "react";
 import logoAsset from "@/assets/gulriza-logo.png.asset.json";
+import { useStore } from "@/lib/store";
 
 const nav = [
   { label: "Shop", to: "/shop" },
@@ -15,6 +16,8 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
+  const { cart, wishlist, setCartOpen, setSearchOpen } = useStore();
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
     <header className={`${isHome ? "absolute" : "relative"} top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm`}>
@@ -41,9 +44,20 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-5 text-foreground/80 justify-end">
-          <button className="hover:text-gold transition-colors" aria-label="Search"><Search className="h-4 w-4" /></button>
-          <button className="hover:text-gold transition-colors hidden sm:block" aria-label="Account"><User className="h-4 w-4" /></button>
-          <button className="hover:text-gold transition-colors" aria-label="Bag"><ShoppingBag className="h-4 w-4" /></button>
+          <button onClick={() => setSearchOpen(true)} className="hover:text-gold transition-colors" aria-label="Search"><Search className="h-4 w-4" /></button>
+          <Link to="/wishlist" className="hover:text-gold transition-colors hidden sm:flex relative" aria-label="Wishlist">
+            <Heart className="h-4 w-4" />
+            {wishlist.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gold text-primary-foreground text-[0.55rem] h-4 min-w-4 px-1 rounded-full flex items-center justify-center">{wishlist.length}</span>
+            )}
+          </Link>
+          <Link to="/account" className="hover:text-gold transition-colors hidden sm:block" aria-label="Account"><User className="h-4 w-4" /></Link>
+          <button onClick={() => setCartOpen(true)} className="hover:text-gold transition-colors relative" aria-label="Bag">
+            <ShoppingBag className="h-4 w-4" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gold text-primary-foreground text-[0.55rem] h-4 min-w-4 px-1 rounded-full flex items-center justify-center">{cartCount}</span>
+            )}
+          </button>
           <button className="lg:hidden hover:text-gold" aria-label="Menu" onClick={() => setOpen(!open)}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -63,6 +77,8 @@ export function Header() {
                 {n.label}
               </Link>
             ))}
+            <Link to="/wishlist" onClick={() => setOpen(false)} className="py-3 text-xs tracking-[0.25em] uppercase text-foreground/80 hover:text-gold border-b border-border/40">Wishlist</Link>
+            <Link to="/account" onClick={() => setOpen(false)} className="py-3 text-xs tracking-[0.25em] uppercase text-foreground/80 hover:text-gold">Account</Link>
           </nav>
         </div>
       )}
