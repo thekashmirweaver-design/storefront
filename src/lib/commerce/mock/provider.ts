@@ -118,7 +118,7 @@ export class MockCommerceProvider implements CommerceProvider {
     if (!record) return null;
     const collection = toCommerceCollection(record);
     const products = applyProductFilters(
-      allProducts.filter((p) => p.category === record.category),
+      mockProducts.filter((p) => p.collectionSlug === slug).map(toCommerceProduct),
       filters,
     );
     return { collection, products };

@@ -166,7 +166,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative border-t border-border/40 overflow-hidden">
+      <section className="relative border-t border-border/40 overflow-hidden bg-background">
         <OptimizedImage
           src={legacyImg}
           alt="Rolled pashmina with gift box"
@@ -174,8 +174,8 @@ export default function HomePage() {
           sizes="100vw"
           className="object-cover object-[65%_center] lg:object-[right_center]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 via-40% to-transparent to-90%" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-ink/15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/95 via-35% to-transparent to-65% lg:via-40% lg:to-70%" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent lg:from-transparent lg:via-transparent" />
 
         <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 py-24 lg:py-28">
           <div className="max-w-xl lg:max-w-[48%]">

@@ -37,7 +37,6 @@ export default async function CollectionDetailPage({ params }: Props) {
   if (!data) notFound();
 
   const { collection, products } = data;
-  const filtered = collection.category === "bridal" ? await commerce.getProducts() : products;
 
   return (
     <>
@@ -84,13 +83,13 @@ export default async function CollectionDetailPage({ params }: Props) {
 
         <div>
           <div className="flex justify-between items-center mb-6 pb-3 border-b border-border/40">
-            <p className="text-xs text-muted-foreground">{filtered.length} products</p>
+            <p className="text-xs text-muted-foreground">{products.length} products</p>
             <button className="flex items-center gap-2 text-xs text-cream border border-border px-3 py-1.5">
               Featured <ChevronDown className="h-3 w-3" />
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
-            {filtered.map((p) => (
+            {products.map((p) => (
               <ProductCard key={p.slug} product={p} />
             ))}
           </div>
