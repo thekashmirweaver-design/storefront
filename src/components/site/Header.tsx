@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Search, User, ShoppingBag, Menu, X, Heart } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logoAsset from "@/assets/gulriza-logo.png.asset.json";
 import { useStore } from "@/lib/store";
 
@@ -14,19 +14,36 @@ const nav = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
   const { cart, wishlist, setCartOpen, setSearchOpen } = useStore();
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const transparent = isHome && !scrolled;
+
   return (
-    <header className={`${isHome ? "absolute" : "relative"} top-0 left-0 right-0 z-40 bg-background/70 backdrop-blur-md border-b border-border/30`}>
+    <>
+    <header
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        transparent
+          ? "bg-transparent border-b border-transparent"
+          : "bg-background/85 backdrop-blur-md border-b border-border/40 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.5)]"
+      }`}
+    >
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 md:px-10 py-4 sm:py-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">
         <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
           <img
             src={logoAsset.url}
             alt="GULRIZA"
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg shadow-[0_6px_20px_-4px_rgba(201,162,76,0.45),0_2px_6px_rgba(0,0,0,0.4)] ring-1 ring-gold/30 bg-ink/40 p-1 backdrop-blur-sm"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg"
           />
           <div className="flex flex-col leading-tight min-w-0">
             <span className="font-display text-lg sm:text-xl tracking-[0.25em] sm:tracking-[0.3em] text-cream truncate">GULRIZA</span>
@@ -87,5 +104,7 @@ export function Header() {
         </div>
       )}
     </header>
+    {!isHome && <div className="h-[73px] sm:h-[81px]" aria-hidden />}
+    </>
   );
 }
