@@ -47,6 +47,17 @@ const cols = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    toast.success("You're on the list", { description: "Welcome to the GULRIZA atelier." });
+    setEmail("");
+  };
   return (
     <footer className="border-t border-border/60 bg-ink mt-24">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
