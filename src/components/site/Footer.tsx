@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Youtube, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import logoAsset from "@/assets/gulriza-logo.png.asset.json";
 
 const cols = [
