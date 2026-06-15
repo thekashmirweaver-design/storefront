@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Leaf, Hexagon, Feather, Mountain, Hand, Home, Heart, Infinity as InfinityIcon } from "lucide-react";
+import { ArrowRight, Leaf, Hexagon, Feather, Mountain, Hand, Home as HomeIcon, Heart, Infinity as InfinityIcon } from "lucide-react";
 import heroImg from "@/assets/hero-portrait.jpg";
 import legacyImg from "@/assets/legacy-stilllife.jpg";
 import classicImg from "@/assets/collection-classic.jpg";
