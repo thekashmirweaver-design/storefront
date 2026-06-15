@@ -1,0 +1,105 @@
+@import "tailwindcss" source(none);
+@source "../app/**/*.{ts,tsx}";
+@source "../src/**/*.{ts,tsx}";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-ink: var(--ink);
+  --color-cream: var(--cream);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+:root {
+  --radius: 0.25rem;
+  --background: oklch(0.14 0.012 60);
+  --foreground: oklch(0.92 0.015 75);
+  --ink: oklch(0.1 0.01 60);
+  --cream: oklch(0.94 0.02 80);
+
+  --card: oklch(0.17 0.013 60);
+  --card-foreground: oklch(0.92 0.015 75);
+  --popover: oklch(0.17 0.013 60);
+  --popover-foreground: oklch(0.92 0.015 75);
+
+  --primary: oklch(0.72 0.105 75);
+  --primary-foreground: oklch(0.14 0.012 60);
+  --gold: oklch(0.72 0.105 75);
+  --gold-soft: oklch(0.62 0.09 75);
+
+  --secondary: oklch(0.22 0.015 60);
+  --secondary-foreground: oklch(0.92 0.015 75);
+  --muted: oklch(0.2 0.012 60);
+  --muted-foreground: oklch(0.65 0.02 75);
+  --accent: oklch(0.72 0.105 75);
+  --accent-foreground: oklch(0.14 0.012 60);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.015 70 / 40%);
+  --input: oklch(0.3 0.015 70 / 40%);
+  --ring: oklch(0.72 0.105 75);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+@utility hairline {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  opacity: 0.45;
+}

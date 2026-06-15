@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { products, type Product } from "./products";
 
@@ -58,7 +60,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   const removeFromCart = (slug: string) => setCart((c) => c.filter((i) => i.slug !== slug));
   const setQty = (slug: string, qty: number) =>
-    setCart((c) => (qty <= 0 ? c.filter((i) => i.slug !== slug) : c.map((i) => (i.slug === slug ? { ...i, qty } : i))));
+    setCart((c) =>
+      qty <= 0
+        ? c.filter((i) => i.slug !== slug)
+        : c.map((i) => (i.slug === slug ? { ...i, qty } : i)),
+    );
   const clearCart = () => setCart([]);
   const toggleWishlist = (slug: string) =>
     setWishlist((w) => (w.includes(slug) ? w.filter((s) => s !== slug) : [...w, slug]));

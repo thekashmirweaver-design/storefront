@@ -1,4 +1,10 @@
-export function Eyebrow({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function Eyebrow({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <span className="eyebrow">{children}</span>
