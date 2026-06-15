@@ -103,5 +103,7 @@ export function Header() {
         </div>
       )}
     </header>
+    {!isHome && <div className="h-[73px] sm:h-[81px]" aria-hidden />}
+    </>
   );
 }
