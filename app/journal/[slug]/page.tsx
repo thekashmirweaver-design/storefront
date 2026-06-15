@@ -4,21 +4,19 @@ import { notFound } from "next/navigation";
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { getArticleCover } from "@/lib/collections";
-import { articles, getArticleBySlug } from "@/lib/products";
+import { commerce } from "@/lib/commerce";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return articles.map((a) => ({ slug: a.slug }));
+export async function generateStaticParams() {
+  const slugs = await commerce.getArticleSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await commerce.getArticleBySlug(slug);
   if (!article) return { title: "Article Not Found" };
-
-  const cover = getArticleCover(slug);
 
   return {
     title: `${article.title} — Journal`,
@@ -26,17 +24,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: article.title,
       description: article.excerpt,
-      images: [{ url: cover.src, width: cover.width, height: cover.height }],
+      images: [
+        {
+          url: article.cover.src,
+          width: article.cover.width,
+          height: article.cover.height,
+        },
+      ],
     },
   };
 }
 
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const [article, articles] = await Promise.all([
+    commerce.getArticleBySlug(slug),
+    commerce.getArticles(),
+  ]);
   if (!article) notFound();
 
-  const cover = getArticleCover(article.slug);
   const idx = articles.findIndex((a) => a.slug === article.slug);
   const prev = articles[idx - 1];
   const next = articles[idx + 1];
@@ -62,35 +68,44 @@ export default async function ArticleDetailPage({ params }: Props) {
 
         <div className="relative mt-10 aspect-[16/9] overflow-hidden">
           <OptimizedImage
-            src={cover}
+            src={article.cover.src}
             alt={article.title}
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 800px"
             className="object-cover"
+            width={article.cover.width}
+            height={article.cover.height}
           />
         </div>
 
         <div className="mt-10 space-y-6 text-base text-foreground/85 leading-relaxed">
-          <p>
-            Pashmina is more than just a fabric — it is a legacy woven through centuries of rich
-            heritage, artistry, and nature&apos;s finest gifts.
-          </p>
-          <p>
-            Originating from the pristine highlands of Kashmir, pashmina is derived from the soft
-            under-fleece of the Changthangi goat. The extreme climate, the pure air, and the
-            traditional way of life in this region contribute to the unmatched quality of this
-            fiber.
-          </p>
-          <p>
-            For generations, skilled artisans have transformed this exquisite fiber into timeless
-            pieces — each one a labor of love that embodies elegance, warmth, and sophistication.
-          </p>
-          <p>
-            Today, as the world embraces slow fashion and conscious luxury, pashmina stands as a
-            symbol of timeless beauty and mindful creation — to be treasured, and passed down
-            through generations.
-          </p>
+          {article.bodyHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: article.bodyHtml }} />
+          ) : (
+            <>
+              <p>
+                Pashmina is more than just a fabric — it is a legacy woven through centuries of rich
+                heritage, artistry, and nature&apos;s finest gifts.
+              </p>
+              <p>
+                Originating from the pristine highlands of Kashmir, pashmina is derived from the
+                soft under-fleece of the Changthangi goat. The extreme climate, the pure air, and
+                the traditional way of life in this region contribute to the unmatched quality of
+                this fiber.
+              </p>
+              <p>
+                For generations, skilled artisans have transformed this exquisite fiber into
+                timeless pieces — each one a labor of love that embodies elegance, warmth, and
+                sophistication.
+              </p>
+              <p>
+                Today, as the world embraces slow fashion and conscious luxury, pashmina stands as a
+                symbol of timeless beauty and mindful creation — to be treasured, and passed down
+                through generations.
+              </p>
+            </>
+          )}
         </div>
 
         <div className="mt-12 pt-8 border-t border-border/40 flex items-center gap-4">
@@ -151,11 +166,13 @@ export default async function ArticleDetailPage({ params }: Props) {
                 <Link href={`/journal/${a.slug}`} className="flex gap-3 group">
                   <div className="relative h-12 w-12 shrink-0">
                     <OptimizedImage
-                      src={getArticleCover(a.slug)}
+                      src={a.cover.src}
                       alt=""
                       fill
                       sizes="48px"
                       className="object-cover"
+                      width={a.cover.width}
+                      height={a.cover.height}
                     />
                   </div>
                   <div className="min-w-0">

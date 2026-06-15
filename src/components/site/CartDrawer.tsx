@@ -2,23 +2,38 @@
 
 import Link from "next/link";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useStore, getProduct } from "@/lib/store";
+import type { CommerceProduct } from "@/lib/commerce";
+import { useCommerce } from "@/lib/commerce/client";
 
 export function CartDrawer() {
-  const { cart, cartOpen, setCartOpen, setQty, removeFromCart, clearCart } = useStore();
+  const { cart, cartOpen, setCartOpen, setQty, removeFromCart, clearCart, resolveProducts } =
+    useCommerce();
+  const [products, setProducts] = useState<CommerceProduct[]>([]);
+
+  useEffect(() => {
+    const slugs = cart.map((i) => i.slug);
+    if (!slugs.length) {
+      setProducts([]);
+      return;
+    }
+    resolveProducts(slugs).then(setProducts);
+  }, [cart, resolveProducts]);
+
+  const productBySlug = useMemo(() => new Map(products.map((p) => [p.slug, p])), [products]);
+
   const items = cart
-    .map((i) => ({ ...i, product: getProduct(i.slug) }))
-    .filter(
-      (
-        i,
-      ): i is { slug: string; qty: number; product: NonNullable<ReturnType<typeof getProduct>> } =>
-        !!i.product,
-    );
-  const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+    .map((i) => {
+      const product = productBySlug.get(i.slug);
+      return product ? { ...i, product } : null;
+    })
+    .filter((i): i is { slug: string; qty: number; product: CommerceProduct } => i != null);
+
+  const subtotal = items.reduce((s, i) => s + i.product.price.amount * i.qty, 0);
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -47,62 +62,69 @@ export function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-              {items.map((i) => (
-                <div key={i.slug} className="flex gap-4">
-                  <Link
-                    href={`/product/${i.slug}`}
-                    onClick={() => setCartOpen(false)}
-                    className="block w-20 h-24 bg-card overflow-hidden shrink-0 relative"
-                  >
-                    <OptimizedImage
-                      src={i.product.image}
-                      alt={i.product.name}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  </Link>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between gap-2">
-                      <Link
-                        href={`/product/${i.slug}`}
-                        onClick={() => setCartOpen(false)}
-                        className="font-display text-base text-cream hover:text-gold"
-                      >
-                        {i.product.name}
-                      </Link>
-                      <button
-                        onClick={() => removeFromCart(i.slug)}
-                        className="text-muted-foreground hover:text-gold shrink-0"
-                        aria-label="Remove"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground mt-1">
-                      {i.product.categoryLabel}
-                    </p>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center border border-border">
-                        <button
-                          onClick={() => setQty(i.slug, i.qty - 1)}
-                          className="p-1.5 text-muted-foreground hover:text-gold"
+              {items.map((i) => {
+                const image = i.product.images[0];
+                return (
+                  <div key={i.slug} className="flex gap-4">
+                    <Link
+                      href={`/product/${i.slug}`}
+                      onClick={() => setCartOpen(false)}
+                      className="block w-20 h-24 bg-card overflow-hidden shrink-0 relative"
+                    >
+                      {image && (
+                        <OptimizedImage
+                          src={image.src}
+                          alt={image.alt ?? i.product.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                          width={image.width}
+                          height={image.height}
+                        />
+                      )}
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between gap-2">
+                        <Link
+                          href={`/product/${i.slug}`}
+                          onClick={() => setCartOpen(false)}
+                          className="font-display text-base text-cream hover:text-gold"
                         >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="px-3 text-xs text-cream">{i.qty}</span>
+                          {i.product.name}
+                        </Link>
                         <button
-                          onClick={() => setQty(i.slug, i.qty + 1)}
-                          className="p-1.5 text-muted-foreground hover:text-gold"
+                          onClick={() => removeFromCart(i.slug)}
+                          className="text-muted-foreground hover:text-gold shrink-0"
+                          aria-label="Remove"
                         >
-                          <Plus className="h-3 w-3" />
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <p className="text-sm text-gold">${i.product.price * i.qty}</p>
+                      <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground mt-1">
+                        {i.product.categoryLabel}
+                      </p>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center border border-border">
+                          <button
+                            onClick={() => setQty(i.slug, i.qty - 1)}
+                            className="p-1.5 text-muted-foreground hover:text-gold"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="px-3 text-xs text-cream">{i.qty}</span>
+                          <button
+                            onClick={() => setQty(i.slug, i.qty + 1)}
+                            className="p-1.5 text-muted-foreground hover:text-gold"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <p className="text-sm text-gold">${i.product.price.amount * i.qty}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-border/40 px-6 py-5 space-y-4">

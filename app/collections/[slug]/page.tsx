@@ -5,36 +5,37 @@ import { ChevronDown } from "lucide-react";
 
 import { ProductCard } from "@/components/site/ProductCard";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { collections, getCollectionBySlug } from "@/lib/collections";
-import { colors, products } from "@/lib/products";
+import { commerce, commerceColors } from "@/lib/commerce";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return collections.map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  const slugs = await commerce.getCollectionSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = getCollectionBySlug(slug);
+  const data = await commerce.getCollectionBySlug(slug);
   if (!data) return { title: "Collection Not Found" };
 
   return {
-    title: data.title,
-    description: data.tagline,
+    title: data.collection.title,
+    description: data.collection.tagline,
     openGraph: {
-      title: `${data.title} — GULRIZA`,
-      description: data.tagline,
+      title: `${data.collection.title} — GULRIZA`,
+      description: data.collection.tagline,
     },
   };
 }
 
 export default async function CollectionDetailPage({ params }: Props) {
   const { slug } = await params;
-  const data = getCollectionBySlug(slug);
+  const data = await commerce.getCollectionBySlug(slug);
   if (!data) notFound();
 
-  const filtered = products.filter((p) => p.category === data.cat || data.cat === "bridal");
+  const { collection, products } = data;
+  const filtered = collection.category === "bridal" ? await commerce.getProducts() : products;
 
   return (
     <>
@@ -48,11 +49,11 @@ export default async function CollectionDetailPage({ params }: Props) {
             <Link href="/collections" className="hover:text-gold">
               Collections
             </Link>{" "}
-            / <span className="text-gold">{data.title}</span>
+            / <span className="text-gold">{collection.title}</span>
           </nav>
           <Eyebrow>Collection</Eyebrow>
-          <h1 className="mt-4 font-display text-5xl text-cream">{data.title}</h1>
-          <p className="mt-3 text-sm text-muted-foreground max-w-2xl">{data.tagline}</p>
+          <h1 className="mt-4 font-display text-5xl text-cream">{collection.title}</h1>
+          <p className="mt-3 text-sm text-muted-foreground max-w-2xl">{collection.tagline}</p>
         </div>
       </section>
 
@@ -67,7 +68,7 @@ export default async function CollectionDetailPage({ params }: Props) {
           <div>
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-cream mb-3">Color</p>
             <div className="grid grid-cols-6 gap-2">
-              {colors.map((c) => (
+              {commerceColors.map((c) => (
                 <button
                   key={c.name}
                   title={c.name}

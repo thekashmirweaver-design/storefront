@@ -3,8 +3,12 @@
 import { toast } from "sonner";
 
 import { Eyebrow } from "@/components/site/Eyebrow";
+import type { BrandConfig } from "@/lib/commerce";
+import { submitContactAction } from "@/lib/commerce/actions";
 
-export function ContactClient() {
+type ContactInfo = BrandConfig["contact"];
+
+export function ContactClient({ contact }: { contact: ContactInfo }) {
   return (
     <section className="mx-auto max-w-[1100px] px-6 md:px-10 py-24 grid lg:grid-cols-2 gap-14">
       <div>
@@ -17,37 +21,47 @@ export function ContactClient() {
         <div className="mt-10 space-y-6 text-sm">
           <div>
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-gold mb-1">Atelier</p>
-            <p className="text-foreground/85">
-              Dal Lake Road, Srinagar
-              <br />
-              Kashmir, India 190001
-            </p>
+            <p className="text-foreground/85 whitespace-pre-line">{contact.address}</p>
           </div>
           <div>
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-gold mb-1">Concierge</p>
             <p className="text-foreground/85">
-              care@gulriza.com
+              {contact.email}
               <br />
-              +91 194 000 0000
+              {contact.phone}
             </p>
           </div>
           <div>
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-gold mb-1">Hours</p>
-            <p className="text-foreground/85">Monday – Saturday · 10:00 – 19:00 IST</p>
+            <p className="text-foreground/85">{contact.hours}</p>
           </div>
         </div>
       </div>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          toast.success("Message sent. We'll be in touch soon.");
+          const form = e.currentTarget;
+          const data = new FormData(form);
+          const result = await submitContactAction({
+            name: String(data.get("name") ?? ""),
+            email: String(data.get("email") ?? ""),
+            subject: String(data.get("subject") ?? ""),
+            message: String(data.get("message") ?? ""),
+          });
+          if (result.ok) {
+            toast.success(result.message);
+            form.reset();
+          } else {
+            toast.error(result.message);
+          }
         }}
         className="space-y-5"
       >
         <div>
           <label className="text-[0.65rem] tracking-[0.25em] uppercase text-cream">Name</label>
           <input
+            name="name"
             required
             className="mt-2 w-full bg-transparent border border-border px-4 py-3 text-sm text-foreground focus:border-gold outline-none"
           />
@@ -55,6 +69,7 @@ export function ContactClient() {
         <div>
           <label className="text-[0.65rem] tracking-[0.25em] uppercase text-cream">Email</label>
           <input
+            name="email"
             required
             type="email"
             className="mt-2 w-full bg-transparent border border-border px-4 py-3 text-sm text-foreground focus:border-gold outline-none"
@@ -62,11 +77,15 @@ export function ContactClient() {
         </div>
         <div>
           <label className="text-[0.65rem] tracking-[0.25em] uppercase text-cream">Subject</label>
-          <input className="mt-2 w-full bg-transparent border border-border px-4 py-3 text-sm text-foreground focus:border-gold outline-none" />
+          <input
+            name="subject"
+            className="mt-2 w-full bg-transparent border border-border px-4 py-3 text-sm text-foreground focus:border-gold outline-none"
+          />
         </div>
         <div>
           <label className="text-[0.65rem] tracking-[0.25em] uppercase text-cream">Message</label>
           <textarea
+            name="message"
             required
             rows={6}
             className="mt-2 w-full bg-transparent border border-border px-4 py-3 text-sm text-foreground focus:border-gold outline-none resize-none"

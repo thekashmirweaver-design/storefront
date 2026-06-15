@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ContactClient } from "@/components/site/ContactClient";
+import { commerce } from "@/lib/commerce";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactPage() {
-  return <ContactClient />;
+export default async function ContactPage() {
+  const brand = await commerce.getBrand();
+  return <ContactClient contact={brand.contact} />;
 }

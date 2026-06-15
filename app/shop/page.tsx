@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { ShopClient } from "@/components/site/ShopClient";
+import { commerce, commerceColors } from "@/lib/commerce";
 
 export const metadata: Metadata = {
   title: "Shop All Pashminas",
@@ -12,12 +13,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const products = await commerce.getProducts();
+
   return (
     <Suspense
       fallback={<div className="py-24 text-center text-muted-foreground">Loading shop…</div>}
     >
-      <ShopClient />
+      <ShopClient products={products} colors={commerceColors} />
     </Suspense>
   );
 }

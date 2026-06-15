@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { ProductCard } from "@/components/site/ProductCard";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { colors, products, type Product } from "@/lib/products";
+import type { CommerceColor, CommerceProduct, CommerceProductCategory } from "@/lib/commerce";
 
 function FilterGroup({
   title,
@@ -28,9 +28,15 @@ function FilterGroup({
 }
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name";
-type Category = Product["category"];
+type Category = CommerceProductCategory;
 
-export function ShopClient() {
+export function ShopClient({
+  products,
+  colors,
+}: {
+  products: CommerceProduct[];
+  colors: CommerceColor[];
+}) {
   const [selectedCats, setCats] = useState<Set<Category>>(new Set());
   const [selectedColors, setColors] = useState<Set<string>>(new Set());
   const [maxPrice, setMaxPrice] = useState(1000);
@@ -42,14 +48,14 @@ export function ShopClient() {
     let list = products.filter((p) => {
       if (selectedCats.size && !selectedCats.has(p.category)) return false;
       if (selectedColors.size && !selectedColors.has(p.colorHex)) return false;
-      if (p.price > maxPrice) return false;
+      if (p.price.amount > maxPrice) return false;
       return true;
     });
-    if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
-    if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
+    if (sort === "price-asc") list = [...list].sort((a, b) => a.price.amount - b.price.amount);
+    if (sort === "price-desc") list = [...list].sort((a, b) => b.price.amount - a.price.amount);
     if (sort === "name") list = [...list].sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [selectedCats, selectedColors, maxPrice, sort]);
+  }, [products, selectedCats, selectedColors, maxPrice, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const safePage = Math.min(page, totalPages);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { JournalClient } from "@/components/site/JournalClient";
+import { commerce } from "@/lib/commerce";
 
 export const metadata: Metadata = {
   title: "Journal",
@@ -12,12 +13,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function JournalPage() {
+export default async function JournalPage() {
+  const articles = await commerce.getArticles();
+
   return (
     <Suspense
       fallback={<div className="py-24 text-center text-muted-foreground">Loading journal…</div>}
     >
-      <JournalClient />
+      <JournalClient articles={articles} />
     </Suspense>
   );
 }

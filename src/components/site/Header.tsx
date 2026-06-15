@@ -6,23 +6,17 @@ import { Search, User, ShoppingBag, Menu, X, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
-import { useStore } from "@/lib/store";
-
-const nav = [
-  { label: "Shop", href: "/shop" },
-  { label: "Collections", href: "/collections" },
-  { label: "Our Story", href: "/our-story" },
-  { label: "Craftsmanship", href: "/craftsmanship" },
-  { label: "Journal", href: "/journal" },
-];
+import { useCommerce } from "@/lib/commerce/client";
+import { formatBrandTagline } from "@/lib/commerce/mappers/metadata";
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const { cart, wishlist, setCartOpen, setSearchOpen } = useStore();
+  const { brand, cart, wishlist, setCartOpen, setSearchOpen } = useCommerce();
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+  const nav = brand.headerNav;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -45,18 +39,18 @@ export function Header() {
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 md:px-10 py-4 sm:py-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
             <OptimizedImage
-              src="/images/gulriza-logo.jpg"
-              alt="GULRIZA"
-              width={40}
-              height={40}
+              src={brand.logo.src}
+              alt={brand.logo.alt ?? brand.name}
+              width={brand.logo.width ?? 40}
+              height={brand.logo.height ?? 40}
               className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg object-cover"
             />
             <div className="flex flex-col leading-tight min-w-0">
               <span className="font-display text-lg sm:text-xl tracking-[0.25em] sm:tracking-[0.3em] text-cream truncate">
-                GULRIZA
+                {brand.name}
               </span>
               <span className="hidden sm:block text-[0.55rem] tracking-[0.35em] text-gold/80 mt-0.5 truncate">
-                TIMELESS · NATURAL · LUXURIOUS
+                {formatBrandTagline(brand.tagline)}
               </span>
             </div>
           </Link>

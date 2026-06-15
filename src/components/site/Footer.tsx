@@ -6,60 +6,23 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
-
-const cols = [
-  {
-    title: "Shop",
-    links: [
-      { label: "All Pashminas", href: "/shop" },
-      { label: "Signature Pashminas", href: "/collections/signature" },
-      { label: "Lightweight Pashminas", href: "/collections/lightweight" },
-      { label: "Bridal Collection", href: "/collections" },
-      { label: "Limited Editions", href: "/collections" },
-    ],
-  },
-  {
-    title: "Collections",
-    links: [
-      { label: "New Arrivals", href: "/shop" },
-      { label: "Best Sellers", href: "/shop" },
-      { label: "Bridal Edit", href: "/collections" },
-      { label: "Men's Pashminas", href: "/shop" },
-      { label: "Accessories", href: "/shop" },
-    ],
-  },
-  {
-    title: "Our Story",
-    links: [
-      { label: "Our Heritage", href: "/our-story" },
-      { label: "Sustainability", href: "/our-story" },
-      { label: "Craftsmanship", href: "/craftsmanship" },
-      { label: "The Kashmir Valley", href: "/our-story" },
-    ],
-  },
-  {
-    title: "Help",
-    links: [
-      { label: "FAQs", href: "/faqs" },
-      { label: "Shipping & Delivery", href: "/faqs" },
-      { label: "Returns & Exchanges", href: "/faqs" },
-      { label: "Care Guide", href: "/craftsmanship" },
-      { label: "Contact Us", href: "/contact" },
-    ],
-  },
-];
+import { useCommerce } from "@/lib/commerce/client";
+import { subscribeNewsletterAction } from "@/lib/commerce/actions";
+import { formatBrandTagline } from "@/lib/commerce/mappers/metadata";
 
 export function Footer() {
+  const { brand } = useCommerce();
   const [email, setEmail] = useState("");
-  const submit = (e: React.FormEvent) => {
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const v = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-      toast.error("Please enter a valid email");
-      return;
+    const result = await subscribeNewsletterAction(email);
+    if (result.ok) {
+      toast.success("You're on the list", { description: result.message });
+      setEmail("");
+    } else {
+      toast.error(result.message);
     }
-    toast.success("You're on the list", { description: "Welcome to the GULRIZA atelier." });
-    setEmail("");
   };
 
   return (
@@ -68,16 +31,16 @@ export function Footer() {
         <div className="lg:col-span-1">
           <Link href="/" className="flex flex-col items-start gap-2">
             <OptimizedImage
-              src="/images/gulriza-logo.jpg"
-              alt="GULRIZA"
-              width={48}
-              height={48}
+              src={brand.logo.src}
+              alt={brand.logo.alt ?? brand.name}
+              width={brand.logo.width ?? 48}
+              height={brand.logo.height ?? 48}
               className="h-12 w-12 rounded-lg object-cover"
             />
-            <span className="font-display text-lg tracking-[0.3em] text-cream">GULRIZA</span>
+            <span className="font-display text-lg tracking-[0.3em] text-cream">{brand.name}</span>
           </Link>
           <p className="text-[0.6rem] tracking-[0.3em] text-gold/70 mt-2">
-            TIMELESS · NATURAL · LUXURIOUS
+            {formatBrandTagline(brand.tagline)}
           </p>
           <p className="text-xs text-muted-foreground mt-6 leading-relaxed max-w-xs">
             Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for
@@ -96,7 +59,7 @@ export function Footer() {
           </div>
         </div>
 
-        {cols.map((col) => (
+        {brand.footerMenus.map((col) => (
           <div key={col.title}>
             <h4 className="text-[0.7rem] tracking-[0.25em] uppercase text-gold font-sans font-medium mb-5">
               {col.title}
@@ -145,7 +108,9 @@ export function Footer() {
 
       <div className="border-t border-border/40">
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-6 flex flex-wrap justify-between gap-4 text-[0.65rem] tracking-wider text-muted-foreground">
-          <p>© {new Date().getFullYear()} GULRIZA. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} {brand.name}. All rights reserved.
+          </p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-gold">
               Privacy Policy

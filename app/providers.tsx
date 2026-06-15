@@ -1,13 +1,14 @@
 "use client";
 
-import { StoreProvider } from "@/lib/store";
+import { CommerceProvider } from "@/lib/commerce/client";
+import type { BrandConfig } from "@/lib/commerce";
 import { Toaster } from "@/components/ui/sonner";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ brand, children }: { brand: BrandConfig; children: React.ReactNode }) {
   return (
-    <StoreProvider>
+    <CommerceProvider brand={brand}>
       {children}
       <Toaster />
-    </StoreProvider>
+    </CommerceProvider>
   );
 }

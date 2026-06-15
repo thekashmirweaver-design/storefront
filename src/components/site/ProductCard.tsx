@@ -5,24 +5,29 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
-import type { Product } from "@/lib/products";
-import { useStore } from "@/lib/store";
+import type { CommerceProduct } from "@/lib/commerce";
+import { useCommerce } from "@/lib/commerce/client";
 
-export function ProductCard({ product }: { product: Product }) {
-  const { addToCart, toggleWishlist, inWishlist, setCartOpen } = useStore();
+export function ProductCard({ product }: { product: CommerceProduct }) {
+  const { addToCart, toggleWishlist, inWishlist, setCartOpen } = useCommerce();
   const liked = inWishlist(product.slug);
+  const image = product.images[0];
 
   return (
     <div className="group">
       <div className="relative aspect-[4/5] overflow-hidden bg-card">
         <Link href={`/product/${product.slug}`} className="block h-full w-full">
-          <OptimizedImage
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-          />
+          {image && (
+            <OptimizedImage
+              src={image.src}
+              alt={image.alt ?? product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              width={image.width}
+              height={image.height}
+            />
+          )}
         </Link>
         <button
           onClick={(e) => {
@@ -56,7 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground">
           {product.categoryLabel}
         </p>
-        <p className="text-sm text-gold pt-1">${product.price}</p>
+        <p className="text-sm text-gold pt-1">${product.price.amount}</p>
       </Link>
     </div>
   );

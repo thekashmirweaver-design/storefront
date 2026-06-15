@@ -2,26 +2,43 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { products } from "@/lib/products";
-import { useStore } from "@/lib/store";
+import type { CommerceProduct } from "@/lib/commerce";
+import { getProductsAction, searchCommerce } from "@/lib/commerce/actions";
+import { useCommerce } from "@/lib/commerce/client";
 
 export function SearchDialog() {
-  const { searchOpen, setSearchOpen } = useStore();
+  const { searchOpen, setSearchOpen } = useCommerce();
   const [q, setQ] = useState("");
-  const results = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return products.slice(0, 6);
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(s) ||
-        p.categoryLabel.toLowerCase().includes(s) ||
-        p.category.includes(s),
-    );
-  }, [q]);
+  const [results, setResults] = useState<CommerceProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    let cancelled = false;
+    setLoading(true);
+    const query = q.trim();
+
+    const run = async () => {
+      const data = query
+        ? (await searchCommerce(query)).products
+        : (await getProductsAction()).slice(0, 6);
+      if (!cancelled) {
+        setResults(data);
+        setLoading(false);
+      }
+    };
+
+    const timer = setTimeout(run, query ? 200 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [q, searchOpen]);
 
   return (
     <Dialog
@@ -44,41 +61,50 @@ export function SearchDialog() {
           />
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-2">
-          {results.length === 0 ? (
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground py-12">Searching…</p>
+          ) : results.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               No matches for &quot;{q}&quot;.
             </p>
           ) : (
             <ul>
-              {results.map((p) => (
-                <li key={p.slug}>
-                  <Link
-                    href={`/product/${p.slug}`}
-                    onClick={() => {
-                      setSearchOpen(false);
-                      setQ("");
-                    }}
-                    className="flex items-center gap-4 px-3 py-3 hover:bg-card transition-colors"
-                  >
-                    <div className="relative w-12 h-14 bg-card shrink-0">
-                      <OptimizedImage
-                        src={p.image}
-                        alt=""
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-base text-cream">{p.name}</p>
-                      <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground">
-                        {p.categoryLabel}
-                      </p>
-                    </div>
-                    <p className="text-sm text-gold">${p.price}</p>
-                  </Link>
-                </li>
-              ))}
+              {results.map((p) => {
+                const image = p.images[0];
+                return (
+                  <li key={p.slug}>
+                    <Link
+                      href={`/product/${p.slug}`}
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setQ("");
+                      }}
+                      className="flex items-center gap-4 px-3 py-3 hover:bg-card transition-colors"
+                    >
+                      <div className="relative w-12 h-14 bg-card shrink-0">
+                        {image && (
+                          <OptimizedImage
+                            src={image.src}
+                            alt=""
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                            width={image.width}
+                            height={image.height}
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-display text-base text-cream">{p.name}</p>
+                        <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground">
+                          {p.categoryLabel}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gold">${p.price.amount}</p>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

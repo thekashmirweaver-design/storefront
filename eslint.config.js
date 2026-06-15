@@ -21,5 +21,29 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["app/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/lib/products",
+              message: "Use @/lib/commerce instead.",
+            },
+            {
+              name: "@/lib/collections",
+              message: "Use @/lib/commerce instead.",
+            },
+            {
+              name: "@/lib/store",
+              message: "Use @/lib/commerce/client instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   eslintPluginPrettier,
 );

@@ -5,19 +5,13 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 
 import mountainImg from "@/assets/journal-mountain.jpg";
-import handloomImg from "@/assets/journal-handloom.jpg";
-import styleImg from "@/assets/journal-style.jpg";
-import legacyImg from "@/assets/legacy-stilllife.jpg";
-import classicImg from "@/assets/collection-classic.jpg";
-import wovenImg from "@/assets/collection-woven.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { articles } from "@/lib/products";
+import type { CommerceArticle } from "@/lib/commerce";
 
-const covers = [mountainImg, handloomImg, styleImg, legacyImg, classicImg, wovenImg];
 const cats = ["All", "Heritage", "Craftsmanship", "Style", "Sustainability", "Travel"];
 
-export function JournalClient() {
+export function JournalClient({ articles }: { articles: CommerceArticle[] }) {
   const [activeCat, setActiveCat] = useState("All");
 
   const filtered =
@@ -71,15 +65,17 @@ export function JournalClient() {
       </section>
 
       <section className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-14">
-        {filtered.map((a, i) => (
+        {filtered.map((a) => (
           <Link key={a.slug} href={`/journal/${a.slug}`} className="group block">
             <div className="relative aspect-[4/3] overflow-hidden">
               <OptimizedImage
-                src={covers[i % covers.length]}
+                src={a.cover.src}
                 alt={a.title}
                 fill
                 sizes="(max-width: 640px) 100vw, 33vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
+                width={a.cover.width}
+                height={a.cover.height}
               />
             </div>
             <div className="pt-5">

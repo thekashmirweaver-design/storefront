@@ -7,9 +7,8 @@ import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { ProductCard } from "@/components/site/ProductCard";
-import type { Product } from "@/lib/products";
-import { products } from "@/lib/products";
-import { useStore } from "@/lib/store";
+import type { CommerceProduct } from "@/lib/commerce";
+import { useCommerce } from "@/lib/commerce/client";
 
 function Accordion({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -23,11 +22,19 @@ function Accordion({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-export function ProductClient({ product }: { product: Product }) {
+export function ProductClient({
+  product,
+  related,
+  colorSwatches,
+}: {
+  product: CommerceProduct;
+  related: CommerceProduct[];
+  colorSwatches: CommerceProduct[];
+}) {
   const [qty, setQty] = useState(1);
-  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useStore();
+  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
   const liked = inWishlist(product.slug);
-  const related = products.filter((p) => p.slug !== product.slug).slice(0, 4);
+  const image = product.images[0];
 
   return (
     <>
@@ -51,26 +58,34 @@ export function ProductClient({ product }: { product: Product }) {
               key={i}
               className={`relative aspect-square overflow-hidden border ${i === 0 ? "border-gold" : "border-border/30"} cursor-pointer`}
             >
-              <OptimizedImage
-                src={product.image}
-                alt=""
-                fill
-                sizes="80px"
-                className="object-cover"
-              />
+              {image && (
+                <OptimizedImage
+                  src={image.src}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  width={image.width}
+                  height={image.height}
+                />
+              )}
             </div>
           ))}
         </div>
 
         <div className="relative aspect-[4/5] overflow-hidden bg-card order-2">
-          <OptimizedImage
-            src={product.image}
-            alt={product.name}
-            fill
-            priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover"
-          />
+          {image && (
+            <OptimizedImage
+              src={image.src}
+              alt={image.alt ?? product.name}
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              width={image.width}
+              height={image.height}
+            />
+          )}
         </div>
 
         <aside className="order-3 space-y-5">
@@ -79,7 +94,7 @@ export function ProductClient({ product }: { product: Product }) {
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-muted-foreground mt-2">
               {product.categoryLabel}
             </p>
-            <p className="text-xl text-gold mt-4">${product.price}</p>
+            <p className="text-xl text-gold mt-4">${product.price.amount}</p>
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
@@ -103,7 +118,7 @@ export function ProductClient({ product }: { product: Product }) {
               <span className="text-muted-foreground capitalize">{product.name.split(" ")[0]}</span>
             </p>
             <div className="flex gap-2">
-              {products.slice(0, 6).map((p) => (
+              {colorSwatches.map((p) => (
                 <Link
                   key={p.slug}
                   href={`/product/${p.slug}`}

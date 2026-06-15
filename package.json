@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "COMMERCE_PROVIDER=mock next dev",
+    "dev:shopify": "COMMERCE_PROVIDER=shopify next dev",
     "build": "next build",
+    "build:mock": "COMMERCE_PROVIDER=mock next build",
+    "build:shopify": "COMMERCE_PROVIDER=shopify next build",
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -37,6 +41,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@shopify/storefront-api-client": "^1.0.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
