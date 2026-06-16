@@ -119,9 +119,10 @@ export type BrandConfig = {
     hours: string;
   };
   social: {
-    instagram?: string;
     facebook?: string;
     youtube?: string;
+    instagram?: string;
+    pinterest?: string;
   };
   seo: {
     defaultTitle: string;

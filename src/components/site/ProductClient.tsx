@@ -235,7 +235,7 @@ export function ProductClient({
       {related.length > 0 && (
         <section className="mx-auto max-w-[1400px] px-6 md:px-10 py-20 pb-28 lg:pb-20">
           <h2 className="font-display text-3xl text-cream mb-10">You may also like</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
             {related.map((p) => (
               <ProductCard key={p.slug} product={p} />
             ))}

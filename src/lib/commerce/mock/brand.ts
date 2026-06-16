@@ -19,9 +19,10 @@ export const mockBrand: BrandConfig = {
     hours: "Monday – Saturday · 10:00 – 19:00 IST",
   },
   social: {
-    instagram: "https://instagram.com/gulriza",
     facebook: "https://facebook.com/gulriza",
     youtube: "https://youtube.com/gulriza",
+    instagram: "https://instagram.com/gulriza",
+    pinterest: "https://pinterest.com/gulriza",
   },
   seo: {
     defaultTitle: "GULRIZA — Timeless. Natural. Luxurious.",

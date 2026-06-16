@@ -1,7 +1,7 @@
 "use client";
 
 import { SlidersHorizontal, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ProductCard } from "@/components/site/ProductCard";
@@ -44,6 +44,7 @@ export function ProductListing({
   const [state, setState] = useState<ListingState>(() =>
     parseListingState(searchParams, lockedCollection),
   );
+  const skipUrlSync = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("shop-grid-cols");
@@ -51,36 +52,38 @@ export function ProductListing({
   }, []);
 
   useEffect(() => {
+    skipUrlSync.current = true;
     setState(parseListingState(searchParams, lockedCollection));
   }, [searchParams, lockedCollection]);
 
-  const syncUrl = useCallback(
-    (next: ListingState) => {
-      const qs = serializeListingState(next, lockedCollection);
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    },
-    [pathname, router, lockedCollection],
-  );
-
-  const updateState = useCallback(
-    (patch: Partial<ListingState>) => {
-      setState((prev) => {
-        const next = { ...prev, ...patch };
-        syncUrl(next);
-        return next;
-      });
-    },
-    [syncUrl],
-  );
+  const updateState = useCallback((patch: Partial<ListingState>) => {
+    setState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const clearAll = useCallback(() => {
-    const next = defaultListingState();
-    setState(next);
-    syncUrl(next);
-  }, [syncUrl]);
+    setState(defaultListingState());
+  }, []);
+
+  useEffect(() => {
+    if (skipUrlSync.current) {
+      skipUrlSync.current = false;
+      return;
+    }
+    const qs = serializeListingState(state, lockedCollection);
+    const current = searchParams.toString();
+    if (qs === current) return;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [state, pathname, router, lockedCollection, searchParams]);
 
   const filtered = useMemo(() => filterAndSortProducts(products, state), [products, state]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+
+  useEffect(() => {
+    if (state.page > totalPages) {
+      updateState({ page: totalPages });
+    }
+  }, [state.page, totalPages, updateState]);
+
   const safePage = Math.min(state.page, totalPages);
   const visible = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
   const filterCount = activeFilterCount(state, lockedCollection);
@@ -184,7 +187,7 @@ export function ProductListing({
             </div>
           ) : (
             <div
-              className={`grid grid-cols-2 gap-x-5 gap-y-10 ${gridCols === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}
+              className={`grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-10 ${gridCols === 3 ? "lg:grid-cols-3" : ""}`}
             >
               {visible.map((p) => (
                 <ProductCard key={p.slug} product={p} />

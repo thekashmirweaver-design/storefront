@@ -45,7 +45,7 @@ export function ProductCard({ product }: { product: CommerceProduct }) {
               src={primary.src}
               alt={primary.alt ?? product.name}
               fill
-              sizes="(max-width: 768px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className={`object-cover motion-reduce:transition-none motion-reduce:transform-none ${
                 hasAltImage
                   ? "transition-opacity duration-500 group-hover:opacity-0"
@@ -60,7 +60,7 @@ export function ProductCard({ product }: { product: CommerceProduct }) {
               src={secondary.src}
               alt={secondary.alt ?? `${product.name} alternate`}
               fill
-              sizes="(max-width: 768px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 motion-reduce:transition-none"
               width={secondary.width}
               height={secondary.height}

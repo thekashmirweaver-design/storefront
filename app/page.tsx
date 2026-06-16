@@ -20,6 +20,7 @@ import wovenImg from "@/assets/collection-woven.jpg";
 import seasonalImg from "@/assets/collection-seasonal.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
+import { Marquee } from "@/components/site/Marquee";
 import { commerce, buildPageMetadata } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,6 +64,16 @@ const collections = [
     img: seasonalImg,
     href: "/collections",
   },
+];
+
+const marqueeItems = [
+  "Timeless Elegance",
+  "100% Pure Pashmina",
+  "Handwoven in Kashmir",
+  "Limited Production",
+  "Ethically Sourced",
+  "Certificate of Authenticity",
+  "Complimentary Worldwide Shipping",
 ];
 
 const valueProps = [
@@ -143,7 +154,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {collections.map((c) => (
             <Link key={c.title} href={c.href} className="group block">
               <div className="relative aspect-[4/5] overflow-hidden">
@@ -151,7 +162,7 @@ export default function HomePage() {
                   src={c.img}
                   alt={c.title}
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
                 />
               </div>
@@ -165,6 +176,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <Marquee items={marqueeItems} />
 
       <section className="relative border-t border-border/40 overflow-hidden bg-background">
         <OptimizedImage

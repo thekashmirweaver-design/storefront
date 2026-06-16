@@ -35,6 +35,16 @@
   --color-cream: var(--cream);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
+  --animate-marquee-rtl: marquee-rtl 45s linear infinite;
+}
+
+@keyframes marquee-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 :root {
