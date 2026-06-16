@@ -34,19 +34,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const [product, allProducts, brand] = await Promise.all([
-    commerce.getProductBySlug(slug),
-    commerce.getProducts(),
-    commerce.getBrand(),
-  ]);
+  const product = await commerce.getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = allProducts.filter((p) => p.slug !== product.slug).slice(0, 4);
+  const [related, brand, collectionData] = await Promise.all([
+    commerce.getRelatedProducts(slug, 4),
+    commerce.getBrand(),
+    product.collectionSlug
+      ? commerce.getCollectionBySlug(product.collectionSlug)
+      : Promise.resolve(null),
+  ]);
+
+  const colorVariants =
+    collectionData?.products.filter((p) => p.collectionSlug === product.collectionSlug) ?? [];
 
   return (
     <>
       <ProductJsonLd product={product} brandName={brand.name} siteUrl={brand.siteUrl} />
-      <ProductClient product={product} related={related} colorSwatches={allProducts.slice(0, 6)} />
+      <ProductClient
+        product={product}
+        related={related}
+        colorVariants={colorVariants.length > 0 ? colorVariants : [product]}
+        collectionTitle={collectionData?.collection.title}
+      />
     </>
   );
 }

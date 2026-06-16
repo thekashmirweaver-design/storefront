@@ -29,13 +29,13 @@ export function Footer() {
     <footer className="border-t border-border/60 bg-ink mt-24">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
         <div className="lg:col-span-1">
-          <Link href="/" className="flex flex-col items-start gap-2">
+          <Link href="/" className="flex flex-col items-start gap-3">
             <OptimizedImage
               src={brand.logo.src}
               alt={brand.logo.alt ?? brand.name}
               width={brand.logo.width ?? 48}
               height={brand.logo.height ?? 48}
-              className="h-12 w-12 rounded-lg object-cover"
+              className="h-14 w-14 object-contain"
             />
             <span className="font-display text-lg tracking-[0.3em] text-cream">{brand.name}</span>
           </Link>

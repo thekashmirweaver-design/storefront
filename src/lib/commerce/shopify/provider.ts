@@ -57,6 +57,10 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     return products.map((p) => p.slug);
   }
 
+  async getRelatedProducts(slug: string, limit = 4) {
+    return this.mockDelegate.getRelatedProducts(slug, limit);
+  }
+
   async getCollections() {
     const { data, errors } = await this.client.request(COLLECTIONS_QUERY, {
       variables: { first: 20 },

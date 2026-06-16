@@ -17,17 +17,19 @@ import { mockProducts } from "./data/products";
 const CURRENCY = "USD";
 
 function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProduct {
+  const primary = staticImageToCommerceImage(record.image, record.name);
   return {
     id: record.slug,
     slug: record.slug,
     name: record.name,
     category: record.category,
     categoryLabel: record.categoryLabel,
+    collectionSlug: record.collectionSlug,
     price: { amount: record.price, currencyCode: CURRENCY },
-    images: [staticImageToCommerceImage(record.image, record.name)],
+    images: [primary, { ...primary, alt: `${record.name} alternate view` }],
     colorHex: record.colorHex,
     description: record.description,
-    availableForSale: true,
+    availableForSale: record.slug.length % 17 !== 0,
     variantId: `mock-variant-${record.slug}`,
   };
 }
@@ -45,6 +47,10 @@ function applyProductFilters(
   if (filters?.colors?.length) {
     const colors = new Set(filters.colors);
     list = list.filter((p) => colors.has(p.colorHex));
+  }
+  if (filters?.collectionSlugs?.length) {
+    const slugs = new Set(filters.collectionSlugs);
+    list = list.filter((p) => p.collectionSlug && slugs.has(p.collectionSlug));
   }
   if (filters?.maxPrice != null) {
     list = list.filter((p) => p.price.amount <= filters.maxPrice!);
@@ -103,6 +109,24 @@ export class MockCommerceProvider implements CommerceProvider {
 
   async getProductBySlug(slug: string) {
     return allProducts.find((p) => p.slug === slug) ?? null;
+  }
+
+  async getRelatedProducts(slug: string, limit = 4) {
+    const product = await this.getProductBySlug(slug);
+    if (!product) return [];
+
+    const sameCollection = allProducts.filter(
+      (p) => p.slug !== slug && p.collectionSlug === product.collectionSlug,
+    );
+    if (sameCollection.length >= limit) return sameCollection.slice(0, limit);
+
+    const sameCategory = allProducts.filter(
+      (p) =>
+        p.slug !== slug &&
+        p.category === product.category &&
+        !sameCollection.some((s) => s.slug === p.slug),
+    );
+    return [...sameCollection, ...sameCategory].slice(0, limit);
   }
 
   async getProductSlugs() {

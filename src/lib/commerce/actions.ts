@@ -36,3 +36,11 @@ export async function getColorsAction() {
   const { mockColors } = await import("./mock/data/products");
   return mockColors;
 }
+
+export async function getRelatedProductsAction(slug: string, limit = 4) {
+  return commerce.getRelatedProducts(slug, limit);
+}
+
+export async function getCollectionsAction() {
+  return commerce.getCollections();
+}

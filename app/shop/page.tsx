@@ -16,13 +16,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ShopPage() {
-  const products = await commerce.getProducts();
+  const [products, collections] = await Promise.all([
+    commerce.getProducts(),
+    commerce.getCollections(),
+  ]);
 
   return (
     <Suspense
       fallback={<div className="py-24 text-center text-muted-foreground">Loading shop…</div>}
     >
-      <ShopClient products={products} colors={commerceColors} />
+      <ShopClient products={products} colors={commerceColors} collections={collections} />
     </Suspense>
   );
 }

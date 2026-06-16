@@ -7,10 +7,10 @@ export const mockBrand: BrandConfig = {
   tagline: "Timeless. Natural. Luxurious.",
   siteUrl,
   logo: {
-    src: "/images/gulriza-logo.jpg",
+    src: "/images/gulriza-icon.png",
     alt: "GULRIZA",
-    width: 120,
-    height: 40,
+    width: 48,
+    height: 48,
   },
   contact: {
     email: "care@gulriza.com",

@@ -25,6 +25,7 @@ export type CommerceProduct = {
   descriptionHtml?: string;
   availableForSale: boolean;
   variantId?: string;
+  collectionSlug?: string;
 };
 
 export type CommerceCollection = {
@@ -72,8 +73,18 @@ export type CommerceCart = {
 export type ProductFilters = {
   categories?: CommerceProductCategory[];
   colors?: string[];
+  collectionSlugs?: string[];
   maxPrice?: number;
   sort?: "featured" | "price-asc" | "price-desc" | "name";
+  page?: number;
+  pageSize?: number;
+};
+
+export type PaginatedProducts = {
+  products: CommerceProduct[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 export type CommerceSearchResult = {

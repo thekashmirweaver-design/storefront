@@ -19,6 +19,7 @@ export interface CommerceProvider {
   getProducts(filters?: ProductFilters): Promise<CommerceProduct[]>;
   getProductBySlug(slug: string): Promise<CommerceProduct | null>;
   getProductSlugs(): Promise<string[]>;
+  getRelatedProducts(slug: string, limit?: number): Promise<CommerceProduct[]>;
 
   getCollections(): Promise<CommerceCollection[]>;
   getCollectionBySlug(

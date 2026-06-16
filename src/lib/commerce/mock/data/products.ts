@@ -75,7 +75,12 @@ const collectionSeeds: CollectionSeed[] = [
   { slug: "limited", category: "limited", categoryLabel: "Limited Edition", priceBase: 595 },
   { slug: "new-arrivals", category: "signature", categoryLabel: "New Arrival", priceBase: 485 },
   { slug: "best-sellers", category: "signature", categoryLabel: "100% Pashmina", priceBase: 465 },
-  { slug: "heritage-weaves", category: "signature", categoryLabel: "Heritage Weave", priceBase: 525 },
+  {
+    slug: "heritage-weaves",
+    category: "signature",
+    categoryLabel: "Heritage Weave",
+    priceBase: 525,
+  },
   { slug: "evening-edit", category: "limited", categoryLabel: "Evening Edit", priceBase: 545 },
   { slug: "travel-wraps", category: "lightweight", categoryLabel: "Travel Wrap", priceBase: 415 },
   { slug: "gift-edition", category: "bridal", categoryLabel: "Gift Edition", priceBase: 505 },
@@ -84,7 +89,10 @@ const collectionSeeds: CollectionSeed[] = [
 const collectionBySlug = Object.fromEntries(collectionSeeds.map((c) => [c.slug, c]));
 
 function slugify(...parts: string[]) {
-  return parts.join("-").toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+  return parts
+    .join("-")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-");
 }
 
 function describe(name: string, collectionSlug: string) {
