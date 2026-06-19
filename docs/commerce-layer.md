@@ -177,6 +177,8 @@ src/lib/commerce/
 
 ## Phase 2 (not yet implemented)
 
+See **[shopify-driven-roadmap.md](./shopify-driven-roadmap.md)** for the full phased plan, progress tracking, and what to mark done when each phase ships.
+
 - Shopify Cart API (replace localStorage cart)
 - Wishlist via customer metafields
 - Newsletter / contact via Shopify Flow or webhooks

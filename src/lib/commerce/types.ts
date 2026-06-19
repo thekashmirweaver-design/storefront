@@ -31,9 +31,21 @@ export type CommerceProduct = {
 export type CommerceCollection = {
   slug: string;
   title: string;
+  /** Optional poetic hero headline shown below the eyebrow. */
+  heroHeadline?: string;
+  /** Short hero subhead (often shown in italic gold). */
   tagline: string;
+  /** Longer story copy for the collection hero. */
+  description?: string;
   category: CommerceProductCategory;
   image?: CommerceImage;
+  /** Hero CTA label; defaults to "Explore {title}" when omitted. */
+  ctaLabel?: string;
+};
+
+export type HomepageCollectionSection = {
+  collection: CommerceCollection;
+  previewProducts: CommerceProduct[];
 };
 
 export type CommerceArticle = {
@@ -107,7 +119,32 @@ export type ContactFormInput = {
   message: string;
 };
 
+export type BrandCopy = {
+  productNoun: string;
+  origin: string;
+  searchPlaceholder: string;
+  pages: {
+    home: { legacyBody: string };
+    shop: { subtitle: string };
+    account: {
+      registerSubtitle: string;
+      newToBrand: string;
+      hasAccount: string;
+    };
+    product: { authenticityPromise: string };
+    ourStory: {
+      nameMeaningQuote: string;
+      heritageBody: string;
+    };
+    craftsmanship: { intro: string };
+  };
+  messages: {
+    newsletterWelcome: string;
+  };
+};
+
 export type BrandConfig = {
+  id: string;
   name: string;
   tagline: string;
   siteUrl: string;
@@ -139,4 +176,9 @@ export type BrandConfig = {
     description: string;
     placeholder: string;
   };
+  legal: {
+    privacyPolicyUrl: string;
+    termsUrl: string;
+  };
+  copy: BrandCopy;
 };

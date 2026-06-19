@@ -13,6 +13,7 @@ import {
   activeFilterCount,
   buildActiveChips,
   defaultListingState,
+  deriveListingFacets,
   filterAndSortProducts,
   parseListingState,
   PER_PAGE,
@@ -22,7 +23,8 @@ import {
 
 type ProductListingProps = {
   products: CommerceProduct[];
-  colors: CommerceColor[];
+  /** Optional name lookup when deriving color swatch labels from product hex values. */
+  colorCatalog?: CommerceColor[];
   collections?: CommerceCollection[];
   lockedCollection?: string;
   totalCount?: number;
@@ -30,7 +32,7 @@ type ProductListingProps = {
 
 export function ProductListing({
   products,
-  colors,
+  colorCatalog = [],
   collections = [],
   lockedCollection,
   totalCount,
@@ -41,8 +43,18 @@ export function ProductListing({
   const [filterOpen, setFilterOpen] = useState(false);
   const [gridCols, setGridCols] = useState<2 | 3>(3);
 
+  const facets = useMemo(
+    () => deriveListingFacets(products, colorCatalog),
+    [products, colorCatalog],
+  );
+
+  const listingOptions = useMemo(
+    () => ({ lockedCollection, facets }),
+    [lockedCollection, facets],
+  );
+
   const [state, setState] = useState<ListingState>(() =>
-    parseListingState(searchParams, lockedCollection),
+    parseListingState(searchParams, listingOptions),
   );
   const skipUrlSync = useRef(false);
 
@@ -53,27 +65,30 @@ export function ProductListing({
 
   useEffect(() => {
     skipUrlSync.current = true;
-    setState(parseListingState(searchParams, lockedCollection));
-  }, [searchParams, lockedCollection]);
+    setState(parseListingState(searchParams, listingOptions));
+  }, [searchParams, listingOptions]);
 
   const updateState = useCallback((patch: Partial<ListingState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
   const clearAll = useCallback(() => {
-    setState(defaultListingState());
-  }, []);
+    setState(defaultListingState(facets));
+  }, [facets]);
 
   useEffect(() => {
     if (skipUrlSync.current) {
       skipUrlSync.current = false;
       return;
     }
-    const qs = serializeListingState(state, lockedCollection);
+    const qs = serializeListingState(state, {
+      lockedCollection,
+      catalogMaxPrice: facets.priceMax,
+    });
     const current = searchParams.toString();
     if (qs === current) return;
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [state, pathname, router, lockedCollection, searchParams]);
+  }, [state, pathname, router, lockedCollection, facets.priceMax, searchParams]);
 
   const filtered = useMemo(() => filterAndSortProducts(products, state), [products, state]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
@@ -86,9 +101,13 @@ export function ProductListing({
 
   const safePage = Math.min(state.page, totalPages);
   const visible = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
-  const filterCount = activeFilterCount(state, lockedCollection);
-  const chips = buildActiveChips(state, colors, collections, lockedCollection);
+  const filterCount = activeFilterCount(state, {
+    lockedCollection,
+    catalogMaxPrice: facets.priceMax,
+  });
+  const chips = buildActiveChips(state, facets, collections, lockedCollection);
   const catalogTotal = totalCount ?? products.length;
+  const showCategoryFilter = !lockedCollection;
 
   const setGridPreference = (cols: 2 | 3) => {
     setGridCols(cols);
@@ -116,12 +135,13 @@ export function ProductListing({
       <div className="grid lg:grid-cols-[240px_1fr] gap-10">
         <aside className="hidden lg:block sticky top-[var(--header-height,72px)] self-start z-20 max-h-[calc(100vh-var(--header-height,72px)-2rem)] overflow-y-auto overscroll-contain">
           <ProductFilters
-            colors={colors}
+            facets={facets}
             collections={collections}
             state={state}
             onChange={updateState}
             onClear={clearAll}
             showCollectionFilter={!lockedCollection}
+            showCategoryFilter={showCategoryFilter}
           />
         </aside>
 
@@ -223,7 +243,7 @@ export function ProductListing({
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <ProductFilters
-              colors={colors}
+              facets={facets}
               collections={collections}
               state={state}
               onChange={(patch) => {
@@ -234,6 +254,7 @@ export function ProductListing({
                 setFilterOpen(false);
               }}
               showCollectionFilter={!lockedCollection}
+              showCategoryFilter={showCategoryFilter}
               idPrefix="mobile"
             />
           </div>

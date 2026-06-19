@@ -1,7 +1,7 @@
 import type { CommerceProvider } from "../provider";
 import type { ContactFormInput, ProductFilters, CommerceArticle } from "../types";
 import { MockCommerceProvider } from "../mock/provider";
-import { mockBrand } from "../mock/brand";
+import { brandConfig } from "../brand/config";
 import { mockFaqs } from "../mock/data/faqs";
 import { createShopifyClient } from "./client";
 import {
@@ -31,7 +31,7 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   private mockDelegate = new MockCommerceProvider();
 
   async getBrand() {
-    return mockBrand;
+    return brandConfig;
   }
 
   async getProducts(filters?: ProductFilters) {

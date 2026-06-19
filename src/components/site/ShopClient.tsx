@@ -3,6 +3,8 @@
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { ProductListing } from "@/components/site/ProductListing";
 import type { CommerceCollection, CommerceColor, CommerceProduct } from "@/lib/commerce";
+import { brandText } from "@/lib/commerce";
+import { useCommerce } from "@/lib/commerce/client";
 
 export function ShopClient({
   products,
@@ -13,6 +15,8 @@ export function ShopClient({
   colors: CommerceColor[];
   collections: CommerceCollection[];
 }) {
+  const { brand } = useCommerce();
+
   return (
     <>
       <section className="border-b border-border/40 bg-ink">
@@ -20,12 +24,12 @@ export function ShopClient({
           <Eyebrow>Shop</Eyebrow>
           <h1 className="mt-4 font-display text-5xl text-cream">All Products</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Explore our complete range of handcrafted GULRIZA pashmina.
+            {brandText(brand.copy.pages.shop.subtitle, brand)}
           </p>
         </div>
       </section>
 
-      <ProductListing products={products} colors={colors} collections={collections} />
+      <ProductListing products={products} colorCatalog={colors} collections={collections} />
     </>
   );
 }

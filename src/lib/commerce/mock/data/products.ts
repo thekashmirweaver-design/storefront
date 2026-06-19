@@ -45,45 +45,25 @@ const colorSeeds: ColorSeed[] = [
   { color: "Plum", hex: "#6c2b54", image: plum },
 ];
 
-const epithets = [
-  "Whisper",
-  "Dune",
-  "Beige",
-  "Grey",
-  "Smoke",
-  "Blue",
-  "Green",
-  "Shadow",
-  "Mist",
-  "Glow",
-  "Veil",
-  "Bloom",
-  "Echo",
-  "Loom",
-  "Aura",
-  "Silk",
-  "Haze",
-  "Dusk",
-  "Dawn",
-  "Frost",
-];
-
 const collectionSeeds: CollectionSeed[] = [
-  { slug: "signature", category: "signature", categoryLabel: "100% Pashmina", priceBase: 495 },
-  { slug: "lightweight", category: "lightweight", categoryLabel: "100% Pashmina", priceBase: 425 },
-  { slug: "bridal", category: "bridal", categoryLabel: "Bridal Pashmina", priceBase: 575 },
-  { slug: "limited", category: "limited", categoryLabel: "Limited Edition", priceBase: 595 },
-  { slug: "new-arrivals", category: "signature", categoryLabel: "New Arrival", priceBase: 485 },
-  { slug: "best-sellers", category: "signature", categoryLabel: "100% Pashmina", priceBase: 465 },
   {
-    slug: "heritage-weaves",
+    slug: "jamawar-embroidery",
     category: "signature",
-    categoryLabel: "Heritage Weave",
-    priceBase: 525,
+    categoryLabel: "Jamawar Embroidery",
+    priceBase: 1450,
   },
-  { slug: "evening-edit", category: "limited", categoryLabel: "Evening Edit", priceBase: 545 },
-  { slug: "travel-wraps", category: "lightweight", categoryLabel: "Travel Wrap", priceBase: 415 },
-  { slug: "gift-edition", category: "bridal", categoryLabel: "Gift Edition", priceBase: 505 },
+  {
+    slug: "kani-pashmina",
+    category: "signature",
+    categoryLabel: "Kani Pashmina",
+    priceBase: 1550,
+  },
+  {
+    slug: "reversible-cashmere",
+    category: "lightweight",
+    categoryLabel: "Reversible Cashmere",
+    priceBase: 320,
+  },
 ];
 
 const collectionBySlug = Object.fromEntries(collectionSeeds.map((c) => [c.slug, c]));
@@ -96,7 +76,7 @@ function slugify(...parts: string[]) {
 }
 
 function describe(name: string, collectionSlug: string) {
-  return `A ${name.toLowerCase()} pashmina from our ${collectionSlug.replace(/-/g, " ")} collection — handwoven in Kashmir for timeless elegance.`;
+  return `A ${name.toLowerCase()} from our ${collectionSlug.replace(/-/g, " ")} collection — handwoven in Kashmir for timeless elegance.`;
 }
 
 function buildMockProducts(): MockProductRecord[] {
@@ -137,24 +117,83 @@ function buildMockProducts(): MockProductRecord[] {
     });
   };
 
-  // Preserve original hero PDPs
-  add("signature", "ivory-whisper", "Ivory Whisper", "#efe6d4", ivory, 495);
-  add("signature", "sand-dune", "Sand Dune", "#d8bf99", sand, 495);
-  add("signature", "mink-beige", "Mink Beige", "#7a4a32", mink, 495);
-  add("signature", "midnight-blue", "Midnight Blue", "#1e2a48", midnight, 395);
-  add("lightweight", "opal-grey", "Opal Grey", "#bcb6ad", opal, 495);
-  add("lightweight", "rose-smoke", "Rose Smoke", "#d77c8f", rose, 395);
-  add("lightweight", "sage-green", "Sage Green", "#9ba87a", sage, 395);
-  add("limited", "plum-shadow", "Plum Shadow", "#6c2b54", plum, 595, "Limited Edition");
+  // Flagship pieces — inspired by purekashmir.com collection previews
+  add(
+    "jamawar-embroidery",
+    "mustard-jamawar-embroidery-pashmina",
+    "Mustard Jamawar Embroidery Pashmina Shawl",
+    "#c9a227",
+    sand,
+    1499,
+  );
+  add(
+    "jamawar-embroidery",
+    "black-jamawar-embroidery-pashmina",
+    "Black Jamawar Embroidery Pashmina Shawl",
+    "#1a1a1a",
+    midnight,
+    1650,
+  );
+  add(
+    "jamawar-embroidery",
+    "salmon-pink-jamawar-embroidery-pashmina",
+    "Salmon Pink Jamawar Embroidery Pashmina Shawl",
+    "#e8a598",
+    rose,
+    1450,
+  );
+
+  add("kani-pashmina", "striped-kani-pashmina-shawl", "Striped Kani Pashmina Shawl", "#bcb6ad", opal, 1950);
+  add(
+    "kani-pashmina",
+    "natural-kani-white-buteh-pashmina",
+    "Natural Kani White Buteh Pashmina Shawl",
+    "#efe6d4",
+    ivory,
+    1550,
+  );
+  add(
+    "kani-pashmina",
+    "ivory-base-kani-jamawar-pashmina",
+    "Ivory Base Kani Jamawar Pashmina Shawl",
+    "#efe6d4",
+    ivory,
+    2950,
+  );
+
+  add(
+    "reversible-cashmere",
+    "dusty-blue-taupe-reversible-cashmere",
+    "Dusty Blue And Taupe Reversible Cashmere Shawl",
+    "#6b8fa3",
+    opal,
+    320,
+  );
+  add(
+    "reversible-cashmere",
+    "forest-green-stone-grey-reversible",
+    "Forest Green And Stone Grey Reversible Cashmere Shawl",
+    "#4a6741",
+    sage,
+    320,
+  );
+  add(
+    "reversible-cashmere",
+    "reversible-rust-green-cashmere",
+    "Reversible Rust and Green Cashmere Shawl",
+    "#a0522d",
+    mink,
+    320,
+  );
 
   let variant = 0;
   for (const collection of collectionSeeds) {
     while (counts[collection.slug] < 6) {
       const color = colorSeeds[variant % colorSeeds.length];
-      const epithet = epithets[variant % epithets.length];
+      const epithet = ["Whisper", "Veil", "Loom", "Aura", "Echo", "Mist"][variant % 6];
       const slug = slugify(collection.slug, color.color, epithet);
       const name = `${color.color} ${epithet}`;
-      const price = collection.priceBase + (variant % 3) * 15 - (variant % 2) * 5;
+      const price = collection.priceBase + (variant % 3) * 25 - (variant % 2) * 10;
 
       if (!usedSlugs.has(slug)) {
         push({

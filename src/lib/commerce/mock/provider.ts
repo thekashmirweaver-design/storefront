@@ -8,6 +8,8 @@ import type {
   ContactFormInput,
   ProductFilters,
 } from "../types";
+import { brandConfig } from "../brand/config";
+import { brandText } from "../brand/text";
 import { mockBrand } from "./brand";
 import { mockArticles } from "./data/articles";
 import { mockCollections } from "./data/collections";
@@ -79,7 +81,10 @@ function toCommerceCollection(record: (typeof mockCollections)[number]): Commerc
   return {
     slug: record.slug,
     title: record.title,
+    heroHeadline: record.heroHeadline,
     tagline: record.tagline,
+    description: record.description,
+    ctaLabel: record.ctaLabel,
     category: record.category,
     image: staticImageToCommerceImage(record.image, record.title),
   };
@@ -91,7 +96,7 @@ function toCommerceArticle(record: (typeof mockArticles)[number]): CommerceArtic
     title: record.title,
     category: record.category,
     date: record.date,
-    excerpt: record.excerpt,
+    excerpt: brandText(record.excerpt, brandConfig),
     cover: staticImageToCommerceImage(record.cover, record.title),
   };
 }
@@ -193,7 +198,10 @@ export class MockCommerceProvider implements CommerceProvider {
   }
 
   async getFaqs() {
-    return mockFaqs;
+    return mockFaqs.map((faq) => ({
+      ...faq,
+      answer: brandText(faq.answer, brandConfig),
+    }));
   }
 
   async getSitemapEntries() {
@@ -233,7 +241,7 @@ export class MockCommerceProvider implements CommerceProvider {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return { ok: false, message: "Please enter a valid email" };
     }
-    return { ok: true, message: "Welcome to the GULRIZA atelier." };
+    return { ok: true, message: brandText(brandConfig.copy.messages.newsletterWelcome, brandConfig) };
   }
 
   async submitContact(form: ContactFormInput) {

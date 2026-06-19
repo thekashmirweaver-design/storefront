@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { Search, User, ShoppingBag, Menu, X, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { BrandLockup } from "@/components/site/BrandLockup";
 import { useCommerce } from "@/lib/commerce/client";
-import { formatBrandTagline } from "@/lib/commerce/mappers/metadata";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -36,16 +37,7 @@ export function Header() {
         }`}
       >
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 md:px-10 py-4 sm:py-5 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">
-          <Link href="/" className="flex items-center shrink-0 min-w-0">
-            <div className="flex flex-col leading-tight min-w-0">
-              <span className="font-display text-xl sm:text-2xl tracking-[0.25em] sm:tracking-[0.3em] text-cream truncate">
-                {brand.name}
-              </span>
-              <span className="hidden sm:block text-[0.55rem] tracking-[0.35em] text-gold/80 mt-0.5 truncate">
-                {formatBrandTagline(brand.tagline)}
-              </span>
-            </div>
-          </Link>
+          <BrandLockup brand={brand} />
 
           <nav className="hidden lg:flex items-center justify-center gap-10">
             {nav.map((n) => (
@@ -112,9 +104,20 @@ export function Header() {
           </div>
         </div>
 
-        {open && (
-          <div className="lg:hidden border-t border-border bg-background">
-            <nav className="flex flex-col px-6 py-4">
+        <div
+          className={cn(
+            "lg:hidden grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none",
+            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+          aria-hidden={!open}
+        >
+          <div className="overflow-hidden border-t border-border bg-background">
+            <nav
+              className={cn(
+                "flex flex-col px-6 py-4 transition-opacity duration-300 motion-reduce:transition-none",
+                open ? "opacity-100" : "opacity-0 pointer-events-none",
+              )}
+            >
               {nav.map((n) => (
                 <Link
                   key={n.href}
@@ -141,7 +144,7 @@ export function Header() {
               </Link>
             </nav>
           </div>
-        )}
+        </div>
       </header>
       {!isHome && <div className="h-[73px] sm:h-[81px]" aria-hidden />}
     </>

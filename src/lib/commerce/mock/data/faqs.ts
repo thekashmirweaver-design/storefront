@@ -4,7 +4,7 @@ export const mockFaqs: CommerceFaq[] = [
   {
     question: "Is each pashmina truly handwoven?",
     answer:
-      "Yes. Every GULRIZA piece is handwoven on a wooden handloom in Kashmir. A single shawl can take three to four weeks to complete.",
+      "Yes. Every {name} piece is handwoven on a wooden handloom in Kashmir. A single shawl can take three to four weeks to complete.",
   },
   {
     question: "How do I authenticate my pashmina?",

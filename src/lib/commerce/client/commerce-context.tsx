@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import type { BrandConfig, CommerceProduct } from "../types";
+import { brandStorageKey } from "../brand/text";
 import { UiStoreProvider } from "@/lib/ui-store";
 import { getProductsBySlugsAction } from "../actions";
 
@@ -35,9 +36,6 @@ type CommerceContextValue = {
 
 const CommerceCtx = createContext<CommerceContextValue | null>(null);
 
-const CART_KEY = "gulriza:cart";
-const WISHLIST_KEY = "gulriza:wishlist";
-
 function load<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -49,6 +47,8 @@ function load<T>(key: string, fallback: T): T {
 }
 
 export function CommerceProvider({ brand, children }: { brand: BrandConfig; children: ReactNode }) {
+  const cartKey = brandStorageKey(brand, "cart");
+  const wishlistKey = brandStorageKey(brand, "wishlist");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -56,18 +56,18 @@ export function CommerceProvider({ brand, children }: { brand: BrandConfig; chil
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setCart(load<CartItem[]>(CART_KEY, []));
-    setWishlist(load<string[]>(WISHLIST_KEY, []));
+    setCart(load<CartItem[]>(cartKey, []));
+    setWishlist(load<string[]>(wishlistKey, []));
     setHydrated(true);
-  }, []);
+  }, [cartKey, wishlistKey]);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  }, [cart, hydrated]);
+    if (hydrated) localStorage.setItem(cartKey, JSON.stringify(cart));
+  }, [cart, cartKey, hydrated]);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
-  }, [wishlist, hydrated]);
+    if (hydrated) localStorage.setItem(wishlistKey, JSON.stringify(wishlist));
+  }, [wishlist, wishlistKey, hydrated]);
 
   const addToCart = useCallback((slug: string, qty = 1) => {
     setCart((c) => {

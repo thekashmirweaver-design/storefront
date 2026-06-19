@@ -14,14 +14,11 @@ import {
 
 import heroImg from "@/assets/hero-portrait.jpg";
 import legacyImg from "@/assets/legacy-stilllife.jpg";
-import classicImg from "@/assets/collection-classic.jpg";
-import lightweightImg from "@/assets/collection-lightweight.jpg";
-import wovenImg from "@/assets/collection-woven.jpg";
-import seasonalImg from "@/assets/collection-seasonal.jpg";
+import { HomeCollectionSections } from "@/components/site/HomeCollectionSections";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
 import { Marquee } from "@/components/site/Marquee";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { commerce, buildPageMetadata, getHomepageCollectionSections, brandText } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();
@@ -38,33 +35,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   });
 }
-
-const collections = [
-  {
-    title: "Classic Pashminas",
-    desc: "Timeless designs for every occasion.",
-    img: classicImg,
-    href: "/collections/signature",
-  },
-  {
-    title: "Lightweight Pashminas",
-    desc: "Featherlight elegance, all year long.",
-    img: lightweightImg,
-    href: "/collections/lightweight",
-  },
-  {
-    title: "Woven Intricacy",
-    desc: "Artistry in every intricate weave.",
-    img: wovenImg,
-    href: "/collections",
-  },
-  {
-    title: "Seasonal Edit",
-    desc: "Curated hues for the season.",
-    img: seasonalImg,
-    href: "/collections",
-  },
-];
 
 const marqueeItems = [
   "Timeless Elegance",
@@ -90,7 +60,10 @@ const legacyPillars = [
   { Icon: InfinityIcon, title: "Timeless Beauty", desc: "Designed to be treasured forever" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const brand = await commerce.getBrand();
+  const collectionSections = await getHomepageCollectionSections();
+
   return (
     <>
       <section className="relative min-h-[640px] sm:min-h-[720px] lg:min-h-[860px] overflow-hidden">
@@ -118,10 +91,10 @@ export default function HomePage() {
               <br className="hidden sm:block" /> A timeless wrap of elegance and comfort.
             </p>
             <Link
-              href="/collections"
+              href="/#collections"
               className="mt-8 sm:mt-10 inline-flex items-center gap-3 border border-gold/70 px-6 sm:px-8 py-3.5 sm:py-4 text-[0.7rem] tracking-[0.3em] uppercase text-gold hover:bg-gold hover:text-primary-foreground transition-colors"
             >
-              Explore Collection <ArrowRight className="h-3.5 w-3.5" />
+              Explore Collections <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -140,42 +113,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1400px] px-6 md:px-10 py-24">
-        <div className="flex flex-wrap items-end justify-between gap-6 mb-12">
-          <div>
-            <Eyebrow>Discover Timeless Elegance</Eyebrow>
-            <h2 className="mt-4 font-display text-4xl md:text-5xl text-cream">Our Collections</h2>
-          </div>
-          <Link
-            href="/collections"
-            className="text-[0.7rem] tracking-[0.3em] uppercase text-gold hover:text-cream inline-flex items-center gap-2"
-          >
-            View All Collections <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {collections.map((c) => (
-            <Link key={c.title} href={c.href} className="group block">
-              <div className="relative aspect-[4/5] overflow-hidden">
-                <OptimizedImage
-                  src={c.img}
-                  alt={c.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
-                />
-              </div>
-              <div className="pt-5 text-center">
-                <h3 className="text-[0.75rem] tracking-[0.25em] uppercase text-cream group-hover:text-gold transition-colors">
-                  {c.title}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-2">{c.desc}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <HomeCollectionSections sections={collectionSections} />
 
       <Marquee items={marqueeItems} />
 
@@ -199,9 +137,7 @@ export default function HomePage() {
               Through Time
             </h2>
             <p className="mt-6 text-sm text-muted-foreground leading-relaxed max-w-lg">
-              From the highlands of Kashmir to the hands of skilled artisans, every GULRIZA pashmina
-              is a story of tradition, patience and unmatched craftsmanship. Woven with care.
-              Cherished for a lifetime.
+              {brandText(brand.copy.pages.home.legacyBody, brand)}
             </p>
 
             <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 lg:grid-cols-2 xl:grid-cols-4">

@@ -5,7 +5,7 @@ import mountainImg from "@/assets/journal-mountain.jpg";
 import legacyImg from "@/assets/legacy-stilllife.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();
@@ -19,7 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function OurStoryPage() {
+export default async function OurStoryPage() {
+  const brand = await commerce.getBrand();
+
   return (
     <>
       <section className="relative h-[520px] overflow-hidden">
@@ -35,8 +37,7 @@ export default function OurStoryPage() {
 
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="font-display italic text-2xl text-cream leading-relaxed">
-          &ldquo;Gulriza&rdquo; means the one who scatters flowers — and that is how we believe
-          every shawl should be made: with patience, with grace, with beauty in every thread.
+          &ldquo;{brandText(brand.copy.pages.ourStory.nameMeaningQuote, brand)}&rdquo;
         </p>
         <DiamondDivider className="mt-10" />
       </section>
@@ -55,10 +56,7 @@ export default function OurStoryPage() {
           <Eyebrow>Heritage</Eyebrow>
           <h2 className="mt-4 font-display text-4xl text-cream">A Craft Centuries in the Making</h2>
           <p className="mt-6 text-sm text-muted-foreground leading-relaxed">
-            For over six hundred years, the artisans of Kashmir have hand-woven pashmina from the
-            soft under-fleece of the Changthangi goat. GULRIZA carries forward this lineage —
-            partnering directly with families of weavers, dyers and spinners who have practiced the
-            craft across generations.
+            {brandText(brand.copy.pages.ourStory.heritageBody, brand)}
           </p>
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
             Every shawl is signed and numbered by the weaver who made it. No two are ever identical.

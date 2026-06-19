@@ -5,17 +5,17 @@ import type { CommerceColor, CommerceProduct } from "@/lib/commerce";
 
 export function CollectionListing({
   products,
-  colors,
+  colorCatalog,
   collectionSlug,
 }: {
   products: CommerceProduct[];
-  colors: CommerceColor[];
+  colorCatalog?: CommerceColor[];
   collectionSlug: string;
 }) {
   return (
     <ProductListing
       products={products}
-      colors={colors}
+      colorCatalog={colorCatalog}
       lockedCollection={collectionSlug}
       totalCount={products.length}
     />

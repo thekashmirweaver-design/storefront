@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  ChevronDown,
   Minus,
   Plus,
   Check,
@@ -17,21 +16,26 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductCard } from "@/components/site/ProductCard";
+import { AnimatedDisclosure } from "@/components/site/AnimatedDisclosure";
 import { ProductGallery } from "@/components/site/ProductGallery";
 import { StickyAtcBar } from "@/components/site/StickyAtcBar";
 import { formatProductPrice } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
+import { brandText } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
 
 function Accordion({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="border-b border-border/40 py-4 group">
-      <summary className="flex items-center justify-between cursor-pointer list-none">
+    <AnimatedDisclosure
+      className="border-b border-border/40 py-4"
+      triggerClassName="py-0"
+      contentClassName="pt-3 text-xs text-muted-foreground leading-relaxed"
+      title={
         <span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-open:rotate-180 transition-transform" />
-      </summary>
-      <div className="pt-3 text-xs text-muted-foreground leading-relaxed">{children}</div>
-    </details>
+      }
+    >
+      {children}
+    </AnimatedDisclosure>
   );
 }
 
@@ -48,7 +52,7 @@ export function ProductClient({
 }) {
   const [qty, setQty] = useState(1);
   const atcRef = useRef<HTMLDivElement>(null);
-  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
+  const { brand, addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
   const liked = inWishlist(product.slug);
   const soldOut = !product.availableForSale;
 
@@ -223,8 +227,7 @@ export function ProductClient({
               Complimentary worldwide express shipping. Free returns within 30 days.
             </Accordion>
             <Accordion title="Our Promise">
-              Every GULRIZA pashmina is signed by the master weaver and accompanied by a certificate
-              of authenticity.
+              {brandText(brand.copy.pages.product.authenticityPromise, brand)}
             </Accordion>
           </div>
         </aside>

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Instagram, Facebook, Youtube, ArrowRight } from "lucide-react";
 import { useState, type ComponentType } from "react";
 import { toast } from "sonner";
 
-import { OptimizedImage } from "@/components/site/OptimizedImage";
+import { BrandLogo } from "@/components/site/BrandLogo";
+import { BrandName } from "@/components/site/BrandName";
 import { useCommerce } from "@/lib/commerce/client";
 import { subscribeNewsletterAction } from "@/lib/commerce/actions";
 import { formatBrandTagline } from "@/lib/commerce/mappers/metadata";
@@ -24,8 +24,6 @@ type SocialIcon = ComponentType<{ className?: string }>;
 
 export function Footer() {
   const { brand } = useCommerce();
-  const pathname = usePathname();
-  const trustBannerAttached = pathname === "/collections";
   const [email, setEmail] = useState("");
 
   const submit = async (e: React.FormEvent) => {
@@ -47,25 +45,14 @@ export function Footer() {
   ];
 
   return (
-    <footer
-      className={cn(
-        "bg-ink",
-        trustBannerAttached ? "border-t-0" : "border-t border-border/60 mt-24",
-      )}
-    >
+    <footer className={cn("bg-ink border-t border-border/60 mt-24")}>
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
         <div className="lg:col-span-1">
           <Link href="/" className="flex flex-col items-start gap-3">
-            <OptimizedImage
-              src={brand.logo.src}
-              alt={brand.logo.alt ?? brand.name}
-              width={brand.logo.width ?? 48}
-              height={brand.logo.height ?? 48}
-              className="h-14 w-14 object-contain"
-            />
-            <span className="font-display text-lg tracking-[0.3em] text-cream">{brand.name}</span>
+            <BrandLogo logo={brand.logo} size="lg" />
+            <BrandName name={brand.name} size="lg" />
           </Link>
-          <p className="text-[0.6rem] tracking-[0.3em] text-gold/70 mt-2">
+          <p className="text-[0.6rem] tracking-[0.25em] text-gold/70 mt-2">
             {formatBrandTagline(brand.tagline)}
           </p>
           <p className="text-xs text-muted-foreground mt-6 leading-relaxed max-w-xs">
@@ -142,10 +129,10 @@ export function Footer() {
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-gold">
+            <a href={brand.legal.privacyPolicyUrl} className="hover:text-gold">
               Privacy Policy
             </a>
-            <a href="#" className="hover:text-gold">
+            <a href={brand.legal.termsUrl} className="hover:text-gold">
               Terms & Conditions
             </a>
           </div>

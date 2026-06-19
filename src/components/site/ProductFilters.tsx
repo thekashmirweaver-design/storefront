@@ -1,12 +1,11 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-
-import type { CommerceCollection, CommerceColor } from "@/lib/commerce";
+import { AnimatedDisclosure } from "@/components/site/AnimatedDisclosure";
+import type { CommerceCollection, CommerceProductCategory } from "@/lib/commerce";
 
 import {
   CATEGORY_OPTIONS,
-  DEFAULT_MAX_PRICE,
+  type ListingFacets,
   type ListingSort,
   type ListingState,
 } from "./listing-state";
@@ -21,36 +20,44 @@ function FilterGroup({
   defaultOpen?: boolean;
 }) {
   return (
-    <details open={defaultOpen} className="border-b border-border/40 py-4 group">
-      <summary className="flex items-center justify-between cursor-pointer list-none">
+    <AnimatedDisclosure
+      defaultOpen={defaultOpen}
+      className="border-b border-border/40 py-4"
+      triggerClassName="py-0"
+      contentClassName="pt-4 space-y-2 text-xs text-muted-foreground"
+      title={
         <span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-open:rotate-180 transition-transform" />
-      </summary>
-      <div className="pt-4 space-y-2 text-xs text-muted-foreground">{children}</div>
-    </details>
+      }
+    >
+      {children}
+    </AnimatedDisclosure>
   );
 }
 
 type ProductFiltersProps = {
-  colors: CommerceColor[];
+  facets: ListingFacets;
   collections?: CommerceCollection[];
   state: ListingState;
   onChange: (patch: Partial<ListingState>) => void;
   onClear: () => void;
   showCollectionFilter?: boolean;
+  showCategoryFilter?: boolean;
   idPrefix?: string;
 };
 
 export function ProductFilters({
-  colors,
+  facets,
   collections = [],
   state,
   onChange,
   onClear,
   showCollectionFilter = true,
+  showCategoryFilter = true,
   idPrefix = "filter",
 }: ProductFiltersProps) {
-  const toggleCategory = (value: (typeof CATEGORY_OPTIONS)[number]["value"]) => {
+  const categoryOptions = facets.categories.length > 0 ? facets.categories : CATEGORY_OPTIONS;
+
+  const toggleCategory = (value: CommerceProductCategory) => {
     const next = state.categories.includes(value)
       ? state.categories.filter((c) => c !== value)
       : [...state.categories, value];
@@ -84,24 +91,26 @@ export function ProductFilters({
         </button>
       </div>
 
-      <FilterGroup title="Category">
-        {CATEGORY_OPTIONS.map((c) => (
-          <label
-            key={c.value}
-            htmlFor={`${idPrefix}-cat-${c.value}`}
-            className="flex items-center gap-2 cursor-pointer hover:text-cream"
-          >
-            <input
-              id={`${idPrefix}-cat-${c.value}`}
-              type="checkbox"
-              checked={state.categories.includes(c.value)}
-              onChange={() => toggleCategory(c.value)}
-              className="accent-[--gold]"
-            />
-            {c.label}
-          </label>
-        ))}
-      </FilterGroup>
+      {showCategoryFilter && categoryOptions.length > 1 && (
+        <FilterGroup title="Category">
+          {categoryOptions.map((c) => (
+            <label
+              key={c.value}
+              htmlFor={`${idPrefix}-cat-${c.value}`}
+              className="flex items-center gap-2 cursor-pointer hover:text-cream"
+            >
+              <input
+                id={`${idPrefix}-cat-${c.value}`}
+                type="checkbox"
+                checked={state.categories.includes(c.value)}
+                onChange={() => toggleCategory(c.value)}
+                className="accent-[--gold]"
+              />
+              {c.label}
+            </label>
+          ))}
+        </FilterGroup>
+      )}
 
       {showCollectionFilter && collections.length > 0 && (
         <FilterGroup title="Collection" defaultOpen={false}>
@@ -124,43 +133,48 @@ export function ProductFilters({
         </FilterGroup>
       )}
 
-      <FilterGroup title="Color">
-        <div className="grid grid-cols-6 gap-2">
-          {colors.map((c) => (
-            <button
-              key={c.name}
-              type="button"
-              title={c.name}
-              aria-label={c.name}
-              aria-pressed={state.colors.includes(c.hex)}
-              onClick={() => toggleColor(c.hex)}
-              className={`h-6 w-6 rounded-full border ${state.colors.includes(c.hex) ? "ring-2 ring-gold" : "border-border"} hover:ring-2 hover:ring-gold transition-all`}
-              style={{ background: c.hex }}
-            />
-          ))}
-        </div>
-      </FilterGroup>
-
-      <FilterGroup title="Price">
-        <div className="px-1">
-          <input
-            type="range"
-            min={0}
-            max={DEFAULT_MAX_PRICE}
-            value={state.maxPrice}
-            onChange={(e) => onChange({ maxPrice: Number(e.target.value), page: 1 })}
-            className="w-full accent-[--gold]"
-            aria-label="Maximum price"
-          />
-          <div className="flex justify-between mt-2 text-[0.65rem] text-muted-foreground">
-            <span>$0</span>
-            <span>
-              ${state.maxPrice}
-              {state.maxPrice === DEFAULT_MAX_PRICE ? "+" : ""}
-            </span>
+      {facets.colors.length > 0 && (
+        <FilterGroup title="Color">
+          <div className="grid grid-cols-6 gap-2">
+            {facets.colors.map((c) => (
+              <button
+                key={c.hex}
+                type="button"
+                title={c.name}
+                aria-label={c.name}
+                aria-pressed={state.colors.includes(c.hex)}
+                onClick={() => toggleColor(c.hex)}
+                className={`h-6 w-6 rounded-full border ${state.colors.includes(c.hex) ? "ring-2 ring-gold" : "border-border"} hover:ring-2 hover:ring-gold transition-all`}
+                style={{ background: c.hex }}
+              />
+            ))}
           </div>
-        </div>
-      </FilterGroup>
+        </FilterGroup>
+      )}
+
+      {facets.priceMax > facets.priceMin && (
+        <FilterGroup title="Price">
+          <div className="px-1">
+            <input
+              type="range"
+              min={facets.priceMin}
+              max={facets.priceMax}
+              step={facets.priceMax - facets.priceMin > 100 ? 10 : 1}
+              value={state.maxPrice}
+              onChange={(e) => onChange({ maxPrice: Number(e.target.value), page: 1 })}
+              className="w-full accent-[--gold]"
+              aria-label="Maximum price"
+            />
+            <div className="flex justify-between mt-2 text-[0.65rem] text-muted-foreground">
+              <span>${facets.priceMin}</span>
+              <span>
+                ${state.maxPrice}
+                {state.maxPrice >= facets.priceMax ? "+" : ""}
+              </span>
+            </div>
+          </div>
+        </FilterGroup>
+      )}
     </div>
   );
 }

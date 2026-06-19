@@ -1,5 +1,5 @@
 {
-  "name": "gulriza-pashmina-boutique",
+  "name": "the-kashmir-weaver",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,8 @@
     "build:shopify": "COMMERCE_PROVIDER=shopify next build",
     "start": "next start",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "verify:shopify": "node scripts/verify-shopify-connection.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

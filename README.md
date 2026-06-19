@@ -21,6 +21,8 @@ Catalog, brand, cart, and search go through a provider-agnostic layer toggled by
 
 Full documentation: **[docs/commerce-layer.md](docs/commerce-layer.md)**
 
+Shopify integration roadmap (phased, with progress tracking): **[docs/shopify-driven-roadmap.md](docs/shopify-driven-roadmap.md)**
+
 ## Scripts
 
 | Command | Description |

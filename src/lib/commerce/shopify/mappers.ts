@@ -105,7 +105,8 @@ export function mapShopifyCollection(node: ShopifyCollectionNode): CommerceColle
   return {
     slug: node.handle,
     title: node.title,
-    tagline: node.description ?? "",
+    tagline: "",
+    description: node.description ?? undefined,
     category: inferCategoryFromHandle(node.handle),
     image: mapImage(node.image ?? null, node.title),
   };
@@ -115,7 +116,8 @@ function inferCategoryFromHandle(handle: string): CommerceProductCategory {
   const h = handle.toLowerCase();
   if (h.includes("limited")) return "limited";
   if (h.includes("bridal")) return "bridal";
-  if (h.includes("lightweight")) return "lightweight";
+  if (h.includes("reversible") || h.includes("lightweight")) return "lightweight";
+  if (h.includes("kani") || h.includes("jamawar")) return "signature";
   return "signature";
 }
 
@@ -131,7 +133,7 @@ export function mapShopifyArticle(
   category = "Journal",
 ): CommerceArticle {
   const cover = mapImage(node.image ?? null, node.title) ?? {
-    src: "/images/gulriza-logo.jpg",
+    src: "/images/kashmir-weaver-logo.png",
     alt: node.title,
   };
   const date = node.publishedAt

@@ -46,7 +46,7 @@ export const mockArticles: MockArticleRecord[] = [
     category: "Sustainability",
     date: "Mar 18, 2026",
     excerpt:
-      "How GULRIZA partners with mountain herders and weavers to keep an ancient craft alive.",
+      "How {name} partners with mountain herders and weavers to keep an ancient craft alive.",
     cover: legacyImg,
   },
   {

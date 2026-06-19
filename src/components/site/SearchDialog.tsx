@@ -11,7 +11,7 @@ import { getProductsAction, searchCommerce } from "@/lib/commerce/actions";
 import { useCommerce } from "@/lib/commerce/client";
 
 export function SearchDialog() {
-  const { searchOpen, setSearchOpen } = useCommerce();
+  const { brand, searchOpen, setSearchOpen } = useCommerce();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<CommerceProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ export function SearchDialog() {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search pashminas, collections…"
+            placeholder={brand.copy.searchPlaceholder}
             className="flex-1 bg-transparent text-sm text-cream placeholder:text-muted-foreground focus:outline-none"
           />
         </div>

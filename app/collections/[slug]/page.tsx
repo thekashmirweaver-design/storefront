@@ -47,14 +47,16 @@ export default async function CollectionDetailPage({ params }: Props) {
               Home
             </Link>{" "}
             /{" "}
-            <Link href="/collections" className="hover:text-gold">
+            <Link href="/#collections" className="hover:text-gold">
               Collections
             </Link>{" "}
             / <span className="text-gold">{collection.title}</span>
           </nav>
           <Eyebrow>Collection</Eyebrow>
           <h1 className="mt-4 font-display text-5xl text-cream">{collection.title}</h1>
-          <p className="mt-3 text-sm text-muted-foreground max-w-2xl">{collection.tagline}</p>
+          <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
+            {collection.description ?? collection.tagline}
+          </p>
         </div>
       </section>
 
@@ -63,7 +65,7 @@ export default async function CollectionDetailPage({ params }: Props) {
           <div className="py-24 text-center text-muted-foreground">Loading collection…</div>
         }
       >
-        <CollectionListing products={products} colors={commerceColors} collectionSlug={slug} />
+        <CollectionListing products={products} colorCatalog={commerceColors} collectionSlug={slug} />
       </Suspense>
     </>
   );

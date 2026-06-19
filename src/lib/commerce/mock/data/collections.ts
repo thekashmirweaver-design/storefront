@@ -2,91 +2,54 @@ import legacyImg from "@/assets/legacy-stilllife.jpg";
 import collectionClassic from "@/assets/collection-classic.jpg";
 import collectionLightweight from "@/assets/collection-lightweight.jpg";
 import collectionWoven from "@/assets/collection-woven.jpg";
-import collectionSeasonal from "@/assets/collection-seasonal.jpg";
-import heroPortrait from "@/assets/hero-portrait.jpg";
-import journalMountain from "@/assets/journal-mountain.jpg";
 import journalHandloom from "@/assets/journal-handloom.jpg";
-import journalStyle from "@/assets/journal-style.jpg";
 
 import type { CommerceProductCategory } from "../../types";
 
 export type MockCollectionRecord = {
   slug: string;
   title: string;
+  heroHeadline?: string;
   tagline: string;
+  description?: string;
+  ctaLabel?: string;
   category: CommerceProductCategory;
   image: typeof legacyImg;
 };
 
+/** Homepage collections — aligned with purekashmir.com editorial structure. */
 export const mockCollections: MockCollectionRecord[] = [
   {
-    slug: "signature",
-    title: "Signature Pashminas",
-    tagline: "Timeless designs, exquisitely handcrafted for every occasion.",
+    slug: "jamawar-embroidery",
+    title: "Jamawar Embroidery",
+    heroHeadline: "Authentic pashmina, richly embroidered —",
+    tagline: "Woven for Generations",
+    description:
+      "Jamawar is among the most elaborate embroidery traditions of Kashmir — dense floral and paisley motifs worked by hand over pure pashmina. Each shawl carries weeks of needlework from artisans trained under master embroiderers.",
+    ctaLabel: "Explore Jamawar",
     category: "signature",
-    image: collectionClassic,
-  },
-  {
-    slug: "lightweight",
-    title: "Lightweight Pashminas",
-    tagline: "Featherlight elegance for every day.",
-    category: "lightweight",
-    image: collectionLightweight,
-  },
-  {
-    slug: "bridal",
-    title: "Bridal Collection",
-    tagline: "For life's most precious occasions.",
-    category: "bridal",
     image: collectionWoven,
   },
   {
-    slug: "limited",
-    title: "Limited Editions",
-    tagline: "Rare and meticulously crafted.",
-    category: "limited",
-    image: legacyImg,
-  },
-  {
-    slug: "new-arrivals",
-    title: "New Arrivals",
-    tagline: "The latest handwoven pieces from our Kashmir atelier.",
-    category: "signature",
-    image: heroPortrait,
-  },
-  {
-    slug: "best-sellers",
-    title: "Best Sellers",
-    tagline: "Our most-loved pashminas, chosen by collectors worldwide.",
-    category: "signature",
-    image: collectionSeasonal,
-  },
-  {
-    slug: "heritage-weaves",
-    title: "Heritage Weaves",
-    tagline: "Patterns and techniques passed down through generations.",
+    slug: "kani-pashmina",
+    title: "Kani Pashmina",
+    heroHeadline: "Kani woven thread by thread —",
+    tagline: "Worn for a Lifetime",
+    description:
+      "Kani weaving uses no shuttle — instead, hundreds of small wooden bobbins called kanis carry each colour thread individually. The pattern is read from a talim, a coded manuscript, line by line. A single shawl takes a master weaver 12 to 18 months to complete.",
+    ctaLabel: "Explore Kani",
     category: "signature",
     image: journalHandloom,
   },
   {
-    slug: "evening-edit",
-    title: "Evening Edit",
-    tagline: "Rich tones and refined drape for after dusk.",
-    category: "limited",
-    image: journalStyle,
-  },
-  {
-    slug: "travel-wraps",
-    title: "Travel Wraps",
-    tagline: "Compact, versatile shawls for journeys near and far.",
+    slug: "reversible-cashmere",
+    title: "Reversible Cashmere",
+    heroHeadline: "Two faces, one masterpiece —",
+    tagline: "Infinite Possibilities",
+    description:
+      "Artistically woven with two distinct hues — each side a different expression. One shawl, two wardrobes. The ultimate travel companion, finished in the world's finest handwoven cashmere pashmina.",
+    ctaLabel: "Shop Reversible",
     category: "lightweight",
-    image: journalMountain,
-  },
-  {
-    slug: "gift-edition",
-    title: "Gift Edition",
-    tagline: "Thoughtfully packaged heirlooms for meaningful giving.",
-    category: "bridal",
-    image: collectionWoven,
+    image: collectionLightweight,
   },
 ];

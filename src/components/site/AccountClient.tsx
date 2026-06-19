@@ -4,8 +4,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Eyebrow } from "@/components/site/Eyebrow";
+import { brandText } from "@/lib/commerce";
+import { useCommerce } from "@/lib/commerce/client";
 
 export function AccountClient() {
+  const { brand } = useCommerce();
   const [mode, setMode] = useState<"signin" | "register">("signin");
 
   return (
@@ -18,7 +21,7 @@ export function AccountClient() {
         <p className="mt-3 text-sm text-muted-foreground">
           {mode === "signin"
             ? "Sign in to manage orders and saved pieces."
-            : "Join GULRIZA to follow new arrivals and exclusive editions."}
+            : brandText(brand.copy.pages.account.registerSubtitle, brand)}
         </p>
       </div>
 
@@ -73,7 +76,9 @@ export function AccountClient() {
       </form>
 
       <p className="text-center text-xs text-muted-foreground mt-8">
-        {mode === "signin" ? "New to GULRIZA?" : "Already have an account?"}{" "}
+        {mode === "signin"
+          ? brandText(brand.copy.pages.account.newToBrand, brand)
+          : brand.copy.pages.account.hasAccount}{" "}
         <button
           onClick={() => setMode(mode === "signin" ? "register" : "signin")}
           className="text-gold hover:underline"

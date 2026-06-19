@@ -4,7 +4,7 @@ import handloomImg from "@/assets/journal-handloom.jpg";
 import wovenImg from "@/assets/collection-woven.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();
@@ -46,7 +46,9 @@ const steps = [
   },
 ];
 
-export default function CraftsmanshipPage() {
+export default async function CraftsmanshipPage() {
+  const brand = await commerce.getBrand();
+
   return (
     <>
       <section className="relative h-[460px] overflow-hidden">
@@ -62,8 +64,7 @@ export default function CraftsmanshipPage() {
 
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          A single GULRIZA pashmina passes through the hands of more than a dozen artisans before it
-          reaches you. Here is how it is made.
+          {brandText(brand.copy.pages.craftsmanship.intro, brand)}
         </p>
         <DiamondDivider className="mt-10" />
       </section>
