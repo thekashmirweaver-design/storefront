@@ -17,7 +17,7 @@ export const brandConfig = {
     height: 48,
   },
   contact: {
-    email: "care@thekashmirweaver.com",
+    email: "",
     phone: "+91 194 000 0000",
     address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
     hours: "Monday – Saturday · 10:00 – 19:00 IST",

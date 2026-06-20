@@ -163,7 +163,7 @@ function mapShopifyBrand(data: ShopifyBrandResponse): BrandConfig {
     tagline: metafieldValue(shop?.brandTaglineMetafield) ?? brandConfig.tagline,
     logo: resolveLogo(metafieldValue(shop?.logoUrlMetafield), name),
     contact: {
-      email: metafieldValue(shop?.contactEmailMetafield) ?? brandConfig.contact.email,
+      email: metafieldValue(shop?.contactEmailMetafield) ?? "",
       phone: metafieldValue(shop?.contactPhoneMetafield) ?? brandConfig.contact.phone,
       address: metafieldValue(shop?.contactAddressMetafield) ?? brandConfig.contact.address,
       hours: metafieldValue(shop?.contactHoursMetafield) ?? brandConfig.contact.hours,
@@ -220,7 +220,7 @@ async function fetchShopifyBrand(): Promise<BrandConfig> {
 }
 
 export async function getShopifyBrand(): Promise<BrandConfig> {
-  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v3"], {
+  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v4"], {
     revalidate: BRAND_REVALIDATE_SECONDS,
     tags: [SHOPIFY_CACHE_TAGS.brand],
   })();

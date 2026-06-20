@@ -33,12 +33,22 @@ export const productMetafieldDefinitions = [
 
 export const customerMetafieldDefinitions = [{ name: "Wishlist", key: "wishlist", type: "json" }];
 
-export const shopPolicies = {
-  shipping: `<p><strong>Complimentary worldwide express shipping</strong> on all orders. Orders are dispatched from our Kashmir atelier within 1–2 business days of confirmation.</p><p>Delivery typically within <strong>5–10 business days</strong> for most international destinations. You will receive tracking details by email once your parcel ships.</p><p>Customs duties and import taxes, where applicable, are the responsibility of the recipient unless stated otherwise at checkout.</p>`,
-  refund: `<p>We want you to love your pashmina. If you are not completely satisfied, you may return unworn items in their original packaging within <strong>30 days of delivery</strong> for a full refund or exchange.</p><p>Initiate a return by contacting <a href="mailto:care@thekashmirweaver.com">care@thekashmirweaver.com</a> with your order number. Return shipping is complimentary for eligible orders.</p><p>Final-sale or personalised pieces are non-returnable unless faulty.</p>`,
-  terms: `<p>By accessing or purchasing from The Kashmir Weaver website, you agree to these Terms of Service.</p><p>All products are handwoven or hand-finished in Kashmir; natural variations in colour and texture are a hallmark of artisan craft, not defects.</p><p>Prices are listed in USD unless otherwise noted. We reserve the right to refuse or cancel orders placed in error or suspected of fraud.</p><p>These terms are governed by the laws applicable in our place of business. For questions, contact <a href="mailto:care@thekashmirweaver.com">care@thekashmirweaver.com</a>.</p>`,
-  privacy: `<p>The Kashmir Weaver respects your privacy. We collect only the information needed to process orders, deliver products, and respond to enquiries—such as name, email, shipping address, and payment details processed securely by our payment partners.</p><p>We do not sell your personal data. We may use your email to send order updates and, with your consent, occasional news about new collections. You may unsubscribe at any time.</p><p>We use industry-standard measures to protect your data. For privacy requests, contact <a href="mailto:care@thekashmirweaver.com">care@thekashmirweaver.com</a>.</p>`,
-};
+function contactMailto(contactEmail) {
+  const email = contactEmail.trim();
+  return `<a href="mailto:${email}">${email}</a>`;
+}
+
+/** Legal policy HTML — contactEmail should match Shopify Admin → Settings → Store details. */
+export function buildShopPolicies(contactEmail) {
+  const contact = contactMailto(contactEmail);
+
+  return {
+    shipping: `<p><strong>Complimentary worldwide express shipping</strong> on all orders. Orders are dispatched from our Kashmir atelier within 1–2 business days of confirmation.</p><p>Delivery typically within <strong>5–10 business days</strong> for most international destinations. You will receive tracking details by email once your parcel ships.</p><p>Customs duties and import taxes, where applicable, are the responsibility of the recipient unless stated otherwise at checkout.</p>`,
+    refund: `<p>We want you to love your pashmina. If you are not completely satisfied, you may return unworn items in their original packaging within <strong>30 days of delivery</strong> for a full refund or exchange.</p><p>Initiate a return by contacting ${contact} with your order number. Return shipping is complimentary for eligible orders.</p><p>Final-sale or personalised pieces are non-returnable unless faulty.</p>`,
+    terms: `<p>By accessing or purchasing from The Kashmir Weaver website, you agree to these Terms of Service.</p><p>All products are handwoven or hand-finished in Kashmir; natural variations in colour and texture are a hallmark of artisan craft, not defects.</p><p>Prices are listed in USD unless otherwise noted. We reserve the right to refuse or cancel orders placed in error or suspected of fraud.</p><p>These terms are governed by the laws applicable in our place of business. For questions, contact ${contact}.</p>`,
+    privacy: `<p>The Kashmir Weaver respects your privacy. We collect only the information needed to process orders, deliver products, and respond to enquiries—such as name, email, shipping address, and payment details processed securely by our payment partners.</p><p>We do not sell your personal data. We may use your email to send order updates and, with your consent, occasional news about new collections. You may unsubscribe at any time.</p><p>We use industry-standard measures to protect your data. For privacy requests, contact ${contact}.</p>`,
+  };
+}
 
 /** Matches app/globals.css — used for Shopify checkoutBrandingUpsert */
 export const checkoutBranding = {
@@ -119,14 +129,21 @@ export const shopMetafieldDefinitions = [
   },
 ];
 
-export const shopMetafields = {
+/** Default public logo URL before CDN upload during seed. */
+export const SHOP_LOGO_URL = "https://thekashmirweaver.com/images/kashmir-weaver-logo.png";
+
+/** Shop metafields for brand chrome — contactEmail comes from Shopify Admin store details. */
+export function buildShopMetafields(contactEmail) {
+  const policies = buildShopPolicies(contactEmail);
+
+  return {
   authenticity_promise:
     "Every The Kashmir Weaver pashmina is signed by the master weaver and accompanied by a certificate of authenticity.",
   shipping_badge_text: "Complimentary express shipping",
   returns_badge_text: "Free 30-day returns",
-  shipping_returns_text: `${shopPolicies.shipping}\n${shopPolicies.refund}`,
+  shipping_returns_text: `${policies.shipping}\n${policies.refund}`,
   brand_tagline: "Timeless. Natural. Luxurious.",
-  contact_email: "care@thekashmirweaver.com",
+  contact_email: contactEmail.trim(),
   contact_phone: "+91 194 000 0000",
   contact_address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
   contact_hours: "Monday – Saturday · 10:00 – 19:00 IST",
@@ -140,7 +157,7 @@ export const shopMetafields = {
     "The Kashmir Weaver crafts the world's finest pashmina shawls, handwoven in Kashmir from 100% natural fibers.",
   seo_og_title: "The Kashmir Weaver — Handwoven Pashmina from Kashmir",
   seo_og_description: "Exquisite Kashmiri pashmina shawls, woven by heritage.",
-  logo_url: "https://thekashmirweaver.com/images/kashmir-weaver-logo.png",
+  logo_url: SHOP_LOGO_URL,
   footer_description:
     "Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for generations.",
   newsletter_title: "Stay Connected",
@@ -149,7 +166,8 @@ export const shopMetafields = {
   journal_hero_title: "Journal",
   journal_hero_description:
     "Stories of heritage, craftsmanship, and the timeless beauty of pashmina.",
-};
+  };
+}
 
 /** Storefront menu handles — must match src/lib/commerce/shopify/brand.ts */
 export const MAIN_MENU_HANDLE = "main-menu";

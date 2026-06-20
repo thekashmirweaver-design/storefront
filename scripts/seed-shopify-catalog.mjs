@@ -24,8 +24,9 @@ import {
   productMetafieldDefinitions,
   customerMetafieldDefinitions,
   shopMetafieldDefinitions,
-  shopMetafields,
-  shopPolicies,
+  buildShopMetafields,
+  buildShopPolicies,
+  SHOP_LOGO_URL,
   checkoutBranding,
   collections,
   products,
@@ -235,7 +236,20 @@ async function ensurePrivacyPolicyManual() {
   console.log("  privacy policy auto-management disabled");
 }
 
+async function getShopContactEmail() {
+  const data = await adminRequest(`{ shop { contactEmail email } }`);
+  const email = data.shop?.contactEmail?.trim() || data.shop?.email?.trim();
+  if (!email) {
+    throw new Error("Could not resolve shop contact email from Shopify Admin");
+  }
+  return email;
+}
+
 async function ensureShopPolicies() {
+  const contactEmail = await getShopContactEmail();
+  const shopPolicies = buildShopPolicies(contactEmail);
+  console.log(`  using store contact email: ${contactEmail}`);
+
   for (const [type, body] of [
     ["SHIPPING_POLICY", shopPolicies.shipping],
     ["REFUND_POLICY", shopPolicies.refund],
@@ -385,7 +399,7 @@ async function ensureCheckoutBranding() {
       }
     }
   } else if (!mediaImageId) {
-    const logoUrl = shopMetafields.logo_url?.trim();
+    const logoUrl = SHOP_LOGO_URL;
     if (logoUrl) {
       mediaImageId = await resolveMediaImageId(adminRequest, logoUrl, "Store logo");
     }
@@ -429,9 +443,18 @@ async function ensureCheckoutBranding() {
 }
 
 async function ensureShopMetafields() {
-  const shopData = await adminRequest(`{ shop { id } }`);
+  const shopData = await adminRequest(`{ shop { id contactEmail email } }`);
   const shopId = shopData.shop?.id;
   if (!shopId) throw new Error("Could not resolve shop id");
+
+  const contactEmail =
+    shopData.shop?.contactEmail?.trim() || shopData.shop?.email?.trim() || "";
+  if (!contactEmail) {
+    throw new Error("Could not resolve shop contact email from Shopify Admin");
+  }
+
+  const shopMetafields = buildShopMetafields(contactEmail);
+  console.log(`  using store contact email: ${contactEmail}`);
 
   const types = Object.fromEntries(
     shopMetafieldDefinitions.map((def) => [def.key, def.type ?? "single_line_text_field"]),

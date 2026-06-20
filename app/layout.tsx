@@ -7,6 +7,8 @@ import { Providers } from "./providers";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { AnalyticsScripts } from "@/components/site/AnalyticsScripts";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { commerce, buildMetadataFromBrand } from "@/lib/commerce";
 import { getCommerceProviderName } from "@/lib/commerce/config";
 
@@ -47,6 +49,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SearchDialog />
           </div>
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
