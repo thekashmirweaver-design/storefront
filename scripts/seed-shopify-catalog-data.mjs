@@ -38,6 +38,45 @@ function contactMailto(contactEmail) {
   return `<a href="mailto:${email}">${email}</a>`;
 }
 
+/** Format Shopify Admin → Settings → Store details billing address for contact metafields. */
+export function formatShopBillingAddress(billingAddress) {
+  if (!billingAddress) {
+    throw new Error("Shop billing address missing from Shopify Admin business details");
+  }
+
+  const lines = [];
+  if (billingAddress.address1?.trim()) lines.push(billingAddress.address1.trim());
+  if (billingAddress.address2?.trim()) lines.push(billingAddress.address2.trim());
+
+  const cityLine = [
+    billingAddress.city?.trim(),
+    billingAddress.province?.trim(),
+    billingAddress.zip?.trim(),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  if (cityLine) lines.push(cityLine);
+
+  if (billingAddress.country?.trim()) lines.push(billingAddress.country.trim());
+
+  if (!lines.length) {
+    throw new Error("Shop billing address is empty in Shopify Admin business details");
+  }
+
+  return lines.join("\n");
+}
+
+/** Format Shopify Admin business phone for contact metafields. */
+export function formatShopBillingPhone(phone, country) {
+  const raw = phone?.trim();
+  if (!raw) {
+    throw new Error("Shop phone missing from Shopify Admin business details");
+  }
+  if (raw.startsWith("+")) return raw;
+  if (country?.trim().toLowerCase() === "india") return `+91 ${raw}`;
+  return raw;
+}
+
 /** Legal policy HTML — contactEmail should match Shopify Admin → Settings → Store details. */
 export function buildShopPolicies(contactEmail) {
   const contact = contactMailto(contactEmail);
@@ -173,9 +212,9 @@ export function buildBrandCopyJson() {
   };
 }
 
-/** Shop metafields for brand chrome — contactEmail comes from Shopify Admin store details. */
-export function buildShopMetafields(contactEmail) {
-  const policies = buildShopPolicies(contactEmail);
+/** Shop metafields for brand chrome — contact fields mirror Shopify Admin business details. */
+export function buildShopMetafields({ email, phone, address }) {
+  const policies = buildShopPolicies(email);
 
   return {
     brand_id: "the-kashmir-weaver",
@@ -191,9 +230,9 @@ export function buildShopMetafields(contactEmail) {
     returns_badge_text: "Free 30-day returns",
     shipping_returns_text: `${policies.shipping}\n${policies.refund}`,
     brand_tagline: "Timeless. Natural. Luxurious.",
-    contact_email: contactEmail.trim(),
-    contact_phone: "+91 194 000 0000",
-    contact_address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
+    contact_email: email.trim(),
+    contact_phone: phone.trim(),
+    contact_address: address.trim(),
     contact_hours: "Monday – Saturday · 10:00 – 19:00 IST",
     social_facebook: "https://facebook.com/thekashmirweaver",
     social_youtube: "https://youtube.com/thekashmirweaver",

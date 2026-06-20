@@ -26,6 +26,8 @@ import {
   shopMetafieldDefinitions,
   buildShopMetafields,
   buildShopPolicies,
+  formatShopBillingAddress,
+  formatShopBillingPhone,
   checkoutBranding,
   collections,
   products,
@@ -236,12 +238,37 @@ async function ensurePrivacyPolicyManual() {
 }
 
 async function getShopContactEmail() {
-  const data = await adminRequest(`{ shop { contactEmail email } }`);
+  const details = await getShopBusinessDetails();
+  return details.email;
+}
+
+async function getShopBusinessDetails() {
+  const data = await adminRequest(`{
+    shop {
+      contactEmail
+      email
+      billingAddress {
+        address1
+        address2
+        city
+        province
+        zip
+        country
+        phone
+      }
+    }
+  }`);
   const email = data.shop?.contactEmail?.trim() || data.shop?.email?.trim();
   if (!email) {
     throw new Error("Could not resolve shop contact email from Shopify Admin");
   }
-  return email;
+
+  const billingAddress = data.shop?.billingAddress;
+  return {
+    email,
+    phone: formatShopBillingPhone(billingAddress?.phone, billingAddress?.country),
+    address: formatShopBillingAddress(billingAddress),
+  };
 }
 
 async function ensureShopPolicies() {
@@ -448,17 +475,15 @@ async function ensureCheckoutBranding() {
 }
 
 async function ensureShopMetafields() {
-  const shopData = await adminRequest(`{ shop { id contactEmail email } }`);
+  const shopData = await adminRequest(`{ shop { id } }`);
   const shopId = shopData.shop?.id;
   if (!shopId) throw new Error("Could not resolve shop id");
 
-  const contactEmail = shopData.shop?.contactEmail?.trim() || shopData.shop?.email?.trim() || "";
-  if (!contactEmail) {
-    throw new Error("Could not resolve shop contact email from Shopify Admin");
-  }
-
-  const shopMetafields = buildShopMetafields(contactEmail);
-  console.log(`  using store contact email: ${contactEmail}`);
+  const businessDetails = await getShopBusinessDetails();
+  const shopMetafields = buildShopMetafields(businessDetails);
+  console.log(`  using store contact email: ${businessDetails.email}`);
+  console.log(`  using store contact phone: ${businessDetails.phone}`);
+  console.log(`  using store contact address: ${businessDetails.address.replace(/\n/g, " · ")}`);
 
   const types = Object.fromEntries(
     shopMetafieldDefinitions.map((def) => [def.key, def.type ?? "single_line_text_field"]),

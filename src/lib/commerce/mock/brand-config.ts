@@ -15,9 +15,10 @@ export const mockBrandConfig: BrandConfig = {
     height: 48,
   },
   contact: {
-    email: "care@thekashmirweaver.com",
-    phone: "+91 194 000 0000",
-    address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
+    email: "thekashmirweaver@gmail.com",
+    phone: "+91 9796105623",
+    address:
+      "M.A. Road, Lal Chowk\nDr. Ali Jan Complex\nSrinagar, Jammu and Kashmir, 190001\nIndia",
     hours: "Monday – Saturday · 10:00 – 19:00 IST",
   },
   social: {
