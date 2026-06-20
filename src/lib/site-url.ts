@@ -15,14 +15,19 @@ function toAbsoluteSiteUrl(value: string): string {
 
 /** Canonical storefront URL used for OAuth callbacks, metadata, and sitemap links. */
 export function getSiteUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) {
-    return toAbsoluteSiteUrl(explicit);
-  }
-
   const vercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   if (vercelProduction) {
     return toAbsoluteSiteUrl(vercelProduction);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) {
+    return toAbsoluteSiteUrl(vercelUrl);
+  }
+
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) {
+    return toAbsoluteSiteUrl(explicit);
   }
 
   return "http://localhost:3000";
@@ -82,7 +87,7 @@ export function getSiteOriginMismatchMessage(
   }
 
   if (isVercelPreviewHost(hostname)) {
-    return `Customer sign-in redirects to ${canonicalSiteUrl}. Open the site on your custom domain instead of this Vercel preview URL (${currentOrigin}) so Shopify can return you to the account page.`;
+    return `Customer sign-in redirects to ${canonicalSiteUrl}. Open the production deployment at ${canonicalSiteUrl} instead of this preview URL (${currentOrigin}) so Shopify can return you to the account page.`;
   }
 
   return `Customer sign-in must use your configured site URL (${canonicalSiteUrl}), not ${currentOrigin}. Shopify only accepts the registered callback domain.`;
