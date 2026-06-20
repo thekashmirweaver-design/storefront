@@ -6,6 +6,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { AnalyticsScripts } from "@/components/site/AnalyticsScripts";
 import { commerce, buildMetadataFromBrand } from "@/lib/commerce";
 import { getCommerceProviderName } from "@/lib/commerce/config";
 
@@ -36,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body>
+        <AnalyticsScripts />
         <Providers brand={brand} cartMode={getCommerceProviderName()}>
           <div className="min-h-screen flex flex-col bg-background">
             <Header />

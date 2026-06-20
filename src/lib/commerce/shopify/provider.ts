@@ -50,6 +50,8 @@ import {
   PRODUCT_RECOMMENDATIONS_QUERY_NO_INVENTORY,
   PRODUCTS_QUERY,
   PRODUCTS_QUERY_NO_INVENTORY,
+  PREDICTIVE_SEARCH_QUERY,
+  PREDICTIVE_SEARCH_QUERY_NO_INVENTORY,
   SEARCH_QUERY,
   SEARCH_QUERY_NO_INVENTORY,
   SHOP_CONTEXT_QUERY,
@@ -253,6 +255,58 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     const q = query.trim();
     if (!q) return { products: [], collections: [], articles: [] };
 
+    const predictive = await this.searchPredictive(q);
+    if (predictive) return predictive;
+
+    return this.searchLegacy(q);
+  }
+
+  /** Storefront predictiveSearch for type-ahead; returns null when unsupported. */
+  private async searchPredictive(q: string) {
+    try {
+      const data = await withShopifyCache(
+        ["shopify-predictive-search", q.toLowerCase(), "v1"],
+        [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],
+        async () => {
+          const { data: searchData, errors } = await requestWithInventoryFallback<{
+            predictiveSearch?: {
+              products?: ShopifyProductNode[];
+              collections?: ShopifyCollectionNode[];
+              articles?: {
+                handle: string;
+                title: string;
+                excerpt?: string | null;
+                publishedAt?: string | null;
+                tags?: string[];
+                image?: { url: string; altText?: string | null; width?: number; height?: number };
+              }[];
+            };
+          }>(
+            this.client,
+            PREDICTIVE_SEARCH_QUERY,
+            PREDICTIVE_SEARCH_QUERY_NO_INVENTORY,
+            { variables: { query: q, limit: 10 } },
+          );
+          if (errors) throw new Error(`Shopify predictiveSearch: ${JSON.stringify(errors)}`);
+          return searchData;
+        },
+      );
+
+      const result = data?.predictiveSearch;
+      if (!result) return null;
+
+      const products = (result.products ?? []).map((n) => mapShopifyProduct(n));
+      const collections = (result.collections ?? []).map(mapShopifyCollection);
+      const articles = (result.articles ?? []).map((node) => mapShopifyArticle(node));
+
+      return { products, collections, articles };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Fallback when predictiveSearch is unavailable. */
+  private async searchLegacy(q: string) {
     const data = await withShopifyCache(
       ["shopify-search", q.toLowerCase(), "v1"],
       [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],

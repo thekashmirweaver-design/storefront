@@ -97,8 +97,13 @@ export function ProductClient({
     }
   };
 
+  const showInlineDescription =
+    detailContent.shopifyMode && !product.descriptionHtml && Boolean(product.description);
+
   const showDescriptionAccordion =
-    Boolean(product.descriptionHtml) || Boolean(product.description) || !detailContent.shopifyMode;
+    Boolean(product.descriptionHtml) ||
+    (!detailContent.shopifyMode && Boolean(product.description)) ||
+    !detailContent.shopifyMode;
 
   const showDetailsAccordion =
     Boolean(product.dimensions) || Boolean(product.careInstructions) || !detailContent.shopifyMode;
@@ -158,7 +163,9 @@ export function ProductClient({
             )}
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+          {showInlineDescription && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+          )}
 
           {detailContent.highlights.length > 0 && (
             <ul className="space-y-2 text-xs text-foreground/80">

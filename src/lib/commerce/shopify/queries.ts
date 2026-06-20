@@ -359,6 +359,182 @@ export const SEARCH_QUERY_NO_INVENTORY = `
   }
 `;
 
+/** Lighter product fields for type-ahead predictive search. */
+export const PREDICTIVE_PRODUCT_FRAGMENT = `
+  fragment PredictiveProductFields on Product {
+    id
+    handle
+    title
+    description
+    availableForSale
+    featuredImage {
+      url
+      altText
+      width
+      height
+    }
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
+    productType
+    tags
+    options {
+      name
+      optionValues {
+        name
+        swatch {
+          color
+        }
+      }
+    }
+    variants(first: 1) {
+      nodes {
+        id
+        availableForSale
+        quantityAvailable
+        selectedOptions {
+          name
+          value
+        }
+      }
+    }
+    collections(first: 1) {
+      nodes {
+        handle
+      }
+    }
+  }
+`;
+
+export const PREDICTIVE_PRODUCT_FRAGMENT_NO_INVENTORY = `
+  fragment PredictiveProductFieldsNoInventory on Product {
+    id
+    handle
+    title
+    description
+    availableForSale
+    featuredImage {
+      url
+      altText
+      width
+      height
+    }
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
+    productType
+    tags
+    options {
+      name
+      optionValues {
+        name
+        swatch {
+          color
+        }
+      }
+    }
+    variants(first: 1) {
+      nodes {
+        id
+        availableForSale
+        selectedOptions {
+          name
+          value
+        }
+      }
+    }
+    collections(first: 1) {
+      nodes {
+        handle
+      }
+    }
+  }
+`;
+
+export const PREDICTIVE_SEARCH_QUERY = `
+  ${PREDICTIVE_PRODUCT_FRAGMENT}
+  query PredictiveSearch($query: String!, $limit: Int!) {
+    predictiveSearch(query: $query, limit: $limit, types: [PRODUCT, COLLECTION, ARTICLE]) {
+      products {
+        ...PredictiveProductFields
+      }
+      collections {
+        id
+        handle
+        title
+        description
+        image {
+          url
+          altText
+          width
+          height
+        }
+      }
+      articles {
+        handle
+        title
+        excerpt
+        publishedAt
+        tags
+        image {
+          url
+          altText
+          width
+          height
+        }
+      }
+      queries {
+        text
+      }
+    }
+  }
+`;
+
+export const PREDICTIVE_SEARCH_QUERY_NO_INVENTORY = `
+  ${PREDICTIVE_PRODUCT_FRAGMENT_NO_INVENTORY}
+  query PredictiveSearchNoInventory($query: String!, $limit: Int!) {
+    predictiveSearch(query: $query, limit: $limit, types: [PRODUCT, COLLECTION, ARTICLE]) {
+      products {
+        ...PredictiveProductFieldsNoInventory
+      }
+      collections {
+        id
+        handle
+        title
+        description
+        image {
+          url
+          altText
+          width
+          height
+        }
+      }
+      articles {
+        handle
+        title
+        excerpt
+        publishedAt
+        tags
+        image {
+          url
+          altText
+          width
+          height
+        }
+      }
+      queries {
+        text
+      }
+    }
+  }
+`;
+
 export const BLOG_ARTICLES_QUERY = `
   query BlogArticles($blogHandle: String!, $first: Int!) {
     blog(handle: $blogHandle) {

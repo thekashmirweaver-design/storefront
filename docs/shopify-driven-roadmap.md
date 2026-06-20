@@ -470,18 +470,30 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 ## Phase 8 — Polish and operations
 
-**Status:** in progress
+**Status:** done (B2B / full Markets UI deferred)
 
 - Markets / multi-currency
 - Predictive search
 - Analytics / pixels
 - Webhooks → `revalidateTag` on product/collection updates
 - Inventory-aware sold-out badges
-- B2B / wholesale (Shopify Plus, if needed)
+- B2B / wholesale (Shopify Plus, if needed) — **deferred**
 
 ### Completed
 
 - [x] **Webhooks → cache revalidation (catalog slice)** — `POST /api/webhooks/shopify` verifies Shopify HMAC (`SHOPIFY_WEBHOOK_SECRET`), handles product/collection/article create/update/delete topics, and calls `revalidateTag` for `shopify-catalog`, `shopify-products`, `shopify-collections`, `shopify-articles` (plus per-handle tags). Catalog Storefront reads wrapped in `unstable_cache` via [`cache-tags.ts`](../src/lib/commerce/shopify/cache-tags.ts) / [`provider.ts`](../src/lib/commerce/shopify/provider.ts). Partner app subscriptions in `kashmir-weaver-probe/shopify.app.toml`; Admin custom webhook documented in [`shopify-store-setup.md`](shopify-store-setup.md).
+
+- [x] **Inventory-aware sold-out badges** — `isProductSoldOut()` in [`inventory.ts`](../src/lib/commerce/inventory.ts) drives sold-out overlays on [`ProductCard`](../src/components/site/ProductCard.tsx), PDP [`ProductClient`](../src/components/site/ProductClient.tsx), and [`StickyAtcBar`](../src/components/site/StickyAtcBar.tsx) when `availableForSale` is false or `quantityAvailable` is 0. Mock catalog includes sold-out examples.
+
+- [x] **Predictive search** — Shopify provider uses Storefront `predictiveSearch` (products, collections, articles) with fallback to legacy `products`/`collections` query; [`SearchDialog`](../src/components/site/SearchDialog.tsx) calls `searchCommerce()` (mock fallback unchanged).
+
+- [x] **Analytics / pixels (optional env)** — [`AnalyticsScripts`](../src/components/site/AnalyticsScripts.tsx) in root layout injects GA4 when `NEXT_PUBLIC_GA_ID` is set; `NEXT_PUBLIC_SHOPIFY_WEB_PIXEL_ID` reserved placeholder.
+
+- [x] **Markets / multi-currency (stub)** — [`market-context.ts`](../src/lib/commerce/shopify/market-context.ts) injects `@inContext(country, language)` on Storefront queries when `NEXT_PUBLIC_SHOPIFY_COUNTRY` / `NEXT_PUBLIC_SHOPIFY_LANGUAGE` are set. Full market picker / geo routing deferred.
+
+- [x] **PDP description dedupe** — [`ProductClient`](../src/components/site/ProductClient.tsx) shows inline description only for plain Shopify copy; rich `descriptionHtml` renders in accordion only.
+
+- **Verify:** `pnpm verify:shopify`; `pnpm build:mock`; `pnpm build:shopify`; `pnpm test:shopify:webhook`; set `SHOPIFY_WEBHOOK_SECRET` in production and confirm Partner app webhook URL matches `{NEXT_PUBLIC_SITE_URL}/api/webhooks/shopify`.
 
 
 ---
@@ -537,6 +549,6 @@ flowchart TD
 
 ## Suggested next sprint
 
-Phases 0–7 engineering is complete.
+Phases 0–8 engineering is complete (B2B wholesale deferred).
 
-1. **Phase 8** — Markets, predictive search, webhooks / revalidation
+1. **Production ops** — Deploy Vercel with `SHOPIFY_WEBHOOK_SECRET`, optional `NEXT_PUBLIC_GA_ID`, verify live webhooks and Customer Account login on production URL.
