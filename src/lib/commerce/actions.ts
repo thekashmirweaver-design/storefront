@@ -1,17 +1,24 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { isShopifyProvider } from "./config";
-import { commerce } from "./index";
+import { commerce } from "./server";
 import {
   addVariantToShopifyCart,
   clearShopifyCart,
   getShopifyCart,
   removeShopifyCartLine,
+  updateShopifyCartBuyerIdentity,
   updateShopifyCartLine,
 } from "./shopify/cart";
+import { writeMarketCookies } from "./shopify/market-cookie";
+import { fetchShopifyLocalization } from "./shopify/localization";
+import { getShopifyCartIdFromCookie } from "./shopify/cart-cookie";
 import type {
   CommerceCart,
   CommerceCartActionResult,
+  CommerceLocalization,
   ContactFormInput,
   ProductFilters,
   CommerceCustomerSession,
@@ -159,4 +166,34 @@ export async function toggleCustomerWishlistAction(slug: string): Promise<string
 
   const { toggleCustomerWishlistSlug } = await import("./shopify/customer/account");
   return toggleCustomerWishlistSlug(slug);
+}
+
+export async function getLocalizationAction(): Promise<CommerceLocalization | null> {
+  if (!isShopifyProvider()) return null;
+  return fetchShopifyLocalization();
+}
+
+export async function setMarketAction(countryCode: string, languageCode?: string): Promise<void> {
+  if (!isShopifyProvider()) return;
+
+  const localization = await fetchShopifyLocalization();
+  const normalizedCountry = countryCode.trim().toUpperCase();
+  const country = localization.countries.find((c) => c.isoCode === normalizedCountry);
+  if (!country) {
+    throw new Error(`Unsupported country: ${countryCode}`);
+  }
+
+  const language =
+    languageCode?.trim().toUpperCase() ??
+    localization.languages[0]?.isoCode ??
+    localization.market.language;
+
+  await writeMarketCookies(normalizedCountry, language);
+
+  const cartId = await getShopifyCartIdFromCookie();
+  if (cartId) {
+    await updateShopifyCartBuyerIdentity(cartId);
+  }
+
+  revalidatePath("/", "layout");
 }

@@ -8,7 +8,6 @@ import type {
   ContactFormInput,
   ProductFilters,
 } from "../types";
-import { brandConfig } from "../brand/config";
 import { brandText } from "../brand/text";
 import { mockBrand } from "./brand";
 import { mockArticles } from "./data/articles";
@@ -29,6 +28,11 @@ import {
 
 const CURRENCY = "USD";
 
+function normalizeColorHex(hex: string): string {
+  const trimmed = hex.trim();
+  return trimmed.startsWith("#") ? trimmed.toLowerCase() : `#${trimmed.toLowerCase()}`;
+}
+
 function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProduct {
   const primary = staticImageToCommerceImage(record.image, record.name);
   const compareAtAmount = Math.round(record.price * 1.12);
@@ -48,7 +52,7 @@ function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProdu
         ? { amount: compareAtAmount, currencyCode: CURRENCY }
         : undefined,
     images: [primary, { ...primary, alt: `${record.name} alternate view` }],
-    colorHex: record.colorHex,
+    colorHex: normalizeColorHex(record.colorHex),
     description: record.description,
     availableForSale: !soldOutBySlug && !soldOutByStock,
     quantityAvailable,
@@ -69,8 +73,8 @@ function applyProductFilters(
     list = list.filter((p) => cats.has(p.category));
   }
   if (filters?.colors?.length) {
-    const colors = new Set(filters.colors);
-    list = list.filter((p) => colors.has(p.colorHex));
+    const colors = new Set(filters.colors.map(normalizeColorHex));
+    list = list.filter((p) => colors.has(normalizeColorHex(p.colorHex)));
   }
   if (filters?.collectionSlugs?.length) {
     const slugs = new Set(filters.collectionSlugs);
@@ -118,7 +122,7 @@ function toCommerceArticle(record: (typeof mockArticles)[number]): CommerceArtic
     title: record.title,
     category: record.category,
     date: record.date,
-    excerpt: brandText(record.excerpt, brandConfig),
+    excerpt: brandText(record.excerpt, mockBrand),
     cover: staticImageToCommerceImage(record.cover, record.title),
   };
 }
@@ -222,20 +226,20 @@ export class MockCommerceProvider implements CommerceProvider {
   async getFaqs() {
     return mockFaqs.map((faq) => ({
       ...faq,
-      answer: brandText(faq.answer, brandConfig),
+      answer: brandText(faq.answer, mockBrand),
     }));
   }
 
   async getHomepageEditorial() {
-    return applyBrandToHomepageEditorial(mockHomepageEditorial, brandConfig);
+    return applyBrandToHomepageEditorial(mockHomepageEditorial, mockBrand);
   }
 
   async getOurStoryContent() {
-    return applyBrandToOurStoryContent(mockOurStoryContent, brandConfig);
+    return applyBrandToOurStoryContent(mockOurStoryContent, mockBrand);
   }
 
   async getCraftsmanshipContent() {
-    return applyBrandToCraftsmanshipContent(mockCraftsmanshipContent, brandConfig);
+    return applyBrandToCraftsmanshipContent(mockCraftsmanshipContent, mockBrand);
   }
 
   async getJournalIndexContent() {
@@ -244,10 +248,7 @@ export class MockCommerceProvider implements CommerceProvider {
 
   async getStorefrontSettings() {
     return {
-      authenticityPromise: brandText(
-        brandConfig.copy.pages.product.authenticityPromise,
-        brandConfig,
-      ),
+      authenticityPromise: brandText(mockBrand.copy.pages.product.authenticityPromise, mockBrand),
       shippingBadgeText: "Complimentary express shipping",
       returnsBadgeText: "Free 30-day returns",
     };
@@ -305,7 +306,10 @@ export class MockCommerceProvider implements CommerceProvider {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return { ok: false, message: "Please enter a valid email" };
     }
-    return { ok: true, message: brandText(brandConfig.copy.messages.newsletterWelcome, brandConfig) };
+    return {
+      ok: true,
+      message: brandText(mockBrand.copy.messages.newsletterWelcome, mockBrand),
+    };
   }
 
   async submitContact(form: ContactFormInput) {

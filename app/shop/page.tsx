@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { ShopClient } from "@/components/site/ShopClient";
-import { commerce, commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 import { isShopifyProvider } from "@/lib/commerce/config";
 
 export async function generateMetadata(): Promise<Metadata> {

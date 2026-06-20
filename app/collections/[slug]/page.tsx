@@ -6,7 +6,8 @@ import { Suspense } from "react";
 import { CollectionListing } from "@/components/site/CollectionListing";
 import { CollectionStory } from "@/components/site/CollectionStory";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { commerce, commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 import { isShopifyProvider } from "@/lib/commerce/config";
 import {
   collectionEyebrow,

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { commerce } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const brand = await commerce.getBrand();

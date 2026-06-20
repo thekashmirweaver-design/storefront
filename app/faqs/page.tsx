@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { FaqList } from "@/components/site/FaqList";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();

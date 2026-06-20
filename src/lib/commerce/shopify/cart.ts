@@ -6,9 +6,12 @@ import type {
   CommerceMoney,
   CommerceProduct,
 } from "../types";
-import { createShopifyClient } from "./client";
+import { getShopifyClient } from "./client";
+import { resolveShopifyMarketContext } from "./market-context.server";
 import { mapShopifyProduct, type ShopifyProductNode } from "./mappers";
 import {
+  CART_BUYER_IDENTITY_UPDATE_MUTATION,
+  CART_BUYER_IDENTITY_UPDATE_MUTATION_NO_INVENTORY,
   CART_CREATE_MUTATION,
   CART_CREATE_MUTATION_NO_INVENTORY,
   CART_LINES_ADD_MUTATION,
@@ -102,6 +105,9 @@ type ShopifyCartCreateData = { cartCreate?: ShopifyCartMutationPayload };
 type ShopifyCartLinesAddData = { cartLinesAdd?: ShopifyCartMutationPayload };
 type ShopifyCartLinesUpdateData = { cartLinesUpdate?: ShopifyCartMutationPayload };
 type ShopifyCartLinesRemoveData = { cartLinesRemove?: ShopifyCartMutationPayload };
+type ShopifyCartBuyerIdentityUpdateData = {
+  cartBuyerIdentityUpdate?: ShopifyCartMutationPayload;
+};
 
 function mapMoney(money: ShopifyMoney | null | undefined): CommerceMoney {
   return {
@@ -198,8 +204,13 @@ function assertNoUserErrors(
   throw new Error(`${operation}: ${userErrors.map((e) => e.message).join(", ")}`);
 }
 
+async function buyerIdentityInput() {
+  const { country } = await resolveShopifyMarketContext();
+  return { countryCode: country };
+}
+
 async function fetchCartById(cartId: string): Promise<CommerceCart | null> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await requestWithInventoryFallback<{ cart?: ShopifyCartNode | null }>(
     client,
     CART_QUERY,
@@ -240,7 +251,7 @@ export async function cartCreate(
   variantId: string,
   quantity: number,
 ): Promise<CommerceCartActionResult> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await requestWithInventoryFallback<ShopifyCartCreateData>(
     client,
     CART_CREATE_MUTATION,
@@ -249,6 +260,7 @@ export async function cartCreate(
       variables: {
         input: {
           lines: [{ merchandiseId: variantId, quantity }],
+          buyerIdentity: await buyerIdentityInput(),
         },
       },
     },
@@ -269,7 +281,7 @@ export async function cartLinesAdd(
   variantId: string,
   quantity: number,
 ): Promise<CommerceCartActionResult> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await requestWithInventoryFallback<ShopifyCartLinesAddData>(
     client,
     CART_LINES_ADD_MUTATION,
@@ -298,7 +310,7 @@ export async function cartLinesUpdate(
   lineId: string,
   quantity: number,
 ): Promise<CommerceCartActionResult> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await requestWithInventoryFallback<ShopifyCartLinesUpdateData>(
     client,
     CART_LINES_UPDATE_MUTATION,
@@ -325,7 +337,7 @@ export async function cartLinesRemove(
   cartId: string,
   lineIds: string[],
 ): Promise<CommerceCartActionResult> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await requestWithInventoryFallback<ShopifyCartLinesRemoveData>(
     client,
     CART_LINES_REMOVE_MUTATION,
@@ -384,4 +396,30 @@ export async function removeShopifyCartLine(lineId: string): Promise<CommerceCar
 export async function clearShopifyCart(): Promise<CommerceCartActionResult> {
   await clearShopifyCartIdCookie();
   return mutationResult(emptyCommerceCart(), []);
+}
+
+export async function updateShopifyCartBuyerIdentity(
+  cartId: string,
+): Promise<CommerceCartActionResult> {
+  const client = await getShopifyClient();
+  const { data, errors } = await requestWithInventoryFallback<ShopifyCartBuyerIdentityUpdateData>(
+    client,
+    CART_BUYER_IDENTITY_UPDATE_MUTATION,
+    CART_BUYER_IDENTITY_UPDATE_MUTATION_NO_INVENTORY,
+    {
+      variables: {
+        cartId,
+        buyerIdentity: await buyerIdentityInput(),
+      },
+    },
+  );
+  if (errors) throw new Error(`Shopify cartBuyerIdentityUpdate: ${JSON.stringify(errors)}`);
+
+  const payload = data?.cartBuyerIdentityUpdate;
+  assertNoUserErrors(payload?.userErrors, "cartBuyerIdentityUpdate");
+
+  const cart = mapShopifyCart(payload?.cart);
+  if (!cart) throw new Error("cartBuyerIdentityUpdate: missing cart in response");
+  const persisted = await persistCart(cart);
+  return mutationResult(persisted, mapCartWarnings(payload?.warnings));
 }

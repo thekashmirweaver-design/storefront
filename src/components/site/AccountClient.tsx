@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { BrandedPageHeader } from "@/components/site/BrandedPageHeader";
 import type { CommerceCustomerSession, CommerceOrder } from "@/lib/commerce";
-import { brandText } from "@/lib/commerce";
+import { brandText } from "@/lib/commerce/brand/text";
 import { useCommerce } from "@/lib/commerce/client";
 import { getCustomerOrdersAction, getCustomerSessionAction } from "@/lib/commerce/actions";
 import { getSiteOriginMismatchMessage } from "@/lib/site-url";

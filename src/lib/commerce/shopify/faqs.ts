@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { mockFaqs } from "../mock/data/faqs";
 import type { CommerceFaq } from "../types";
 import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
-import { createShopifyClient } from "./client";
+import { getShopifyClient } from "./client";
 import { FAQS_QUERY } from "./queries";
 
 /** App-owned metaobject type — must match partner app `shopify.app.toml` and seed script. */
@@ -41,7 +41,7 @@ export function mapShopifyFaqs(data: ShopifyFaqsResponse): CommerceFaq[] {
 }
 
 async function fetchShopifyFaqs(): Promise<CommerceFaq[]> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await client.request(FAQS_QUERY, {
     variables: { type: SHOPIFY_FAQ_METAOBJECT_TYPE, first: 50 },
   });

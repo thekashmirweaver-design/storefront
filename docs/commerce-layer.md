@@ -13,7 +13,7 @@ Copy [`.env.example`](../.env.example) to `.env.local` and adjust as needed.
 ### Mock mode (default)
 
 - Uses static catalog data in `src/lib/commerce/mock/data/`
-- Brand config in `src/lib/commerce/mock/brand.ts`
+- Brand config in `src/lib/commerce/mock/brand-config.ts` (`mockBrandConfig`; re-exported from `mock/brand.ts`)
 - Cart and wishlist stored in `localStorage` on the client
 - No Shopify credentials required
 - `pnpm build` and CI work out of the box
@@ -34,9 +34,13 @@ Optional:
 SHOPIFY_STOREFRONT_API_VERSION=2025-01
 SHOPIFY_BLOG_HANDLE=news
 NEXT_PUBLIC_SITE_URL=https://thekashmirweaver.com
+NEXT_PUBLIC_SHOPIFY_COUNTRY=US
+NEXT_PUBLIC_SHOPIFY_LANGUAGE=EN
 ```
 
-**Phase 1 Shopify scope:** catalog reads (products, collections, articles, search) use the Storefront API. Brand, FAQs, newsletter, contact, cart, and wishlist still use mock behavior until Phase 2.
+**Markets / multi-currency (Shopify mode):** Header country selector persists `shopify_country` / `shopify_language` cookies. Storefront queries use `@inContext`; cart create/update sets `buyerIdentity.countryCode`. Verify with `pnpm verify:shopify:markets`. Configure additional markets in Shopify Admin → Settings → Markets for localized currencies.
+
+**Phase 1 Shopify scope:** catalog reads (products, collections, articles, search) use the Storefront API. Brand (shop metafields + menus), cart, and related flows are implemented in later phases — see [shopify-driven-roadmap.md](./shopify-driven-roadmap.md). FAQs, newsletter, contact, and wishlist may still use mock fallbacks where noted in the roadmap.
 
 ## Scripts
 
@@ -64,7 +68,7 @@ app/ + src/components/
 
 | Context | Import | Usage |
 |---|---|---|
-| Server Components, `generateMetadata`, sitemap | `@/lib/commerce` | `import { commerce } from "@/lib/commerce"` |
+| Server Components, `generateMetadata`, sitemap | `@/lib/commerce/server` | `import { commerce } from "@/lib/commerce/server"` |
 | Client components (cart, wishlist, search UI) | `@/lib/commerce/client` | `useCommerce()`, `useCommerceCart()`, `useCommerceWishlist()` |
 | Client → server calls | `@/lib/commerce/actions` | `searchCommerce()`, `getProductsAction()`, etc. |
 
@@ -90,7 +94,8 @@ Legacy files (`src/lib/products.ts`, `collections.ts`, `store.tsx`) remain as de
 ### Server singleton
 
 ```ts
-import { commerce, buildMetadataFromBrand } from "@/lib/commerce";
+import { buildMetadataFromBrand } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 const brand = await commerce.getBrand();
 const products = await commerce.getProducts({ sort: "price-asc" });
@@ -145,7 +150,11 @@ Product images in the UI use `product.images[0].src` with `OptimizedImage`.
 - `Footer` — logo, menus, social links, newsletter
 - `ContactClient` — atelier address, email, phone, hours
 
-Edit mock values in `src/lib/commerce/mock/brand.ts`. Shopify brand mapping from shop metafields is planned for Phase 2.
+| Mode | Source |
+|---|---|
+| Mock (`pnpm dev:mock`) | [`mockBrandConfig`](../src/lib/commerce/mock/brand-config.ts) |
+| Shopify | Shop metafields + Storefront menus via [`getShopifyBrand()`](../src/lib/commerce/shopify/brand.ts) — required fields must be seeded (`pnpm seed:shopify -- --brand-only`); missing data throws `CommerceConfigError` |
+| Shared constants | [`brand/config.ts`](../src/lib/commerce/brand/config.ts) — `brandLegalRoutes`, `defaultLogoDimensions` only (not full brand data) |
 
 ## File layout
 
@@ -161,11 +170,15 @@ src/lib/commerce/
   mappers/
     metadata.ts         # brand → Next Metadata
     image.ts
+  brand/
+    config.ts           # brandLegalRoutes, defaultLogoDimensions (shared)
   mock/
     provider.ts
-    brand.ts
+    brand-config.ts     # mockBrandConfig (mock mode only)
+    brand.ts            # re-exports mockBrandConfig
     data/               # products, collections, articles, faqs
   shopify/
+    brand.ts            # getShopifyBrand() — strict metafield + menu mapping
     client.ts
     provider.ts
     mappers.ts
@@ -182,14 +195,16 @@ See **[shopify-driven-roadmap.md](./shopify-driven-roadmap.md)** for the full ph
 - Shopify Cart API (replace localStorage cart)
 - Wishlist via customer metafields
 - Newsletter / contact via Shopify Flow or webhooks
-- Brand from shop metafields + Menu API
 - Dynamic Shopify sitemap entries
 
 ## Troubleshooting
 
 **Build fails with `CommerceConfigError`**
 
-You set `COMMERCE_PROVIDER=shopify` without `SHOPIFY_STORE_DOMAIN` and/or `SHOPIFY_STOREFRONT_ACCESS_TOKEN`. Add them to `.env.local` or switch back to `mock`.
+Common causes in Shopify mode:
+
+1. Missing `SHOPIFY_STORE_DOMAIN` and/or `SHOPIFY_STOREFRONT_ACCESS_TOKEN` — add them to `.env.local` or switch back to `mock`.
+2. Brand metafields or navigation menus not seeded — run `pnpm seed:shopify -- --brand-only` (see [shopify-store-setup.md](./shopify-store-setup.md)).
 
 **ESLint: "Use @/lib/commerce instead"**
 

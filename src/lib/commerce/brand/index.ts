@@ -1,2 +1,2 @@
-export { brandConfig, brandDefaults } from "./config";
+export { brandLegalRoutes, defaultLogoDimensions } from "./config";
 export { brandText, brandStorageKey } from "./text";

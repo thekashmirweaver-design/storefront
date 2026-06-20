@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-import { brandConfig } from "../brand/config";
+import { getSiteUrl } from "@/lib/site-url";
 import {
   mockCraftsmanshipContent,
   mockHomepageEditorial,
@@ -17,7 +17,7 @@ import type {
   EditorialPillar,
 } from "../types";
 import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
-import { createShopifyClient } from "./client";
+import { getShopifyClient } from "./client";
 import {
   EDITORIAL_CONTENT_QUERY,
   SHOPIFY_CRAFTSMANSHIP_STEP_METAOBJECT_TYPE,
@@ -132,7 +132,7 @@ function normalizeImageUrl(src: string | undefined): string | undefined {
 
   try {
     const parsed = new URL(trimmed);
-    const siteHost = new URL(brandConfig.siteUrl).hostname;
+    const siteHost = new URL(getSiteUrl()).hostname;
     if (
       parsed.hostname === siteHost ||
       parsed.hostname === "thekashmirweaver.com" ||
@@ -363,7 +363,7 @@ function mapJournalIndexContent(data: ShopifyEditorialResponse): CommerceJournal
 }
 
 async function fetchShopifyEditorial(): Promise<ShopifyEditorialResponse> {
-  const client = createShopifyClient();
+  const client = await getShopifyClient();
   const { data, errors } = await client.request(EDITORIAL_CONTENT_QUERY, {
     variables: {
       homepageHeroType: SHOPIFY_HOMEPAGE_HERO_METAOBJECT_TYPE,

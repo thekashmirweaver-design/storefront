@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 
 import { ProductClient } from "@/components/site/ProductClient";
 import { ProductJsonLd } from "@/components/site/ProductJsonLd";
-import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
+import { buildPageMetadata, brandText } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 import { resolveProductDetailContent } from "@/lib/commerce/product-detail";
 
 type Props = { params: Promise<{ slug: string }> };

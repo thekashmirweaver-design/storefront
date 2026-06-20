@@ -9,8 +9,11 @@ import { Footer } from "@/components/site/Footer";
 import { AnalyticsScripts } from "@/components/site/AnalyticsScripts";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { commerce, buildMetadataFromBrand } from "@/lib/commerce";
-import { getCommerceProviderName } from "@/lib/commerce/config";
+import { buildMetadataFromBrand } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
+import { getCommerceProviderName, isShopifyProvider } from "@/lib/commerce/config";
+import { fetchShopifyLocalization } from "@/lib/commerce/shopify/localization";
+import { htmlLangFromMarket } from "@/lib/commerce/shopify/market-context";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -36,11 +39,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const brand = await commerce.getBrand();
+  const cartMode = getCommerceProviderName();
+  const localization = isShopifyProvider() ? await fetchShopifyLocalization() : null;
+  const market = localization?.market ?? null;
+  const lang = market
+    ? htmlLangFromMarket({ country: market.country, language: market.language })
+    : "en";
+
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang={lang} className={`${display.variable} ${sans.variable}`}>
       <body>
         <AnalyticsScripts />
-        <Providers brand={brand} cartMode={getCommerceProviderName()}>
+        <Providers brand={brand} cartMode={cartMode} market={market} localization={localization}>
           <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <main className="flex-1">{children}</main>

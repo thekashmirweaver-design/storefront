@@ -1,14 +1,16 @@
 "use client";
 
 import { AnimatedDisclosure } from "@/components/site/AnimatedDisclosure";
-import type { CommerceCollection, CommerceProductCategory } from "@/lib/commerce";
+import type { CommerceCollection } from "@/lib/commerce";
 
 import {
+  formatProductPrice,
   CATEGORY_OPTIONS,
   type ListingFacets,
   type ListingSort,
   type ListingState,
 } from "./listing-state";
+import { useCommerce } from "@/lib/commerce/client";
 
 function FilterGroup({
   title,
@@ -25,9 +27,7 @@ function FilterGroup({
       className="border-b border-border/40 py-4"
       triggerClassName="py-0"
       contentClassName="pt-4 space-y-2 text-xs text-muted-foreground"
-      title={
-        <span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>
-      }
+      title={<span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>}
     >
       {children}
     </AnimatedDisclosure>
@@ -55,9 +55,11 @@ export function ProductFilters({
   showCategoryFilter = true,
   idPrefix = "filter",
 }: ProductFiltersProps) {
+  const { market } = useCommerce();
+  const priceLocale = market?.locale;
   const categoryOptions = facets.categories.length > 0 ? facets.categories : CATEGORY_OPTIONS;
 
-  const toggleCategory = (value: CommerceProductCategory) => {
+  const toggleCategory = (value: string) => {
     const next = state.categories.includes(value)
       ? state.categories.filter((c) => c !== value)
       : [...state.categories, value];
@@ -166,9 +168,9 @@ export function ProductFilters({
               aria-label="Maximum price"
             />
             <div className="flex justify-between mt-2 text-[0.65rem] text-muted-foreground">
-              <span>${facets.priceMin}</span>
+              <span>{formatProductPrice(facets.priceMin, facets.currencyCode, priceLocale)}</span>
               <span>
-                ${state.maxPrice}
+                {formatProductPrice(state.maxPrice, facets.currencyCode, priceLocale)}
                 {state.maxPrice >= facets.priceMax ? "+" : ""}
               </span>
             </div>

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { JournalClient } from "@/components/site/JournalClient";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();

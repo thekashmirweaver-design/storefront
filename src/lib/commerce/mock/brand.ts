@@ -1,1 +1,1 @@
-export { brandConfig as mockBrand } from "../brand/config";
+export { mockBrandConfig as mockBrand } from "./brand-config";

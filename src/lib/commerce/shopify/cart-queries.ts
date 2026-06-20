@@ -326,3 +326,43 @@ export const CART_LINES_REMOVE_MUTATION_NO_INVENTORY = `
     }
   }
 `;
+
+export const CART_BUYER_IDENTITY_UPDATE_MUTATION = `
+  ${CART_FRAGMENT}
+  mutation CartBuyerIdentityUpdate($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart {
+        ...CartFields
+      }
+      userErrors {
+        field
+        message
+      }
+      warnings {
+        code
+        message
+        target
+      }
+    }
+  }
+`;
+
+export const CART_BUYER_IDENTITY_UPDATE_MUTATION_NO_INVENTORY = `
+  ${CART_FRAGMENT_NO_INVENTORY}
+  mutation CartBuyerIdentityUpdateNoInventory($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart {
+        ...CartFieldsNoInventory
+      }
+      userErrors {
+        field
+        message
+      }
+      warnings {
+        code
+        message
+        target
+      }
+    }
+  }
+`;

@@ -2,7 +2,8 @@ import { unstable_cache } from "next/cache";
 
 import { getSiteUrl } from "@/lib/site-url";
 
-import { brandDefaults } from "../brand/config";
+import { brandLegalRoutes, defaultLogoDimensions } from "../brand/config";
+import { CommerceConfigError } from "../errors";
 import type { BrandConfig, BrandCopy, CommerceImage } from "../types";
 import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
 import { getShopifyClient } from "./client";
@@ -12,6 +13,7 @@ export const SHOPIFY_MAIN_MENU_HANDLE = "main-menu";
 export const SHOPIFY_FOOTER_MENU_HANDLE = "footer";
 
 const BRAND_REVALIDATE_SECONDS = 300;
+const SEED_HINT = "Run `pnpm seed:shopify -- --brand-only` after partner app install.";
 
 type ShopifyMetafield = { value?: string | null } | null;
 
@@ -21,38 +23,40 @@ type ShopifyMenuItem = {
   items?: ShopifyMenuItem[];
 };
 
+type ShopifyBrandShop = {
+  name?: string | null;
+  privacyPolicy?: { url?: string | null } | null;
+  termsOfService?: { url?: string | null } | null;
+  brandIdMetafield?: ShopifyMetafield;
+  brandTaglineMetafield?: ShopifyMetafield;
+  contactEmailMetafield?: ShopifyMetafield;
+  contactPhoneMetafield?: ShopifyMetafield;
+  contactAddressMetafield?: ShopifyMetafield;
+  contactHoursMetafield?: ShopifyMetafield;
+  socialFacebookMetafield?: ShopifyMetafield;
+  socialYoutubeMetafield?: ShopifyMetafield;
+  socialInstagramMetafield?: ShopifyMetafield;
+  socialPinterestMetafield?: ShopifyMetafield;
+  seoDefaultTitleMetafield?: ShopifyMetafield;
+  seoTitleTemplateMetafield?: ShopifyMetafield;
+  seoDefaultDescriptionMetafield?: ShopifyMetafield;
+  seoOgTitleMetafield?: ShopifyMetafield;
+  seoOgDescriptionMetafield?: ShopifyMetafield;
+  productNounMetafield?: ShopifyMetafield;
+  brandOriginMetafield?: ShopifyMetafield;
+  searchPlaceholderMetafield?: ShopifyMetafield;
+  copyJsonMetafield?: ShopifyMetafield;
+  logoUrlMetafield?: ShopifyMetafield;
+  logoWidthMetafield?: ShopifyMetafield;
+  logoHeightMetafield?: ShopifyMetafield;
+  footerDescriptionMetafield?: ShopifyMetafield;
+  newsletterTitleMetafield?: ShopifyMetafield;
+  newsletterDescriptionMetafield?: ShopifyMetafield;
+  newsletterPlaceholderMetafield?: ShopifyMetafield;
+};
+
 type ShopifyBrandResponse = {
-  shop?: {
-    name?: string | null;
-    privacyPolicy?: { url?: string | null } | null;
-    termsOfService?: { url?: string | null } | null;
-    brandIdMetafield?: ShopifyMetafield;
-    brandTaglineMetafield?: ShopifyMetafield;
-    contactEmailMetafield?: ShopifyMetafield;
-    contactPhoneMetafield?: ShopifyMetafield;
-    contactAddressMetafield?: ShopifyMetafield;
-    contactHoursMetafield?: ShopifyMetafield;
-    socialFacebookMetafield?: ShopifyMetafield;
-    socialYoutubeMetafield?: ShopifyMetafield;
-    socialInstagramMetafield?: ShopifyMetafield;
-    socialPinterestMetafield?: ShopifyMetafield;
-    seoDefaultTitleMetafield?: ShopifyMetafield;
-    seoTitleTemplateMetafield?: ShopifyMetafield;
-    seoDefaultDescriptionMetafield?: ShopifyMetafield;
-    seoOgTitleMetafield?: ShopifyMetafield;
-    seoOgDescriptionMetafield?: ShopifyMetafield;
-    productNounMetafield?: ShopifyMetafield;
-    brandOriginMetafield?: ShopifyMetafield;
-    searchPlaceholderMetafield?: ShopifyMetafield;
-    copyJsonMetafield?: ShopifyMetafield;
-    logoUrlMetafield?: ShopifyMetafield;
-    logoWidthMetafield?: ShopifyMetafield;
-    logoHeightMetafield?: ShopifyMetafield;
-    footerDescriptionMetafield?: ShopifyMetafield;
-    newsletterTitleMetafield?: ShopifyMetafield;
-    newsletterDescriptionMetafield?: ShopifyMetafield;
-    newsletterPlaceholderMetafield?: ShopifyMetafield;
-  } | null;
+  shop?: ShopifyBrandShop | null;
   mainMenu?: { title?: string | null; items?: ShopifyMenuItem[] } | null;
   footerMenu?: { title?: string | null; items?: ShopifyMenuItem[] } | null;
 };
@@ -64,37 +68,49 @@ function metafieldValue(metafield?: ShopifyMetafield): string | undefined {
   return value || undefined;
 }
 
-function metafieldInteger(metafield?: ShopifyMetafield, fallback?: number): number | undefined {
+function metafieldInteger(metafield?: ShopifyMetafield): number | undefined {
   const raw = metafieldValue(metafield);
-  if (!raw) return fallback;
+  if (!raw) return undefined;
   const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) ? parsed : fallback;
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function parseBrandCopyJson(raw: string | undefined): BrandCopyJson | undefined {
-  if (!raw) return undefined;
+function requireMetafield(label: string, value: string | undefined): string {
+  if (!value) {
+    throw new CommerceConfigError(`Shopify brand metafield "${label}" is missing. ${SEED_HINT}`);
+  }
+  return value;
+}
+
+function parseBrandCopyJson(raw: string): BrandCopyJson {
   try {
     const parsed = JSON.parse(raw) as Partial<BrandCopyJson>;
-    if (!parsed || typeof parsed !== "object") return undefined;
-    return {
-      pages: { ...brandDefaults.copy.pages, ...parsed.pages },
-      messages: { ...brandDefaults.copy.messages, ...parsed.messages },
-    };
-  } catch {
-    return undefined;
+    if (!parsed || typeof parsed !== "object" || !parsed.pages || !parsed.messages) {
+      throw new Error("copy_json must include pages and messages");
+    }
+    return { pages: parsed.pages, messages: parsed.messages };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new CommerceConfigError(
+      `Invalid Shopify brand metafield "copy_json": ${detail}. ${SEED_HINT}`,
+    );
   }
 }
 
-function mapBrandCopy(shop: NonNullable<ShopifyBrandResponse["shop"]>): BrandCopy {
-  const copyJson = parseBrandCopyJson(metafieldValue(shop.copyJsonMetafield));
+function mapBrandCopy(shop: ShopifyBrandShop): BrandCopy {
+  const copyJson = parseBrandCopyJson(
+    requireMetafield("copy_json", metafieldValue(shop.copyJsonMetafield)),
+  );
 
   return {
-    productNoun: metafieldValue(shop.productNounMetafield) ?? brandDefaults.copy.productNoun,
-    origin: metafieldValue(shop.brandOriginMetafield) ?? brandDefaults.copy.origin,
-    searchPlaceholder:
-      metafieldValue(shop.searchPlaceholderMetafield) ?? brandDefaults.copy.searchPlaceholder,
-    pages: copyJson?.pages ?? brandDefaults.copy.pages,
-    messages: copyJson?.messages ?? brandDefaults.copy.messages,
+    productNoun: requireMetafield("product_noun", metafieldValue(shop.productNounMetafield)),
+    origin: requireMetafield("brand_origin", metafieldValue(shop.brandOriginMetafield)),
+    searchPlaceholder: requireMetafield(
+      "search_placeholder",
+      metafieldValue(shop.searchPlaceholderMetafield),
+    ),
+    pages: copyJson.pages,
+    messages: copyJson.messages,
   };
 }
 
@@ -124,7 +140,11 @@ function mapHeaderNav(
   items: ShopifyMenuItem[] | undefined,
   siteUrl: string,
 ): BrandConfig["headerNav"] {
-  if (!items?.length) return brandDefaults.headerNav;
+  if (!items?.length) {
+    throw new CommerceConfigError(
+      `Shopify menu "${SHOPIFY_MAIN_MENU_HANDLE}" is missing or empty. ${SEED_HINT}`,
+    );
+  }
 
   return items.map((item) => ({
     label: item.title,
@@ -136,7 +156,11 @@ function mapFooterMenus(
   items: ShopifyMenuItem[] | undefined,
   siteUrl: string,
 ): BrandConfig["footerMenus"] {
-  if (!items?.length) return brandDefaults.footerMenus;
+  if (!items?.length) {
+    throw new CommerceConfigError(
+      `Shopify menu "${SHOPIFY_FOOTER_MENU_HANDLE}" is missing or empty. ${SEED_HINT}`,
+    );
+  }
 
   const columns = items
     .map((column) => {
@@ -154,22 +178,18 @@ function mapFooterMenus(
     })
     .filter((column): column is BrandConfig["footerMenus"][number] => column !== null);
 
-  return columns.length ? columns : brandDefaults.footerMenus;
-}
-
-function resolveLogo(
-  src: string | undefined,
-  name: string,
-  width?: number,
-  height?: number,
-): CommerceImage {
-  const logoWidth = width ?? brandDefaults.logo.width;
-  const logoHeight = height ?? brandDefaults.logo.height;
-
-  if (!src) {
-    return { ...brandDefaults.logo, alt: name, width: logoWidth, height: logoHeight };
+  if (!columns.length) {
+    throw new CommerceConfigError(
+      `Shopify menu "${SHOPIFY_FOOTER_MENU_HANDLE}" has no usable links. ${SEED_HINT}`,
+    );
   }
 
+  return columns;
+}
+
+function resolveLogo(src: string, name: string, width?: number, height?: number): CommerceImage {
+  const logoWidth = width ?? defaultLogoDimensions.width;
+  const logoHeight = height ?? defaultLogoDimensions.height;
   const siteUrl = getSiteUrl();
   let logoSrc = src.trim();
 
@@ -189,7 +209,7 @@ function resolveLogo(
       ) {
         logoSrc = isShopifyCdn
           ? logoSrc
-          : `${parsed.pathname}${parsed.search}` || brandDefaults.logo.src;
+          : `${parsed.pathname}${parsed.search}` || "/images/kashmir-weaver-logo.png";
       }
     } catch {
       // keep original src
@@ -206,62 +226,79 @@ function resolveLogo(
 
 function mapShopifyBrand(data: ShopifyBrandResponse): BrandConfig {
   const shop = data.shop;
+  if (!shop) {
+    throw new CommerceConfigError(`Shopify shop payload missing. ${SEED_HINT}`);
+  }
+
   const siteUrl = getSiteUrl();
-  const name = shop?.name?.trim() || brandDefaults.name;
+  const name = shop.name?.trim();
+  if (!name) {
+    throw new CommerceConfigError(`Shopify shop.name is missing. ${SEED_HINT}`);
+  }
+
+  const logoUrl = requireMetafield("logo_url", metafieldValue(shop.logoUrlMetafield));
 
   return {
-    id: metafieldValue(shop?.brandIdMetafield) ?? brandDefaults.id,
+    id: requireMetafield("brand_id", metafieldValue(shop.brandIdMetafield)),
     name,
-    tagline: metafieldValue(shop?.brandTaglineMetafield) ?? brandDefaults.tagline,
+    tagline: requireMetafield("brand_tagline", metafieldValue(shop.brandTaglineMetafield)),
     siteUrl,
     logo: resolveLogo(
-      metafieldValue(shop?.logoUrlMetafield),
+      logoUrl,
       name,
-      metafieldInteger(shop?.logoWidthMetafield),
-      metafieldInteger(shop?.logoHeightMetafield),
+      metafieldInteger(shop.logoWidthMetafield),
+      metafieldInteger(shop.logoHeightMetafield),
     ),
     contact: {
-      email: metafieldValue(shop?.contactEmailMetafield) ?? brandDefaults.contact.email,
-      phone: metafieldValue(shop?.contactPhoneMetafield) ?? brandDefaults.contact.phone,
-      address: metafieldValue(shop?.contactAddressMetafield) ?? brandDefaults.contact.address,
-      hours: metafieldValue(shop?.contactHoursMetafield) ?? brandDefaults.contact.hours,
+      email: requireMetafield("contact_email", metafieldValue(shop.contactEmailMetafield)),
+      phone: requireMetafield("contact_phone", metafieldValue(shop.contactPhoneMetafield)),
+      address: requireMetafield("contact_address", metafieldValue(shop.contactAddressMetafield)),
+      hours: requireMetafield("contact_hours", metafieldValue(shop.contactHoursMetafield)),
     },
     social: {
-      facebook: metafieldValue(shop?.socialFacebookMetafield) ?? brandDefaults.social.facebook,
-      youtube: metafieldValue(shop?.socialYoutubeMetafield) ?? brandDefaults.social.youtube,
-      instagram: metafieldValue(shop?.socialInstagramMetafield) ?? brandDefaults.social.instagram,
-      pinterest: metafieldValue(shop?.socialPinterestMetafield) ?? brandDefaults.social.pinterest,
+      facebook: metafieldValue(shop.socialFacebookMetafield),
+      youtube: metafieldValue(shop.socialYoutubeMetafield),
+      instagram: metafieldValue(shop.socialInstagramMetafield),
+      pinterest: metafieldValue(shop.socialPinterestMetafield),
     },
     seo: {
-      defaultTitle:
-        metafieldValue(shop?.seoDefaultTitleMetafield) ?? brandDefaults.seo.defaultTitle,
-      titleTemplate:
-        metafieldValue(shop?.seoTitleTemplateMetafield) ?? brandDefaults.seo.titleTemplate,
-      defaultDescription:
-        metafieldValue(shop?.seoDefaultDescriptionMetafield) ??
-        brandDefaults.seo.defaultDescription,
-      ogTitle: metafieldValue(shop?.seoOgTitleMetafield) ?? brandDefaults.seo.ogTitle,
-      ogDescription:
-        metafieldValue(shop?.seoOgDescriptionMetafield) ?? brandDefaults.seo.ogDescription,
+      defaultTitle: requireMetafield(
+        "seo_default_title",
+        metafieldValue(shop.seoDefaultTitleMetafield),
+      ),
+      titleTemplate: requireMetafield(
+        "seo_title_template",
+        metafieldValue(shop.seoTitleTemplateMetafield),
+      ),
+      defaultDescription: requireMetafield(
+        "seo_default_description",
+        metafieldValue(shop.seoDefaultDescriptionMetafield),
+      ),
+      ogTitle: requireMetafield("seo_og_title", metafieldValue(shop.seoOgTitleMetafield)),
+      ogDescription: requireMetafield(
+        "seo_og_description",
+        metafieldValue(shop.seoOgDescriptionMetafield),
+      ),
     },
     headerNav: mapHeaderNav(data.mainMenu?.items, siteUrl),
     footerMenus: mapFooterMenus(data.footerMenu?.items, siteUrl),
-    footerDescription:
-      metafieldValue(shop?.footerDescriptionMetafield) ?? brandDefaults.footerDescription,
+    footerDescription: requireMetafield(
+      "footer_description",
+      metafieldValue(shop.footerDescriptionMetafield),
+    ),
     newsletter: {
-      title: metafieldValue(shop?.newsletterTitleMetafield) ?? brandDefaults.newsletter.title,
-      description:
-        metafieldValue(shop?.newsletterDescriptionMetafield) ??
-        brandDefaults.newsletter.description,
-      placeholder:
-        metafieldValue(shop?.newsletterPlaceholderMetafield) ??
-        brandDefaults.newsletter.placeholder,
+      title: requireMetafield("newsletter_title", metafieldValue(shop.newsletterTitleMetafield)),
+      description: requireMetafield(
+        "newsletter_description",
+        metafieldValue(shop.newsletterDescriptionMetafield),
+      ),
+      placeholder: requireMetafield(
+        "newsletter_placeholder",
+        metafieldValue(shop.newsletterPlaceholderMetafield),
+      ),
     },
-    legal: {
-      privacyPolicyUrl: brandDefaults.legal.privacyPolicyUrl,
-      termsUrl: brandDefaults.legal.termsUrl,
-    },
-    copy: shop ? mapBrandCopy(shop) : brandDefaults.copy,
+    legal: brandLegalRoutes,
+    copy: mapBrandCopy(shop),
   };
 }
 
@@ -282,7 +319,7 @@ async function fetchShopifyBrand(): Promise<BrandConfig> {
 }
 
 export async function getShopifyBrand(): Promise<BrandConfig> {
-  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v5"], {
+  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v6"], {
     revalidate: BRAND_REVALIDATE_SECONDS,
     tags: [SHOPIFY_CACHE_TAGS.brand],
   })();

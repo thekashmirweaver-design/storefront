@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { commerce } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const brand = await commerce.getBrand();

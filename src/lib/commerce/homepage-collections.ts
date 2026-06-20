@@ -1,4 +1,4 @@
-import { commerce } from "./factory";
+import { commerce } from "./server";
 import type { HomepageCollectionSection } from "./types";
 
 const HOMEPAGE_SECTION_LIMIT = 3;

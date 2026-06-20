@@ -6,6 +6,7 @@ import { Search, User, ShoppingBag, Menu, X, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BrandLockup } from "@/components/site/BrandLockup";
+import { MarketSelector } from "@/components/site/MarketSelector";
 import { useCommerce } from "@/lib/commerce/client";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +15,17 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const { brand, cart, shopifyCart, cartMode, wishlist, setCartOpen, setSearchOpen } =
-    useCommerce();
+  const {
+    brand,
+    cart,
+    shopifyCart,
+    cartMode,
+    wishlist,
+    market,
+    localization,
+    setCartOpen,
+    setSearchOpen,
+  } = useCommerce();
   const cartCount =
     cartMode === "shopify"
       ? (shopifyCart?.lines.reduce((s, line) => s + line.quantity, 0) ?? 0)
@@ -86,6 +96,9 @@ export function Header() {
             >
               <User className="h-4 w-4" />
             </Link>
+            {cartMode === "shopify" && market && localization?.countries.length ? (
+              <MarketSelector market={market} countries={localization.countries} />
+            ) : null}
             <button
               onClick={() => setCartOpen(true)}
               className="hover:text-gold transition-colors relative"

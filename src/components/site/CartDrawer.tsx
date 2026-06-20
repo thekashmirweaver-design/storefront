@@ -26,7 +26,9 @@ export function CartDrawer() {
     removeFromCart,
     clearCart,
     resolveProducts,
+    market,
   } = useCommerce();
+  const priceLocale = market?.locale;
   const isShopifyCart = cartMode === "shopify";
   const [products, setProducts] = useState<CommerceProduct[]>([]);
 
@@ -192,7 +194,11 @@ export function CartDrawer() {
                               </button>
                             </div>
                             <p className="text-sm text-gold">
-                              {formatProductPrice(lineTotal.amount, lineTotal.currencyCode)}
+                              {formatProductPrice(
+                                lineTotal.amount,
+                                lineTotal.currencyCode,
+                                priceLocale,
+                              )}
                             </p>
                           </div>
                         </div>
@@ -264,6 +270,7 @@ export function CartDrawer() {
                               {formatProductPrice(
                                 i.product.price.amount * i.qty,
                                 i.product.price.currencyCode,
+                                priceLocale,
                               )}
                             </p>
                           </div>
@@ -279,7 +286,11 @@ export function CartDrawer() {
                   Subtotal
                 </span>
                 <span className="text-gold">
-                  {formatProductPrice(subtotal?.amount ?? 0, subtotal?.currencyCode ?? "USD")}
+                  {formatProductPrice(
+                    subtotal?.amount ?? 0,
+                    subtotal?.currencyCode ?? "USD",
+                    priceLocale,
+                  )}
                 </span>
               </div>
               <p className="text-[0.65rem] text-muted-foreground leading-relaxed">

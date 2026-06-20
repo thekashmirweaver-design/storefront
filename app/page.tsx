@@ -7,7 +7,8 @@ import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
 import { Marquee } from "@/components/site/Marquee";
 import { editorialIcon } from "@/lib/commerce/editorial-icons";
-import { commerce, buildPageMetadata, getHomepageCollectionSections } from "@/lib/commerce";
+import { buildPageMetadata, getHomepageCollectionSections } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [brand, editorial] = await Promise.all([

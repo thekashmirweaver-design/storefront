@@ -116,6 +116,11 @@ function hasColorOption(options?: ShopifyProductNode["options"]): boolean {
   return options?.some((o) => o.name.toLowerCase() === "color") ?? false;
 }
 
+function normalizeColorHex(hex: string): string {
+  const trimmed = hex.trim();
+  return trimmed.startsWith("#") ? trimmed.toLowerCase() : `#${trimmed.toLowerCase()}`;
+}
+
 function resolveColorSwatchFromOptions(
   options: ShopifyProductNode["options"] | undefined,
   colorName: string,
@@ -124,7 +129,8 @@ function resolveColorSwatchFromOptions(
   const match = colorOption?.optionValues?.find(
     (v) => v.name.toLowerCase() === colorName.toLowerCase(),
   );
-  return match?.swatch?.color?.trim() || undefined;
+  const swatch = match?.swatch?.color?.trim();
+  return swatch ? normalizeColorHex(swatch) : undefined;
 }
 
 /** Deterministic hex for unknown Color option values (avoids hardcoded opal fallback). */
@@ -150,7 +156,7 @@ function resolveProductColor(
       COLOR_HEX_BY_NAME[normalized] ??
       resolveColorSwatchFromOptions(node.options, colorName) ??
       (colorOptionExists ? hashColorName(colorName) : undefined);
-    if (hex) return { hex, name: colorName };
+    if (hex) return { hex: normalizeColorHex(hex), name: colorName };
   }
 
   if (colorOptionExists) {
@@ -372,8 +378,12 @@ export function applyClientFilters(
     list = list.filter((p) => cats.has(p.category));
   }
   if (filters?.colors?.length) {
-    const colors = new Set(filters.colors);
-    list = list.filter((p) => colors.has(p.colorHex));
+    const colors = new Set(filters.colors.map(normalizeColorHex));
+    list = list.filter((p) => colors.has(normalizeColorHex(p.colorHex)));
+  }
+  if (filters?.collectionSlugs?.length) {
+    const slugs = new Set(filters.collectionSlugs);
+    list = list.filter((p) => p.collectionSlug && slugs.has(p.collectionSlug));
   }
   if (filters?.maxPrice != null) {
     list = list.filter((p) => p.price.amount <= filters.maxPrice!);

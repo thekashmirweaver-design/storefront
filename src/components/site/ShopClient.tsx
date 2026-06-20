@@ -3,7 +3,7 @@
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { ProductListing } from "@/components/site/ProductListing";
 import type { CommerceCollection, CommerceColor, CommerceProduct } from "@/lib/commerce";
-import { brandText } from "@/lib/commerce";
+import { brandText } from "@/lib/commerce/brand/text";
 import { useCommerce } from "@/lib/commerce/client";
 
 export function ShopClient({

@@ -10,6 +10,26 @@ export type CommerceMoney = {
   currencyCode: string;
 };
 
+export type CommerceMarketContext = {
+  country: string;
+  language: string;
+  currencyCode: string;
+  locale: string;
+};
+
+export type CommerceCountryOption = {
+  isoCode: string;
+  name: string;
+  currencyCode: string;
+  currencyName?: string;
+};
+
+export type CommerceLocalization = {
+  market: CommerceMarketContext;
+  countries: CommerceCountryOption[];
+  languages: { isoCode: string; endonymName: string }[];
+};
+
 export type CommerceProductCategory = "signature" | "lightweight" | "bridal" | "limited";
 
 export type CommerceProduct = {

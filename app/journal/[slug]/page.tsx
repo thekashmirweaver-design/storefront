@@ -5,7 +5,8 @@ import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
 import { ArticleBody } from "@/components/site/ArticleBody";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 import { deriveJournalCategories } from "@/lib/commerce/journal-categories";
 
 type Props = { params: Promise<{ slug: string }> };

@@ -23,8 +23,16 @@ function categoryBadgeLabel(category: CommerceProduct["category"]): string | nul
 }
 
 export function ProductCard({ product }: { product: CommerceProduct }) {
-  const { addToCart, toggleWishlist, inWishlist, setCartOpen, cart, shopifyCart, cartMode } =
-    useCommerce();
+  const {
+    addToCart,
+    toggleWishlist,
+    inWishlist,
+    setCartOpen,
+    cart,
+    shopifyCart,
+    cartMode,
+    market,
+  } = useCommerce();
   const liked = inWishlist(product.slug);
   const primary = product.images[0];
   const secondary = product.images[1];
@@ -147,12 +155,15 @@ export function ProductCard({ product }: { product: CommerceProduct }) {
           {product.categoryLabel}
         </p>
         <p className="text-sm text-gold pt-1 flex items-baseline gap-2">
-          <span>{formatProductPrice(product.price.amount, product.price.currencyCode)}</span>
+          <span>
+            {formatProductPrice(product.price.amount, product.price.currencyCode, market?.locale)}
+          </span>
           {productHasCompareAt(product) && product.compareAtPrice && (
             <span className="text-xs text-muted-foreground line-through">
               {formatProductPrice(
                 product.compareAtPrice.amount,
                 product.compareAtPrice.currencyCode,
+                market?.locale,
               )}
             </span>
           )}

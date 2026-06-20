@@ -10,7 +10,14 @@ import {
   type ReactNode,
 } from "react";
 
-import type { BrandConfig, CommerceCart, CommerceCartWarning, CommerceProduct } from "../types";
+import type {
+  BrandConfig,
+  CommerceCart,
+  CommerceCartWarning,
+  CommerceLocalization,
+  CommerceMarketContext,
+  CommerceProduct,
+} from "../types";
 import { brandStorageKey } from "../brand/text";
 import { formatCartWarningMessage } from "../cart-errors";
 import {
@@ -41,6 +48,8 @@ export type CommerceCartMode = "mock" | "shopify";
 type CommerceContextValue = {
   brand: BrandConfig;
   cartMode: CommerceCartMode;
+  market: CommerceMarketContext | null;
+  localization: CommerceLocalization | null;
   cart: CartItem[];
   shopifyCart: CommerceCart | null;
   cartLoading: boolean;
@@ -87,10 +96,14 @@ function mockStockWarning(requested: number, actual: number): CommerceCartWarnin
 export function CommerceProvider({
   brand,
   cartMode = "mock",
+  market = null,
+  localization = null,
   children,
 }: {
   brand: BrandConfig;
   cartMode?: CommerceCartMode;
+  market?: CommerceMarketContext | null;
+  localization?: CommerceLocalization | null;
   children: ReactNode;
 }) {
   const isShopifyCart = cartMode === "shopify";
@@ -332,6 +345,8 @@ export function CommerceProvider({
     () => ({
       brand,
       cartMode,
+      market,
+      localization,
       cart,
       shopifyCart,
       cartLoading,
@@ -351,6 +366,8 @@ export function CommerceProvider({
     [
       brand,
       cartMode,
+      market,
+      localization,
       cart,
       shopifyCart,
       cartLoading,

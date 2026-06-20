@@ -93,7 +93,7 @@ flowchart LR
 - Homepage hero, value props, marquee, legacy, quote via app metaobjects + [`getHomepageEditorial()`](../src/lib/commerce/shopify/editorial.ts)
 - Our Story, Craftsmanship, journal index hero via app metaobjects + shop metafields
 - Cart & checkout — Storefront Cart API, httpOnly `cartId` cookie, `checkoutUrl` redirect
-- Brand, nav, footer — shop metafields + Storefront menus (falls back to `brandConfig` when unseeded)
+- Brand, nav, footer — shop metafields + Storefront menus (strict: throws `CommerceConfigError` when unseeded; run `pnpm seed:shopify -- --brand-only`)
 - FAQs — app metaobject `$app:faq` (falls back to `mockFaqs` when unseeded or API error)
 - Shop policies — PDP Shipping & Returns accordions; footer privacy/terms via Shopify-hosted policy URLs
 - Newsletter + contact — Admin `customerCreate` / consent / notes (requires `SHOPIFY_ADMIN_ACCESS_TOKEN` at runtime)
@@ -320,12 +320,12 @@ Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP an
 |---------|---------|-----|
 | Header nav | Storefront `menu(handle: "main-menu")` | `getShopifyBrand()` → `headerNav` |
 | Footer menus | Storefront `menu(handle: "footer")` nested items | `footerMenus` |
-| Logo | shop metafield `custom.logo_url` | `brand.logo` (static fallback) |
+| Logo | shop metafield `custom.logo_url` | `brand.logo`; width/height default via [`defaultLogoDimensions`](../src/lib/commerce/brand/config.ts) when metafields omit them |
 | Name, tagline, contact, social, SEO | shop metafields + `shop.name` | `BrandConfig` |
 | Newsletter copy | shop metafields | `brand.newsletter` (submit via Admin API — Phase 5) |
 | Privacy / Terms links | `shop.privacyPolicy.url`, `shop.termsOfService.url` | Footer `<a>` (Shopify-hosted policy URLs) |
 
-Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collections/…`), not theme URLs. Falls back to [`brandConfig`](../src/lib/commerce/brand/config.ts) when menus or metafields are missing.
+Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collections/…`), not theme URLs. Missing menus or required metafields throw `CommerceConfigError` — no static brand fallback. [`brand/config.ts`](../src/lib/commerce/brand/config.ts) holds shared constants only (`brandLegalRoutes`, `defaultLogoDimensions`).
 
 **Requires:** Storefront token (read); Admin `write_online_store_navigation` for seed (`pnpm seed:shopify`). Brand cached ~300s via `unstable_cache`.
 
@@ -335,7 +335,7 @@ Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collectio
 
 - **Date:** 2026-06-20
 - **What was done:**
-  - **Storefront brand read:** [`brand.ts`](../src/lib/commerce/shopify/brand.ts) — `getShopifyBrand()` merges `SHOP_BRAND_QUERY` (shop metafields, policy URLs, menus) with `brandConfig` for `copy.pages` templates
+  - **Storefront brand read:** [`brand.ts`](../src/lib/commerce/shopify/brand.ts) — `getShopifyBrand()` maps `SHOP_BRAND_QUERY` (shop metafields, policy URLs, menus); `copy.pages` / `copy.messages` from `copy_json` metafield; legal routes from [`brandLegalRoutes`](../src/lib/commerce/brand/config.ts)
   - **Provider:** [`shopify/provider.ts`](../src/lib/commerce/shopify/provider.ts) `getBrand()` → cached Shopify brand (mock unchanged)
   - **Queries:** extended [`SHOP_CONTEXT_QUERY`](../src/lib/commerce/shopify/queries.ts) + `SHOP_BRAND_QUERY` with brand metafields; Storefront `menu(handle:)` for `main-menu` and `footer`
   - **Seed:** 18 shop metafield definitions/values + navigation menus in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs) / [`seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs) (`menuCreate` / `menuUpdate`, graceful skip if scope missing)
@@ -343,7 +343,7 @@ Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collectio
   - **Header/Footer:** unchanged components — already consume `brand` from commerce context
 - **Verify:** `pnpm build:mock`; `pnpm build:shopify`; `pnpm verify:shopify`
 - **Admin menus:** Online Store → Navigation → menus `main-menu`, `footer` (after seed)
-- **Blocker note:** Partner app needs `write_online_store_navigation` to seed menus; without it, app falls back to `brandConfig` nav
+- **Blocker note:** Partner app needs `write_online_store_navigation` to seed menus; without seed, Shopify builds fail with `CommerceConfigError` on missing nav
 
 ---
 
@@ -470,7 +470,7 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 ## Phase 8 — Polish and operations
 
-**Status:** done (B2B / full Markets UI deferred)
+**Status:** done (B2B deferred)
 
 - Markets / multi-currency
 - Predictive search
@@ -489,7 +489,7 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 - [x] **Analytics / pixels (optional env)** — [`AnalyticsScripts`](../src/components/site/AnalyticsScripts.tsx) in root layout injects GA4 when `NEXT_PUBLIC_GA_ID` is set; `NEXT_PUBLIC_SHOPIFY_WEB_PIXEL_ID` reserved placeholder.
 
-- [x] **Markets / multi-currency (stub)** — [`market-context.ts`](../src/lib/commerce/shopify/market-context.ts) injects `@inContext(country, language)` on Storefront queries when `NEXT_PUBLIC_SHOPIFY_COUNTRY` / `NEXT_PUBLIC_SHOPIFY_LANGUAGE` are set. Full market picker / geo routing deferred.
+- [x] **Markets / multi-currency** — Cookie-driven `@inContext(country, language)` via [`market-context.ts`](../src/lib/commerce/shopify/market-context.ts) + [`localization.ts`](../src/lib/commerce/shopify/localization.ts). Header [`MarketSelector`](../src/components/site/MarketSelector.tsx) persists market cookies; cart uses `buyerIdentity.countryCode`; [`formatCommerceMoney`](../src/lib/commerce/money.ts) for Intl price formatting. Env `NEXT_PUBLIC_SHOPIFY_COUNTRY` / `LANGUAGE` seed defaults. Verify: `pnpm verify:shopify:markets`.
 
 - [x] **PDP description dedupe** — [`ProductClient`](../src/components/site/ProductClient.tsx) shows inline description only for plain Shopify copy; rich `descriptionHtml` renders in accordion only.
 
@@ -605,7 +605,7 @@ pnpm checkout:branding
 
 | Item | Notes |
 |------|--------|
-| Full **Markets** UI | Env stub (`NEXT_PUBLIC_SHOPIFY_COUNTRY` / `LANGUAGE`) exists; no market picker |
+| Geo routing / auto-detect | Browser geo not implemented; customer picks country in header |
 | **B2B / wholesale** | Shopify Plus |
 | Standalone `/privacy` / `/terms` | On-site pages exist; footer uses them |
 | **Article webhooks** | Admin custom webhook for journal cache (partner app covers products/collections only) |

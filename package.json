@@ -15,6 +15,8 @@
     "verify:shopify": "node scripts/verify-shopify-connection.mjs",
     "verify:shopify:policies": "node scripts/verify-shopify-policies.mjs",
     "verify:shopify:inventory": "node scripts/verify-shopify-inventory.mjs",
+    "verify:shopify:markets": "node scripts/verify-shopify-markets.mjs",
+    "test:money": "node --test src/lib/commerce/money.test.mjs",
     "smoke:shopify:forms": "node scripts/smoke-shopify-forms.mjs",
     "test:shopify:webhook": "node scripts/test-shopify-webhook.mjs",
     "checkout:branding": "node scripts/apply-checkout-branding.mjs",

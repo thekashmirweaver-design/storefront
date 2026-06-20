@@ -1,14 +1,11 @@
-import type {
-  CommerceColor,
-  CommerceCollection,
-  CommerceProduct,
-  CommerceProductCategory,
-} from "@/lib/commerce";
+import type { CommerceColor, CommerceCollection, CommerceProduct } from "@/lib/commerce";
+import { formatCommerceMoney } from "@/lib/commerce/money";
 
 export type ListingSort = "featured" | "price-asc" | "price-desc" | "name";
 
 export type ListingState = {
-  categories: CommerceProductCategory[];
+  /** Selected category facet values (categoryLabel when derived from products). */
+  categories: string[];
   colors: string[];
   collectionSlugs: string[];
   maxPrice: number;
@@ -21,17 +18,23 @@ export const PER_PAGE = 9;
 
 export type ListingFacets = {
   colors: CommerceColor[];
-  categories: { value: CommerceProductCategory; label: string }[];
+  categories: { value: string; label: string }[];
   priceMin: number;
   priceMax: number;
+  currencyCode: string;
 };
 
-export const CATEGORY_OPTIONS: { value: CommerceProductCategory; label: string }[] = [
+export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "signature", label: "Signature" },
   { value: "lightweight", label: "Lightweight" },
   { value: "bridal", label: "Bridal" },
   { value: "limited", label: "Limited Editions" },
 ];
+
+function normalizeColorHex(hex: string): string {
+  const trimmed = hex.trim();
+  return trimmed.startsWith("#") ? trimmed.toLowerCase() : `#${trimmed.toLowerCase()}`;
+}
 
 /** Build filter options from the products visible on the current page (shop or collection). */
 export function deriveListingFacets(
@@ -43,32 +46,27 @@ export function deriveListingFacets(
   const colors: CommerceColor[] = [];
   const seenHex = new Set<string>();
   for (const product of products) {
-    const hex = product.colorHex;
+    const hex = normalizeColorHex(product.colorHex);
     if (seenHex.has(hex)) continue;
     seenHex.add(hex);
     colors.push({
       hex,
-      name:
-        product.colorName ??
-        colorNameByHex.get(hex.toLowerCase()) ??
-        product.name.split(" ")[0] ??
-        hex,
+      name: product.colorName ?? colorNameByHex.get(hex) ?? product.name.split(" ")[0] ?? hex,
     });
   }
 
-  const categoryMap = new Map<CommerceProductCategory, string>();
+  const categoryLabels = new Set<string>();
   for (const product of products) {
-    if (!categoryMap.has(product.category)) {
-      categoryMap.set(product.category, product.categoryLabel);
-    }
+    categoryLabels.add(product.categoryLabel);
   }
-  const categories = [...categoryMap.entries()].map(([value, label]) => ({ value, label }));
+  const categories = [...categoryLabels].map((label) => ({ value: label, label }));
 
   const amounts = products.map((p) => p.price.amount);
   const priceMin = amounts.length ? Math.min(...amounts) : 0;
   const priceMax = amounts.length ? Math.max(...amounts) : DEFAULT_MAX_PRICE;
+  const currencyCode = products[0]?.price.currencyCode ?? "USD";
 
-  return { colors, categories, priceMin, priceMax };
+  return { colors, categories, priceMin, priceMax, currencyCode };
 }
 
 export function defaultListingState(facets?: ListingFacets): ListingState {
@@ -112,12 +110,10 @@ export function parseListingState(
     : catalogMax;
 
   return {
-    categories: cats
-      ? cats
-          .split(",")
-          .filter((c): c is CommerceProductCategory => validCats.has(c as CommerceProductCategory))
+    categories: cats ? cats.split(",").filter((c) => validCats.has(c)) : [],
+    colors: colors
+      ? colors.split(",").map((h) => normalizeColorHex(h.startsWith("#") ? h : `#${h}`))
       : [],
-    colors: colors ? colors.split(",").map((h) => (h.startsWith("#") ? h : `#${h}`)) : [],
     collectionSlugs: lockedCollection ? [] : colls ? colls.split(",").filter(Boolean) : [],
     maxPrice: lockedCollection ? parsedMax : parsedMax,
     sort: sort && validSorts.has(sort as ListingSort) ? (sort as ListingSort) : "featured",
@@ -151,8 +147,8 @@ export function filterAndSortProducts(
   state: ListingState,
 ): CommerceProduct[] {
   let list = products.filter((p) => {
-    if (state.categories.length && !state.categories.includes(p.category)) return false;
-    if (state.colors.length && !state.colors.includes(p.colorHex)) return false;
+    if (state.categories.length && !state.categories.includes(p.categoryLabel)) return false;
+    if (state.colors.length && !state.colors.includes(normalizeColorHex(p.colorHex))) return false;
     if (
       state.collectionSlugs.length &&
       (!p.collectionSlug || !state.collectionSlugs.includes(p.collectionSlug))
@@ -234,7 +230,7 @@ export function buildActiveChips(
   if (state.maxPrice < facets.priceMax) {
     chips.push({
       key: "max-price",
-      label: `Under $${state.maxPrice}`,
+      label: `Under ${formatProductPrice(state.maxPrice, facets.currencyCode)}`,
       remove: () => ({ maxPrice: facets.priceMax, page: 1 }),
     });
   }
@@ -242,9 +238,8 @@ export function buildActiveChips(
   return chips;
 }
 
-export function formatProductPrice(amount: number, currencyCode: string): string {
-  if (currencyCode === "USD") return `$${amount}`;
-  return `${amount} ${currencyCode}`;
+export function formatProductPrice(amount: number, currencyCode: string, locale?: string): string {
+  return formatCommerceMoney(amount, currencyCode, locale);
 }
 
 export function productHasCompareAt(product: CommerceProduct): boolean {

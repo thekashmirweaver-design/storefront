@@ -26,7 +26,7 @@ import {
   getShopifyOurStoryContent,
 } from "./editorial";
 import { getShopifyFaqs } from "./faqs";
-import { createShopifyClient } from "./client";
+import { getShopifyClient } from "./client";
 import {
   applyClientFilters,
   mapShopifyArticle,
@@ -62,25 +62,27 @@ const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 /** Catalog reads from Shopify; brand + FAQs from Storefront when available; forms via Admin API. */
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
-  private client = createShopifyClient();
+
+  private async marketCacheKey(): Promise<string> {
+    const { resolveShopifyMarketContext } = await import("./market-context.server");
+    const { country, language } = await resolveShopifyMarketContext();
+    return `${country}-${language}`;
+  }
 
   async getBrand() {
     return getShopifyBrand();
   }
 
   async getProducts(filters?: ProductFilters) {
+    const marketKey = await this.marketCacheKey();
     const nodes = await withShopifyCache(
-      ["shopify-products", "v1"],
+      ["shopify-products", marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
+        const client = await getShopifyClient();
         const { data, errors } = await requestWithInventoryFallback<{
           products?: { nodes?: ShopifyProductNode[] };
-        }>(
-          this.client,
-          PRODUCTS_QUERY,
-          PRODUCTS_QUERY_NO_INVENTORY,
-          { variables: { first: 50 } },
-        );
+        }>(client, PRODUCTS_QUERY, PRODUCTS_QUERY_NO_INVENTORY, { variables: { first: 50 } });
         if (errors) throw new Error(`Shopify getProducts: ${JSON.stringify(errors)}`);
         return (data?.products?.nodes ?? []) as ShopifyProductNode[];
       },
@@ -92,18 +94,17 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getProductBySlug(slug: string) {
+    const marketKey = await this.marketCacheKey();
     const node = await withShopifyCache(
-      ["shopify-product", slug, "v1"],
+      ["shopify-product", slug, marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.catalog, shopifyProductTag(slug)],
       async () => {
+        const client = await getShopifyClient();
         const { data, errors } = await requestWithInventoryFallback<{
           product?: ShopifyProductNode | null;
-        }>(
-          this.client,
-          PRODUCT_BY_HANDLE_QUERY,
-          PRODUCT_BY_HANDLE_QUERY_NO_INVENTORY,
-          { variables: { handle: slug } },
-        );
+        }>(client, PRODUCT_BY_HANDLE_QUERY, PRODUCT_BY_HANDLE_QUERY_NO_INVENTORY, {
+          variables: { handle: slug },
+        });
         if (errors) throw new Error(`Shopify getProductBySlug: ${JSON.stringify(errors)}`);
         return (data?.product as ShopifyProductNode | null | undefined) ?? null;
       },
@@ -137,14 +138,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
 
   private async fetchProductRecommendations(productId: string, slug: string, limit: number) {
     try {
+      const client = await getShopifyClient();
       const { data, errors } = await requestWithInventoryFallback<{
         productRecommendations?: ShopifyProductNode[];
-      }>(
-        this.client,
-        PRODUCT_RECOMMENDATIONS_QUERY,
-        PRODUCT_RECOMMENDATIONS_QUERY_NO_INVENTORY,
-        { variables: { productId } },
-      );
+      }>(client, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCT_RECOMMENDATIONS_QUERY_NO_INVENTORY, {
+        variables: { productId },
+      });
       if (errors) return [];
       const nodes = (data?.productRecommendations ?? []) as ShopifyProductNode[];
       return nodes
@@ -167,11 +166,15 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getCollections() {
+    const marketKey = await this.marketCacheKey();
     const nodes = await withShopifyCache(
-      ["shopify-collections", "v1"],
+      ["shopify-collections", marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
-        const { data, errors } = await this.client.request(COLLECTIONS_QUERY, {
+        const client = await getShopifyClient();
+        const { data, errors } = await client.request<{
+          collections?: { nodes?: ShopifyCollectionNode[] };
+        }>(COLLECTIONS_QUERY, {
           variables: { first: 20 },
         });
         if (errors) throw new Error(`Shopify getCollections: ${JSON.stringify(errors)}`);
@@ -182,18 +185,17 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getCollectionBySlug(slug: string, filters?: ProductFilters) {
+    const marketKey = await this.marketCacheKey();
     const node = await withShopifyCache(
-      ["shopify-collection", slug, "v1"],
+      ["shopify-collection", slug, marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog, shopifyCollectionTag(slug)],
       async () => {
+        const client = await getShopifyClient();
         const { data, errors } = await requestWithInventoryFallback<{
           collection?: ShopifyCollectionNode | null;
-        }>(
-          this.client,
-          COLLECTION_BY_HANDLE_QUERY,
-          COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY,
-          { variables: { handle: slug, first: 50 } },
-        );
+        }>(client, COLLECTION_BY_HANDLE_QUERY, COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY, {
+          variables: { handle: slug, first: 50 },
+        });
         if (errors) throw new Error(`Shopify getCollectionBySlug: ${JSON.stringify(errors)}`);
         return (data?.collection as ShopifyCollectionNode | null | undefined) ?? null;
       },
@@ -213,11 +215,15 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getArticles(category?: string) {
+    const marketKey = await this.marketCacheKey();
     const nodes = await withShopifyCache(
-      ["shopify-articles", BLOG_HANDLE, "v1"],
+      ["shopify-articles", BLOG_HANDLE, marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.articles, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
-        const { data, errors } = await this.client.request(BLOG_ARTICLES_QUERY, {
+        const client = await getShopifyClient();
+        const { data, errors } = await client.request<{
+          blog?: { articles?: { nodes?: Parameters<typeof mapShopifyArticle>[0][] } };
+        }>(BLOG_ARTICLES_QUERY, {
           variables: { blogHandle: BLOG_HANDLE, first: 50 },
         });
         if (errors) throw new Error(`Shopify getArticles: ${JSON.stringify(errors)}`);
@@ -232,11 +238,15 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getArticleBySlug(slug: string) {
+    const marketKey = await this.marketCacheKey();
     const node = await withShopifyCache(
-      ["shopify-article", BLOG_HANDLE, slug, "v1"],
+      ["shopify-article", BLOG_HANDLE, slug, marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.articles, SHOPIFY_CACHE_TAGS.catalog, shopifyArticleTag(slug)],
       async () => {
-        const { data, errors } = await this.client.request(ARTICLE_BY_HANDLE_QUERY, {
+        const client = await getShopifyClient();
+        const { data, errors } = await client.request<{
+          blog?: { articleByHandle?: Parameters<typeof mapShopifyArticle>[0] | null };
+        }>(ARTICLE_BY_HANDLE_QUERY, {
           variables: { blogHandle: BLOG_HANDLE, articleHandle: slug },
         });
         if (errors) throw new Error(`Shopify getArticleBySlug: ${JSON.stringify(errors)}`);
@@ -264,10 +274,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   /** Storefront predictiveSearch for type-ahead; returns null when unsupported. */
   private async searchPredictive(q: string) {
     try {
+      const marketKey = await this.marketCacheKey();
       const data = await withShopifyCache(
-        ["shopify-predictive-search", q.toLowerCase(), "v1"],
+        ["shopify-predictive-search", q.toLowerCase(), marketKey, "v2"],
         [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],
         async () => {
+          const client = await getShopifyClient();
           const { data: searchData, errors } = await requestWithInventoryFallback<{
             predictiveSearch?: {
               products?: ShopifyProductNode[];
@@ -281,12 +293,9 @@ export class ShopifyCommerceProvider implements CommerceProvider {
                 image?: { url: string; altText?: string | null; width?: number; height?: number };
               }[];
             };
-          }>(
-            this.client,
-            PREDICTIVE_SEARCH_QUERY,
-            PREDICTIVE_SEARCH_QUERY_NO_INVENTORY,
-            { variables: { query: q, limit: 10 } },
-          );
+          }>(client, PREDICTIVE_SEARCH_QUERY, PREDICTIVE_SEARCH_QUERY_NO_INVENTORY, {
+            variables: { query: q, limit: 10 },
+          });
           if (errors) throw new Error(`Shopify predictiveSearch: ${JSON.stringify(errors)}`);
           return searchData;
         },
@@ -307,19 +316,16 @@ export class ShopifyCommerceProvider implements CommerceProvider {
 
   /** Fallback when predictiveSearch is unavailable. */
   private async searchLegacy(q: string) {
+    const marketKey = await this.marketCacheKey();
     const data = await withShopifyCache(
-      ["shopify-search", q.toLowerCase(), "v1"],
+      ["shopify-search", q.toLowerCase(), marketKey, "v2"],
       [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],
       async () => {
+        const client = await getShopifyClient();
         const { data: searchData, errors } = await requestWithInventoryFallback<{
           products?: { nodes?: ShopifyProductNode[] };
           collections?: { nodes?: ShopifyCollectionNode[] };
-        }>(
-          this.client,
-          SEARCH_QUERY,
-          SEARCH_QUERY_NO_INVENTORY,
-          { variables: { query: q, first: 20 } },
-        );
+        }>(client, SEARCH_QUERY, SEARCH_QUERY_NO_INVENTORY, { variables: { query: q, first: 20 } });
         if (errors) throw new Error(`Shopify search: ${JSON.stringify(errors)}`);
         return searchData;
       },
@@ -369,13 +375,19 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getStorefrontSettings() {
-    const { data, errors } = await this.client.request(SHOP_CONTEXT_QUERY);
+    const client = await getShopifyClient();
+    const { data, errors } = await client.request<{ shop?: Parameters<typeof mapShopifyStorefrontSettings>[0] }>(
+      SHOP_CONTEXT_QUERY,
+    );
     if (errors) throw new Error(`Shopify getStorefrontSettings: ${JSON.stringify(errors)}`);
     return mapShopifyStorefrontSettings(data?.shop);
   }
 
   async getShopPolicies() {
-    const { data, errors } = await this.client.request(SHOP_CONTEXT_QUERY);
+    const client = await getShopifyClient();
+    const { data, errors } = await client.request<{ shop?: Parameters<typeof mapShopifyShopPolicies>[0] }>(
+      SHOP_CONTEXT_QUERY,
+    );
     if (errors) throw new Error(`Shopify getShopPolicies: ${JSON.stringify(errors)}`);
     return mapShopifyShopPolicies(data?.shop);
   }

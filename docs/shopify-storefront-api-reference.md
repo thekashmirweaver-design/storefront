@@ -160,7 +160,7 @@ Other catalog scopes in use: `unauthenticated_read_product_listings` (required f
 | App feature | Storefront operation | Doc link | Code location |
 |-------------|---------------------|----------|---------------|
 | Brand name, tagline, contact, social, SEO, newsletter, footer copy | `shop.name` + `shop.metafield(namespace: "custom", key: …)` | [Shop](https://shopify.dev/docs/api/storefront/latest/objects/Shop) · [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | `SHOP_BRAND_QUERY`; [`brand.ts`](../src/lib/commerce/shopify/brand.ts) |
-| Header nav | `menu(handle: "main-menu")` | [menu](https://shopify.dev/docs/api/storefront/latest/queries/menu) | `getShopifyBrand()` → `headerNav`; fallback [`brandConfig`](../src/lib/commerce/brand/config.ts) |
+| Header nav | `menu(handle: "main-menu")` | [menu](https://shopify.dev/docs/api/storefront/latest/queries/menu) | `getShopifyBrand()` → `headerNav`; throws `CommerceConfigError` if menu missing (seed required). Mock mode uses [`mockBrandConfig`](../src/lib/commerce/mock/brand-config.ts). [`brand/config.ts`](../src/lib/commerce/brand/config.ts) is shared constants only. |
 | Footer link columns | `menu(handle: "footer")` nested `MenuItem` | [Menu](https://shopify.dev/docs/api/storefront/latest/objects/Menu) · [MenuItem](https://shopify.dev/docs/api/storefront/latest/objects/MenuItem) | `getShopifyBrand()` → `footerMenus` |
 | Logo | shop metafield `custom.logo_url` | [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | `brand.logo` |
 | Footer privacy / terms links | `shop.privacyPolicy.url`, `shop.termsOfService.url` | [ShopPolicy](https://shopify.dev/docs/api/storefront/latest/objects/ShopPolicy) | `brand.legal` |
