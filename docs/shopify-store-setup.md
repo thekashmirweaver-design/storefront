@@ -86,10 +86,11 @@ pnpm build:shopify  # production build with Shopify provider
 The Partner app at `SHOPIFY_PARTNER_APP_DIR` (default: `/tmp/shopify-probe/kashmir-weaver-probe`) must declare these scopes in `shopify.app.toml` and be deployed to the dev store (`shopify app deploy --allow-updates`), then re-approved on the store if Shopify prompts for new permissions:
 
 - **Catalog & content:** `write_products`, `read_publications`, `write_publications`, `read_content`, `write_content`, `write_online_store_navigation`, `read_locations`, `write_inventory`, `read_metaobjects`, `write_metaobjects`
+- **Customers (forms):** `read_customers`, `write_customers`
 - **Policies & privacy:** `write_legal_policies`, `read_privacy_settings`, `write_privacy_settings`
 - **Storefront (unauthenticated):** `unauthenticated_read_product_listings`, `unauthenticated_read_collection_listings`, `unauthenticated_read_content`, `unauthenticated_read_metaobjects`, `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`, `unauthenticated_read_product_inventory`
 
-`write_online_store_navigation` is required for seeding the Online Store main menu. `read_metaobjects` and `write_metaobjects` are required for seeding FAQ metaobjects (`pnpm seed:shopify -- --faqs-only`). The FAQ metaobject definition lives in the partner app `shopify.app.toml` (`[metaobjects.app.faq]`) with `access.storefront = "public_read"` — deploy the app after changing that file (`shopify app deploy --allow-updates`), then re-approve scopes on the dev store if prompted. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
+`read_customers` and `write_customers` are required for newsletter signup and contact form submissions (Phase 5). `write_online_store_navigation` is required for seeding the Online Store main menu. `read_metaobjects` and `write_metaobjects` are required for seeding FAQ metaobjects (`pnpm seed:shopify -- --faqs-only`). The FAQ metaobject definition lives in the partner app `shopify.app.toml` (`[metaobjects.app.faq]`) with `access.storefront = "public_read"` — deploy the app after changing that file (`shopify app deploy --allow-updates`), then re-approve scopes on the dev store if prompted. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
 
 ## Seed the catalog (Phase 0)
 
@@ -134,7 +135,17 @@ Run `shopify app dev -s YOUR-STORE.myshopify.com` from your Partner app director
 
 **Admin API token (`SHOPIFY_ADMIN_ACCESS_TOKEN`)**
 
-Only needed for future Phase 2 features (newsletter, contact). Create a custom app in Shopify Admin with the scopes you need and paste the Admin API access token into `.env.local`.
+Required for **newsletter and contact forms** (Phase 5) when running `pnpm dev:shopify`. The Next.js server calls Admin GraphQL (`customerCreate`, `customerEmailMarketingConsentUpdate`, `customerUpdate`, `tagsAdd`) — it does not use `shopify app execute` at request time.
+
+1. Deploy partner app scopes (`read_customers`, `write_customers`) — see [Partner app scopes](#partner-app-scopes-admin-api--seed) above.
+2. Create a **custom app** in Shopify Admin (or use an offline token from your installed Partner app) with `read_customers` and `write_customers`.
+3. Paste the Admin API access token into `.env.local` as `SHOPIFY_ADMIN_ACCESS_TOKEN`.
+
+Optional: `SHOPIFY_ADMIN_API_VERSION` (default `2025-07`).
+
+**Newsletter:** creates or updates a customer with `emailMarketingConsent` = `SUBSCRIBED` and tag `newsletter`.
+
+**Contact:** creates or updates a customer with tag `contact-form` and an appended note containing name, email, subject, and message. View submissions in **Shopify Admin → Customers** (filter by tag).
 
 ## Storefront API reference
 

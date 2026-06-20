@@ -35,7 +35,7 @@ Status values: `pending` | `in_progress` | `done`
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **done** | Storefront menus + shop metafields |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **in_progress** | FAQs wired; footer policy links TBD |
-| 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | pending | |
+| 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | **done** | Admin customerCreate + consent |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
 | 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | partial | Homepage collection blocks only |
 | 8 | [Markets & operations](#phase-8--polish-and-operations) | pending | |
@@ -77,7 +77,6 @@ flowchart LR
     SF --> Blog
     SF --> Cart
     Mock --> Brand
-    Mock --> Forms
     Mock --> Sitemap
     Mock --> RelatedProducts
     LS --> Wishlist
@@ -98,7 +97,7 @@ flowchart LR
 
 - Header/footer nav, brand, contact, SEO, social — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 3); mock uses `brandConfig`
 - FAQs — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 4); mock uses `mockFaqs`
-- Newsletter, contact form
+- Newsletter, contact form — **Shopify Admin API when `COMMERCE_PROVIDER=shopify`** (Phase 5); requires `SHOPIFY_ADMIN_ACCESS_TOKEN`
 - Wishlist (localStorage), account
 - Homepage main hero, marquee, legacy, quote
 - Our Story, Craftsmanship pages
@@ -325,7 +324,7 @@ Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP an
 | Footer menus | Storefront `menu(handle: "footer")` nested items | `footerMenus` |
 | Logo | shop metafield `custom.logo_url` | `brand.logo` (static fallback) |
 | Name, tagline, contact, social, SEO | shop metafields + `shop.name` | `BrandConfig` |
-| Newsletter copy | shop metafields | `brand.newsletter` (submit in Phase 5) |
+| Newsletter copy | shop metafields | `brand.newsletter` (submit via Admin API — Phase 5) |
 | Privacy / Terms links | `shop.privacyPolicy.url`, `shop.termsOfService.url` | Footer `<a>` (Shopify-hosted policy URLs) |
 
 Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collections/…`), not theme URLs. Falls back to [`brandConfig`](../src/lib/commerce/brand/config.ts) when menus or metafields are missing.
@@ -382,20 +381,28 @@ Shop legal policies (all four types) are seeded and consumed on PDP Shipping & R
 
 ## Phase 5 — Forms: newsletter and contact
 
-**Status:** pending
+**Status:** done
 
 **Goal:** Submissions reach merchant workflows.
 
-| Form | Options |
-|------|---------|
-| Newsletter | Admin `customerCreate` + marketing consent; Shopify Forms; Flow + Klaviyo/Mailchimp |
-| Contact | Flow webhook; custom app email; third-party backend |
+| Form | Implementation |
+|------|----------------|
+| Newsletter | Admin `customerCreate` / `customerEmailMarketingConsentUpdate` + tag `newsletter` |
+| Contact | Admin `customerCreate` / `customerUpdate` + tag `contact-form` + appended note |
 
-Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitContactAction` in Shopify provider.
+Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitContactAction` in Shopify provider via [`forms.ts`](../src/lib/commerce/shopify/forms.ts) + [`admin.ts`](../src/lib/commerce/shopify/admin.ts). Requires `SHOPIFY_ADMIN_ACCESS_TOKEN` with `read_customers` + `write_customers` at runtime.
 
 ### Completed
 
-_(none)_
+- **Date:** 2026-06-20
+- **What was done:**
+  - **Newsletter:** `subscribeShopifyNewsletter()` — validates email, creates customer with `emailMarketingConsent: SUBSCRIBED` or updates existing via `customerEmailMarketingConsentUpdate`; tag `newsletter`
+  - **Contact:** `submitShopifyContact()` — creates/updates customer with appended note (name, email, subject, message) and tag `contact-form`
+  - **Admin client:** [`admin.ts`](../src/lib/commerce/shopify/admin.ts) — server-side Admin GraphQL via `SHOPIFY_ADMIN_ACCESS_TOKEN`
+  - **Provider:** [`shopify/provider.ts`](../src/lib/commerce/shopify/provider.ts) — replaced mock delegate for forms
+  - **Partner app scopes:** `read_customers`, `write_customers` in `shopify.app.toml`
+  - **Docs:** [shopify-store-setup.md](./shopify-store-setup.md) — customer scopes + Admin token setup for forms
+- **Verify:** Set `SHOPIFY_ADMIN_ACCESS_TOKEN` in `.env.local`; `pnpm dev:shopify` → footer newsletter + `/contact` form; check **Shopify Admin → Customers** for new records/tags
 
 ---
 

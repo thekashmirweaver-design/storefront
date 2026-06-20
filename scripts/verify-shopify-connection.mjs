@@ -250,6 +250,11 @@ if (!privacyPolicyUrl || !termsUrl) {
     "Footer policy URLs missing — run `pnpm seed:shopify -- --policies-only` (needs write_legal_policies on partner app)",
   );
 }
+if (!process.env.SHOPIFY_ADMIN_ACCESS_TOKEN) {
+  warnings.push(
+    "SHOPIFY_ADMIN_ACCESS_TOKEN not set — newsletter + contact forms will fail at runtime (Phase 5; needs read_customers + write_customers)",
+  );
+}
 
 if (warnings.length) {
   console.log("\n⚠ Checks:");

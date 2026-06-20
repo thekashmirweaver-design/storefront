@@ -6,9 +6,9 @@ import type {
   CommerceSitemapEntry,
 } from "../types";
 import { brandText } from "../brand/text";
-import { MockCommerceProvider } from "../mock/provider";
 import { getShopifyBrand } from "./brand";
 import { getShopifyFaqs } from "./faqs";
+import { subscribeShopifyNewsletter, submitShopifyContact } from "./forms";
 import { createShopifyClient } from "./client";
 import {
   applyClientFilters,
@@ -40,11 +40,10 @@ import {
 
 const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 
-/** Catalog reads from Shopify; brand + FAQs from Storefront when available; forms fall back to mock until Phase 5+. */
+/** Catalog reads from Shopify; brand + FAQs from Storefront when available; forms via Admin API. */
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
   private client = createShopifyClient();
-  private mockDelegate = new MockCommerceProvider();
 
   async getBrand() {
     return getShopifyBrand();
@@ -280,10 +279,10 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async subscribeNewsletter(email: string) {
-    return this.mockDelegate.subscribeNewsletter(email);
+    return subscribeShopifyNewsletter(email);
   }
 
   async submitContact(form: ContactFormInput) {
-    return this.mockDelegate.submitContact(form);
+    return submitShopifyContact(form);
   }
 }
