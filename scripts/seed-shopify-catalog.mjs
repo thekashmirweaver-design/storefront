@@ -409,6 +409,20 @@ async function ensureColorOption(productId, colorName) {
   if (errors.length) throw new Error(`productOptionsCreate: ${JSON.stringify(errors)}`);
 }
 
+async function ensureInventoryItemTracked(inventoryItemId) {
+  const data = await adminRequest(
+    `mutation InventoryItemUpdate($id: ID!, $input: InventoryItemInput!) {
+      inventoryItemUpdate(id: $id, input: $input) {
+        inventoryItem { id tracked }
+        userErrors { field message }
+      }
+    }`,
+    { id: inventoryItemId, input: { tracked: true } },
+  );
+  const errors = data.inventoryItemUpdate?.userErrors ?? [];
+  if (errors.length) throw new Error(`inventoryItemUpdate(tracked): ${JSON.stringify(errors)}`);
+}
+
 async function setVariantPricing(productId, variantId, record) {
   const variantInput = {
     id: variantId,
@@ -416,7 +430,10 @@ async function setVariantPricing(productId, variantId, record) {
     compareAtPrice: record.compareAtPrice,
     inventoryPolicy: "DENY",
     optionValues: [{ optionName: "Color", name: record.color }],
-    inventoryItem: record.sku ? { sku: record.sku } : undefined,
+    inventoryItem: {
+      tracked: true,
+      ...(record.sku ? { sku: record.sku } : {}),
+    },
   };
 
   const data = await adminRequest(
@@ -471,6 +488,8 @@ async function setVariantInventory(variantId, quantity) {
     return;
   }
 
+  await ensureInventoryItemTracked(inventoryItemId);
+
   const locationId = await getPrimaryLocationId();
   const idemSuffix = `${inventoryItemId}-${locationId}`.replace(/[^a-zA-Z0-9_-]/g, "-");
 
@@ -520,7 +539,7 @@ async function setVariantInventory(variantId, quantity) {
   const setErrors = setQty.inventorySetQuantities?.userErrors ?? [];
   if (setErrors.length) throw new Error(`inventorySetQuantities: ${JSON.stringify(setErrors)}`);
 
-  console.log(`    ↳ inventory ${quantity} at primary location (DENY policy)`);
+  console.log(`    ↳ inventory ${quantity} at primary location (tracked, DENY policy)`);
 }
 
 async function upsertCollection(record, publicationIds) {

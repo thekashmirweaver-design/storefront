@@ -371,7 +371,7 @@ Shop legal policies (all four types) are seeded and consumed on PDP Shipping & R
   - App-owned FAQ metaobject `$app:faq` (question, answer, show_on_faq_page) in partner app `shopify.app.toml` with `access.storefront = "public_read"`
   - Storefront `metaobjects` query + [`getShopifyFaqs()`](../src/lib/commerce/shopify/faqs.ts); `getFaqs()` in Shopify provider with `brandText` token interpolation
   - Seed: 6 FAQ entries via `metaobjectUpsert` in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs); `pnpm seed:shopify -- --faqs-only`
-  - Partner app scopes: `read_metaobjects`, `write_metaobjects`
+  - Partner app scopes: `read_metaobjects`, `write_metaobjects`, `unauthenticated_read_metaobjects`
 - **Verify:** `pnpm verify:shopify` — expect 6 FAQ metaobjects; `/faqs` with `pnpm dev:shopify`
 - **Remaining:** Footer privacy/terms links (currently `#`); optional standalone `/privacy`, `/terms` routes
 
