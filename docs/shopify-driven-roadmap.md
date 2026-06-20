@@ -38,7 +38,7 @@ Status values: `pending` | `in_progress` | `done`
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | **done** | Admin customerCreate + consent |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | **done** | Customer Account OAuth PKCE, orders, wishlist metafield |
 | 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | **done** | Homepage hero, Our Story, Craftsmanship, journal hero |
-| 8 | [Markets & operations](#phase-8--polish-and-operations) | pending | |
+| 8 | [Markets & operations](#phase-8--polish-and-operations) | **done** | Webhooks, search, analytics stub; checkout branding CLI blocked on app-dev store |
 
 ---
 
@@ -543,7 +543,73 @@ flowchart TD
 | Cart persistence | Storefront Cart API + httpOnly cookie; mock mode keeps localStorage | 2026-06-20 |
 | Admin API app | _Custom Admin app vs Partner `kashmir-weaver-probe`_ | — |
 | Customer Account URLs | _Must match production `NEXT_PUBLIC_SITE_URL`_ | — |
+| Checkout / login branding | **App-dev store:** Admin UI only. **CLI/API** (`checkoutBrandingUpsert`, `pnpm checkout:branding`) requires Plus sandbox or classic Partner dev store — not Basic App Development | 2026-06-20 |
 | Mock mode | _Keep for CI/preview; `dev:shopify` is integration truth_ | 2026-06-19 |
+
+---
+
+## Future plan (post–Phase 8)
+
+Engineering phases 0–8 are complete on `dev`. Remaining work is **verification**, **Shopify Admin branding**, **content**, then **production** (deploy + login last).
+
+### 1. Local QA (no production deploy)
+
+| Task | Command / URL |
+|------|----------------|
+| Connection | `pnpm verify:shopify`, `pnpm verify:shopify:policies` |
+| Forms | `pnpm smoke:shopify:forms` |
+| Storefront walkthrough | `pnpm dev:shopify` → `/`, `/shop`, PDP, cart → checkout redirect, `/privacy`, `/terms`, `/our-story`, `/craftsmanship`, `/journal`, search, guest wishlist |
+| Webhook smoke (optional) | `SHOPIFY_WEBHOOK_SECRET` in `.env.local` → `pnpm test:shopify:webhook` |
+
+Skip **customer login** until deployment verification (see §4).
+
+### 2. Shopify-hosted checkout & login branding
+
+Checkout and Customer Account **sign-in** are Shopify-hosted pages. The Next.js app brands `/account` (pre-redirect) and cart CTA; logo/colors on Shopify’s pages are configured in Admin or via API.
+
+| Store type | Checkout / login branding |
+|------------|---------------------------|
+| **Current store** (`the-kashmir-weaver-nncjdd3t`, plan **Basic App Development**) | **Admin only** — `checkoutBrandingUpsert` returns `ACCESS_DENIED` via CLI/API (`shopify app execute`, `pnpm checkout:branding`). See [shopify-store-setup.md](./shopify-store-setup.md) **Option B**. |
+| **Plus sandbox** or **classic Partner development store** (not app-dev) | **CLI/API** — `pnpm checkout:branding` or `pnpm seed:shopify -- --checkout-branding-only` after partner app install. See **Option A2** in setup doc. |
+
+**Admin steps (current store):**
+
+1. **Settings → Checkout → Customize** — logo (`kashmir-weaver-logo.png` in Files), colors: bg `#1f1c19`, text `#efe8dc`, buttons `#c4a052`
+2. **Settings → Customer accounts → Customize** — match logo/colors for hosted login
+3. Optional: **Settings → Customer accounts** → connect **Google** sign-in
+
+**CLI reference (eligible stores only):**
+
+```bash
+pnpm checkout:branding
+# docs: https://shopify.dev/docs/api/admin-graphql/latest/mutations/checkoutBrandingUpsert
+```
+
+### 3. Content & ops (before go-live)
+
+- Edit copy/images in **Admin → Content → Metaobjects** (homepage, Our Story, Craftsmanship)
+- Refresh `SHOPIFY_ADMIN_ACCESS_TOKEN` when form smoke tests fail (~24h CLI TTL), or use `SHOPIFY_PARTNER_APP_DIR` fallback
+- Re-approve **kashmir-weaver-probe** in Admin if new scopes are requested
+
+### 4. Production (do last)
+
+| Step | Notes |
+|------|--------|
+| Vercel deploy from `dev` | `pnpm build:shopify`; set all Shopify env vars |
+| `NEXT_PUBLIC_SITE_URL` | Must match partner app `[customer_authentication]` and webhook URI (`thekashmirweaver.com`) |
+| `SHOPIFY_WEBHOOK_SECRET` | Partner app API secret; verify product edit → cache refresh |
+| Customer login | Smoke `/account` on **production URL** (not localhost) |
+| Optional | `NEXT_PUBLIC_GA_ID`; Google sign-in in Admin |
+
+### 5. Deferred engineering (optional later)
+
+| Item | Notes |
+|------|--------|
+| Full **Markets** UI | Env stub (`NEXT_PUBLIC_SHOPIFY_COUNTRY` / `LANGUAGE`) exists; no market picker |
+| **B2B / wholesale** | Shopify Plus |
+| Standalone `/privacy` / `/terms` | On-site pages exist; footer uses them |
+| **Article webhooks** | Admin custom webhook for journal cache (partner app covers products/collections only) |
+| **checkoutAndAccountsConfigurationUpdate** | Newer API; evaluate when migrating off deprecated `checkoutBrandingUpsert` |
 
 ---
 
@@ -551,4 +617,6 @@ flowchart TD
 
 Phases 0–8 engineering is complete (B2B wholesale deferred).
 
-1. **Production ops** — Deploy Vercel with `SHOPIFY_WEBHOOK_SECRET`, optional `NEXT_PUBLIC_GA_ID`, verify live webhooks and Customer Account login on production URL.
+1. **Local QA** — §Future plan above
+2. **Checkout + login branding** — Admin Customize on current store; CLI when on eligible store
+3. **Production ops** — Deploy last: env vars, webhooks, Customer Account login on live URL
