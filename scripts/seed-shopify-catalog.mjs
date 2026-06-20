@@ -8,6 +8,7 @@
  *   pnpm seed:shopify -- --policies-only # shop legal policies only (fast)
  *   pnpm seed:shopify -- --faqs-only      # FAQ metaobjects only (fast)
  *   pnpm seed:shopify -- --editorial-only # Editorial CMS metaobjects + journal hero (fast)
+ *   pnpm seed:shopify -- --checkout-branding-only # Checkout logo + colors (fast)
  *
  * Requires SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR (see docs).
  */
@@ -57,6 +58,8 @@ import {
   uploadCollectionImage,
   uploadArticleImage,
   productHasMedia,
+  stageLocalImage,
+  createShopifyFile,
 } from "./lib/shopify-media.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -65,6 +68,7 @@ const enrichOnly = process.argv.includes("--enrich-only");
 const policiesOnly = process.argv.includes("--policies-only");
 const faqsOnly = process.argv.includes("--faqs-only");
 const editorialOnly = process.argv.includes("--editorial-only");
+const checkoutBrandingOnly = process.argv.includes("--checkout-branding-only");
 
 function loadEnvLocal() {
   const envPath = resolve(root, ".env.local");
@@ -88,6 +92,7 @@ const apiVersion = process.env.SHOPIFY_ADMIN_API_VERSION ?? "2025-07";
 const blogHandle = process.env.SHOPIFY_BLOG_HANDLE ?? BLOG_HANDLE;
 const partnerAppDir =
   process.env.SHOPIFY_PARTNER_APP_DIR ?? "/tmp/shopify-probe/kashmir-weaver-probe";
+const checkoutLogoPath = resolve(root, "public/images/kashmir-weaver-logo.png");
 
 function fail(message) {
   console.error(`\n✗ ${message}`);
@@ -332,10 +337,56 @@ async function ensureCheckoutBranding() {
     throw new Error("No published checkout profile found");
   }
 
+  const shopData = await adminRequest(
+    `{ shop { id metafield(namespace: "custom", key: "logo_url") { value } } }`,
+  );
+  const shopId = shopData.shop?.id;
+  const existingLogo = shopData.shop?.metafield?.value?.trim();
+
   let mediaImageId;
-  const logoUrl = shopMetafields.logo_url?.trim();
-  if (logoUrl) {
-    mediaImageId = await resolveMediaImageId(adminRequest, logoUrl, "Store logo");
+  if (existingLogo?.includes("cdn.shopify.com")) {
+    try {
+      mediaImageId = await resolveMediaImageId(adminRequest, existingLogo, "Store logo");
+    } catch {
+      /* fall through to local upload */
+    }
+  }
+
+  if (!mediaImageId && existsSync(checkoutLogoPath)) {
+    const resourceUrl = await stageLocalImage(adminRequest, checkoutLogoPath, "FILE");
+    mediaImageId = await resolveMediaImageId(adminRequest, resourceUrl, "Store logo");
+    const cdnUrl = await createShopifyFile(adminRequest, resourceUrl, "Store logo");
+    if (shopId && cdnUrl) {
+      const setData = await adminRequest(
+        `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+          metafieldsSet(metafields: $metafields) {
+            userErrors { field message }
+          }
+        }`,
+        {
+          metafields: [
+            {
+              ownerId: shopId,
+              namespace: "custom",
+              key: "logo_url",
+              type: "url",
+              value: cdnUrl,
+            },
+          ],
+        },
+      );
+      const setErrors = setData.metafieldsSet?.userErrors ?? [];
+      if (setErrors.length) {
+        console.warn(`  shop logo_url metafield: ${JSON.stringify(setErrors)}`);
+      } else {
+        console.log("  shop metafield logo_url (cdn)");
+      }
+    }
+  } else if (!mediaImageId) {
+    const logoUrl = shopMetafields.logo_url?.trim();
+    if (logoUrl) {
+      mediaImageId = await resolveMediaImageId(adminRequest, logoUrl, "Store logo");
+    }
   }
 
   const checkoutBrandingInput = {
@@ -1205,9 +1256,34 @@ async function seedPoliciesOnly() {
   console.log("  Verify: node scripts/verify-shopify-policies.mjs\n");
 }
 
+async function seedCheckoutBrandingOnly() {
+  console.log("Shopify checkout branding seed\n");
+  console.log(`Store:  ${storeDomain}`);
+  console.log(
+    `Admin:  ${adminToken ? "SHOPIFY_ADMIN_ACCESS_TOKEN" : `shopify app execute (${partnerAppDir})`}\n`,
+  );
+
+  if (!adminToken && !existsSync(partnerAppDir)) {
+    fail(
+      `No SHOPIFY_ADMIN_ACCESS_TOKEN and partner app dir not found at ${partnerAppDir}. ` +
+        "See docs/shopify-store-setup.md",
+    );
+  }
+
+  console.log("Checkout branding:");
+  await ensureCheckoutBranding();
+  console.log("\n✓ Checkout branding updated");
+  console.log("  Verify: add to cart → checkout on dev store\n");
+}
+
 async function main() {
   if (policiesOnly) {
     await seedPoliciesOnly();
+    return;
+  }
+
+  if (checkoutBrandingOnly) {
+    await seedCheckoutBrandingOnly();
     return;
   }
 

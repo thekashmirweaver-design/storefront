@@ -47,27 +47,6 @@ export const checkoutBranding = {
       brand: "#c4a052",
       accent: "#c4a052",
     },
-    scheme1: {
-      base: {
-        background: "#1f1c19",
-        text: "#efe8dc",
-      },
-      control: {
-        background: "#1f1c19",
-        border: "#5c5348",
-        selected: {
-          background: "#c4a052",
-          border: "#a8863f",
-        },
-      },
-      primaryButton: {
-        background: "#c4a052",
-        text: "#1f1c19",
-        hover: {
-          background: "#a8863f",
-        },
-      },
-    },
   },
   logoMaxWidth: 120,
 };
