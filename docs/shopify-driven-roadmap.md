@@ -6,6 +6,7 @@ Related docs:
 
 - [Commerce layer](./commerce-layer.md) — architecture and env toggle
 - [Shopify store setup](./shopify-store-setup.md) — tokens, CLI, verification
+- [Storefront API reference](./shopify-storefront-api-reference.md) — queries, mutations, scopes mapped to code
 
 ---
 
@@ -32,7 +33,7 @@ Status values: `pending` | `in_progress` | `done`
 | 0 | [Foundation & content migration](#phase-0--foundation-and-content-migration) | **done** | Catalog, images, journal seeded |
 | 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
-| 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | pending | |
+| 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **in_progress** | Admin menus + shop metafields |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | pending | |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | pending | |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
@@ -312,9 +313,11 @@ Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP an
 
 ## Phase 3 — Global chrome: brand, nav, footer
 
-**Status:** pending
+**Status:** in_progress
 
 **Goal:** Header, footer, contact, SEO editable in Shopify without deploys.
+
+**Reference:** [Storefront API reference](./shopify-storefront-api-reference.md) (today’s reads) · Admin [`menus`](https://shopify.dev/docs/api/admin-graphql/latest/queries/menus) (Phase 3 nav)
 
 | Surface | Shopify | App |
 |---------|---------|-----|

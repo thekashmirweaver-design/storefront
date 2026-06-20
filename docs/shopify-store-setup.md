@@ -125,4 +125,8 @@ Run `shopify app dev -s YOUR-STORE.myshopify.com` from your Partner app director
 
 Only needed for future Phase 2 features (newsletter, contact). Create a custom app in Shopify Admin with the scopes you need and paste the Admin API access token into `.env.local`.
 
+## Storefront API reference
+
+For a full map of Storefront queries, mutations, fields, and scopes used by this app (plus Phase 3+ planned usage), see **[shopify-storefront-api-reference.md](./shopify-storefront-api-reference.md)**.
+
 See also: [commerce-layer.md](./commerce-layer.md) · [shopify-driven-roadmap.md](./shopify-driven-roadmap.md) (phased plan + progress)
