@@ -470,7 +470,7 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 ## Phase 8 — Polish and operations
 
-**Status:** pending
+**Status:** in progress
 
 - Markets / multi-currency
 - Predictive search
@@ -481,7 +481,8 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 ### Completed
 
-_(none)_
+- [x] **Webhooks → cache revalidation (catalog slice)** — `POST /api/webhooks/shopify` verifies Shopify HMAC (`SHOPIFY_WEBHOOK_SECRET`), handles product/collection/article create/update/delete topics, and calls `revalidateTag` for `shopify-catalog`, `shopify-products`, `shopify-collections`, `shopify-articles` (plus per-handle tags). Catalog Storefront reads wrapped in `unstable_cache` via [`cache-tags.ts`](../src/lib/commerce/shopify/cache-tags.ts) / [`provider.ts`](../src/lib/commerce/shopify/provider.ts). Partner app subscriptions in `kashmir-weaver-probe/shopify.app.toml`; Admin custom webhook documented in [`shopify-store-setup.md`](shopify-store-setup.md).
+
 
 ---
 

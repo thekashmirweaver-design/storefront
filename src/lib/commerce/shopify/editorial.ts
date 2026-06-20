@@ -16,6 +16,7 @@ import type {
   EditorialIconName,
   EditorialPillar,
 } from "../types";
+import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
 import { createShopifyClient } from "./client";
 import {
   EDITORIAL_CONTENT_QUERY,
@@ -386,7 +387,7 @@ async function fetchShopifyEditorial(): Promise<ShopifyEditorialResponse> {
 async function getCachedEditorialResponse(): Promise<ShopifyEditorialResponse> {
   return unstable_cache(fetchShopifyEditorial, ["shopify-editorial", "v1"], {
     revalidate: EDITORIAL_REVALIDATE_SECONDS,
-    tags: ["shopify-editorial"],
+    tags: [SHOPIFY_CACHE_TAGS.editorial],
   })();
 }
 

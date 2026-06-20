@@ -224,6 +224,46 @@ curl -sS -D - -o /dev/null http://localhost:3000/api/auth/customer/login   # exp
 
 Then open `/account` and complete sign-in through the **same URL** as `NEXT_PUBLIC_SITE_URL` (ngrok or production). **Do not use `http://localhost:3000` for account login** — Shopify requires HTTPS callbacks; OAuth cookies and `redirect_uri` must match the registered tunnel URL.
 
+## Phase 8 — Catalog webhooks (cache revalidation)
+
+When `COMMERCE_PROVIDER=shopify`, catalog reads are cached with Next.js tags (`shopify-products`, `shopify-collections`, `shopify-articles`, `shopify-catalog`). Shopify webhooks call `POST /api/webhooks/shopify` to invalidate stale data after Admin edits.
+
+### Env
+
+| Variable | Description |
+|---|---|
+| `SHOPIFY_WEBHOOK_SECRET` | HMAC signing secret — Partner app **API secret key** or custom webhook secret from Admin |
+
+### Option A — Partner app webhooks (recommended)
+
+The `kashmir-weaver-probe` Partner app declares webhook subscriptions in `shopify.app.toml` pointing at `{NEXT_PUBLIC_SITE_URL}/api/webhooks/shopify`. After deploy:
+
+```bash
+cd /tmp/shopify-probe/kashmir-weaver-probe
+shopify app deploy
+```
+
+Set `SHOPIFY_WEBHOOK_SECRET` to the app **API secret key** (same value Shopify uses to sign app webhooks).
+
+### Option B — Custom Admin webhooks
+
+1. **Shopify Admin → Settings → Notifications → Webhooks → Create webhook**
+2. URL: `https://thekashmirweaver.com/api/webhooks/shopify`
+3. Topics: product and collection create/update/delete (article topics via Admin custom webhooks only — not supported in Partner app subscriptions)
+4. Copy the webhook signing secret into `SHOPIFY_WEBHOOK_SECRET`
+
+### Verify
+
+```bash
+# Expect 401 without valid HMAC
+curl -i -X POST "$NEXT_PUBLIC_SITE_URL/api/webhooks/shopify" \
+  -H "Content-Type: application/json" \
+  -H "X-Shopify-Topic: products/update" \
+  -d '{"handle":"example-product"}'
+```
+
+After a real product save in Admin, the storefront should reflect changes without waiting for the 1h catalog ISR fallback.
+
 ## Storefront API reference
 
 For a full map of Storefront queries, mutations, fields, and scopes used by this app (plus Phase 3+ planned usage), see **[shopify-storefront-api-reference.md](./shopify-storefront-api-reference.md)**.

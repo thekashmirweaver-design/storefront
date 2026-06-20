@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 
 import { brandConfig } from "../brand/config";
 import type { BrandConfig, CommerceImage } from "../types";
+import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
 import { createShopifyClient } from "./client";
 import { SHOP_BRAND_QUERY } from "./queries";
 
@@ -222,6 +223,6 @@ async function fetchShopifyBrand(): Promise<BrandConfig> {
 export async function getShopifyBrand(): Promise<BrandConfig> {
   return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v3"], {
     revalidate: BRAND_REVALIDATE_SECONDS,
-    tags: ["shopify-brand"],
+    tags: [SHOPIFY_CACHE_TAGS.brand],
   })();
 }

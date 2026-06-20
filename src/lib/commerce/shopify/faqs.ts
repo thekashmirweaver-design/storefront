@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 
 import { mockFaqs } from "../mock/data/faqs";
 import type { CommerceFaq } from "../types";
+import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
 import { createShopifyClient } from "./client";
 import { FAQS_QUERY } from "./queries";
 
@@ -57,7 +58,7 @@ export async function getShopifyFaqs(): Promise<CommerceFaq[]> {
   try {
     return await unstable_cache(fetchShopifyFaqs, ["shopify-faqs", "v1"], {
       revalidate: FAQS_REVALIDATE_SECONDS,
-      tags: ["shopify-faqs"],
+      tags: [SHOPIFY_CACHE_TAGS.faqs],
     })();
   } catch {
     return mockFaqs;
