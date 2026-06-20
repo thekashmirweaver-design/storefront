@@ -26,7 +26,8 @@ import {
   getShopifyOurStoryContent,
 } from "./editorial";
 import { getShopifyFaqs } from "./faqs";
-import { getShopifyClient } from "./client";
+import { getShopifyClient, getShopifyClientForContext } from "./client";
+import type { ShopifyMarketContext } from "./market-context";
 import {
   applyClientFilters,
   mapShopifyArticle,
@@ -63,10 +64,10 @@ const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
 
-  private async marketCacheKey(): Promise<string> {
+  private async resolveMarket(): Promise<{ key: string; context: ShopifyMarketContext }> {
     const { resolveShopifyMarketContext } = await import("./market-context.server");
-    const { country, language } = await resolveShopifyMarketContext();
-    return `${country}-${language}`;
+    const context = await resolveShopifyMarketContext();
+    return { key: `${context.country}-${context.language}`, context };
   }
 
   async getBrand() {
@@ -74,12 +75,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getProducts(filters?: ProductFilters) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const nodes = await withShopifyCache(
-      ["shopify-products", marketKey, "v2"],
+      ["shopify-products", marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await requestWithInventoryFallback<{
           products?: { nodes?: ShopifyProductNode[] };
         }>(client, PRODUCTS_QUERY, PRODUCTS_QUERY_NO_INVENTORY, { variables: { first: 50 } });
@@ -94,12 +95,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getProductBySlug(slug: string) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const node = await withShopifyCache(
-      ["shopify-product", slug, marketKey, "v2"],
+      ["shopify-product", slug, marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.catalog, shopifyProductTag(slug)],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await requestWithInventoryFallback<{
           product?: ShopifyProductNode | null;
         }>(client, PRODUCT_BY_HANDLE_QUERY, PRODUCT_BY_HANDLE_QUERY_NO_INVENTORY, {
@@ -166,12 +167,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getCollections() {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const nodes = await withShopifyCache(
-      ["shopify-collections", marketKey, "v2"],
+      ["shopify-collections", marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await client.request<{
           collections?: { nodes?: ShopifyCollectionNode[] };
         }>(COLLECTIONS_QUERY, {
@@ -185,12 +186,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getCollectionBySlug(slug: string, filters?: ProductFilters) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const node = await withShopifyCache(
-      ["shopify-collection", slug, marketKey, "v2"],
+      ["shopify-collection", slug, marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog, shopifyCollectionTag(slug)],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await requestWithInventoryFallback<{
           collection?: ShopifyCollectionNode | null;
         }>(client, COLLECTION_BY_HANDLE_QUERY, COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY, {
@@ -215,12 +216,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getArticles(category?: string) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const nodes = await withShopifyCache(
-      ["shopify-articles", BLOG_HANDLE, marketKey, "v2"],
+      ["shopify-articles", BLOG_HANDLE, marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.articles, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await client.request<{
           blog?: { articles?: { nodes?: Parameters<typeof mapShopifyArticle>[0][] } };
         }>(BLOG_ARTICLES_QUERY, {
@@ -238,12 +239,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getArticleBySlug(slug: string) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const node = await withShopifyCache(
-      ["shopify-article", BLOG_HANDLE, slug, marketKey, "v2"],
+      ["shopify-article", BLOG_HANDLE, slug, marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.articles, SHOPIFY_CACHE_TAGS.catalog, shopifyArticleTag(slug)],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data, errors } = await client.request<{
           blog?: { articleByHandle?: Parameters<typeof mapShopifyArticle>[0] | null };
         }>(ARTICLE_BY_HANDLE_QUERY, {
@@ -274,12 +275,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   /** Storefront predictiveSearch for type-ahead; returns null when unsupported. */
   private async searchPredictive(q: string) {
     try {
-      const marketKey = await this.marketCacheKey();
+      const { key: marketKey, context: marketContext } = await this.resolveMarket();
       const data = await withShopifyCache(
-        ["shopify-predictive-search", q.toLowerCase(), marketKey, "v2"],
+        ["shopify-predictive-search", q.toLowerCase(), marketKey, "v4"],
         [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],
         async () => {
-          const client = await getShopifyClient();
+          const client = getShopifyClientForContext(marketContext);
           const { data: searchData, errors } = await requestWithInventoryFallback<{
             predictiveSearch?: {
               products?: ShopifyProductNode[];
@@ -316,12 +317,12 @@ export class ShopifyCommerceProvider implements CommerceProvider {
 
   /** Fallback when predictiveSearch is unavailable. */
   private async searchLegacy(q: string) {
-    const marketKey = await this.marketCacheKey();
+    const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const data = await withShopifyCache(
-      ["shopify-search", q.toLowerCase(), marketKey, "v2"],
+      ["shopify-search", q.toLowerCase(), marketKey, "v4"],
       [SHOPIFY_CACHE_TAGS.catalog, SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.collections],
       async () => {
-        const client = await getShopifyClient();
+        const client = getShopifyClientForContext(marketContext);
         const { data: searchData, errors } = await requestWithInventoryFallback<{
           products?: { nodes?: ShopifyProductNode[] };
           collections?: { nodes?: ShopifyCollectionNode[] };

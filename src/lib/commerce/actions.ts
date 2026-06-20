@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { isShopifyProvider } from "./config";
 import { commerce } from "./server";
@@ -13,6 +13,7 @@ import {
   updateShopifyCartLine,
 } from "./shopify/cart";
 import { writeMarketCookies } from "./shopify/market-cookie";
+import { SHOPIFY_CACHE_TAGS } from "./shopify/cache-tags";
 import { fetchShopifyLocalization } from "./shopify/localization";
 import { getShopifyCartIdFromCookie } from "./shopify/cart-cookie";
 import type {
@@ -195,5 +196,7 @@ export async function setMarketAction(countryCode: string, languageCode?: string
     await updateShopifyCartBuyerIdentity(cartId);
   }
 
+  revalidateTag(SHOPIFY_CACHE_TAGS.catalog, "max");
+  revalidateTag(SHOPIFY_CACHE_TAGS.products, "max");
   revalidatePath("/", "layout");
 }

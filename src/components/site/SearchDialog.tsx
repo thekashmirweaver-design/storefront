@@ -5,13 +5,14 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
+import { formatProductPrice } from "@/components/site/listing-state";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { CommerceProduct } from "@/lib/commerce";
 import { getProductsAction, searchCommerce } from "@/lib/commerce/actions";
 import { useCommerce } from "@/lib/commerce/client";
 
 export function SearchDialog() {
-  const { brand, searchOpen, setSearchOpen } = useCommerce();
+  const { brand, market, searchOpen, setSearchOpen } = useCommerce();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<CommerceProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ export function SearchDialog() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [q, searchOpen]);
+  }, [q, searchOpen, market?.country, market?.language]);
 
   return (
     <Dialog
@@ -100,7 +101,9 @@ export function SearchDialog() {
                           {p.categoryLabel}
                         </p>
                       </div>
-                      <p className="text-sm text-gold">${p.price.amount}</p>
+                      <p className="text-sm text-gold">
+                        {formatProductPrice(p.price.amount, p.price.currencyCode, market?.locale)}
+                      </p>
                     </Link>
                   </li>
                 );

@@ -7,11 +7,13 @@ import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
+import { formatProductPrice } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
 
 export function WishlistClient() {
-  const { wishlist, toggleWishlist, addToCart, setCartOpen, resolveProducts } = useCommerce();
+  const { wishlist, toggleWishlist, addToCart, setCartOpen, resolveProducts, market } =
+    useCommerce();
   const [products, setProducts] = useState<CommerceProduct[]>([]);
 
   useEffect(() => {
@@ -87,7 +89,9 @@ export function WishlistClient() {
                   </Link>
                   <div className="pt-4 space-y-1">
                     <h3 className="font-display text-lg text-cream">{p.name}</h3>
-                    <p className="text-sm text-gold">${p.price.amount}</p>
+                    <p className="text-sm text-gold">
+                      {formatProductPrice(p.price.amount, p.price.currencyCode, market?.locale)}
+                    </p>
                     <button
                       onClick={async () => {
                         try {

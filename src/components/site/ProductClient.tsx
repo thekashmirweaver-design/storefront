@@ -53,7 +53,7 @@ export function ProductClient({
 }) {
   const [qty, setQty] = useState(1);
   const atcRef = useRef<HTMLDivElement>(null);
-  const { addToCart, setCartOpen, toggleWishlist, inWishlist, cart, shopifyCart, cartMode } =
+  const { addToCart, setCartOpen, toggleWishlist, inWishlist, cart, shopifyCart, cartMode, market } =
     useCommerce();
   const liked = inWishlist(product.slug);
   const soldOut = isProductSoldOut(product);
@@ -145,13 +145,18 @@ export function ProductClient({
             </p>
             <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="text-xl text-gold">
-                {formatProductPrice(product.price.amount, product.price.currencyCode)}
+                {formatProductPrice(
+                  product.price.amount,
+                  product.price.currencyCode,
+                  market?.locale,
+                )}
               </p>
               {productHasCompareAt(product) && product.compareAtPrice && (
                 <p className="text-sm text-muted-foreground line-through">
                   {formatProductPrice(
                     product.compareAtPrice.amount,
                     product.compareAtPrice.currencyCode,
+                    market?.locale,
                   )}
                 </p>
               )}
