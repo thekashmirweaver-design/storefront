@@ -25,7 +25,7 @@ async function requestToken(
   const { clientId, clientSecret } = getCustomerAccountConfig();
   const headers: Record<string, string> = {
     "content-type": "application/x-www-form-urlencoded",
-    "user-agent": "gulriza-pashmina-boutique/1.0",
+    "user-agent": "the-kashmir-weaver/1.0",
   };
 
   if (useConfidentialAuth && clientSecret) {

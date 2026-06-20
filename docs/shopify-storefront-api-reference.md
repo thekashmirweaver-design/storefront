@@ -1,6 +1,6 @@
-# Shopify Storefront API reference (GULRIZA)
+# Shopify Storefront API reference (The Kashmir Weaver)
 
-This document maps every **Shopify Storefront API** operation used by the GULRIZA Next.js headless storefront to official Shopify docs and app code locations.
+This document maps every **Shopify Storefront API** operation used by The Kashmir Weaver Next.js headless storefront to official Shopify docs and app code locations.
 
 Official reference: [Storefront API — latest](https://shopify.dev/docs/api/storefront/latest)
 

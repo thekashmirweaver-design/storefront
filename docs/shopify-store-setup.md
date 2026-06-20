@@ -62,7 +62,7 @@ Use when you already have a Partner app with unauthenticated Storefront scopes (
    ```bash
    shopify app execute -s YOUR-STORE.myshopify.com \
      -q 'mutation StorefrontAccessTokenCreate($input: StorefrontAccessTokenInput!) { storefrontAccessTokenCreate(input: $input) { userErrors { message } storefrontAccessToken { accessToken title } } }' \
-     -v '{"input":{"title":"GULRIZA Next.js Storefront"}}'
+     -v '{"input":{"title":"The Kashmir Weaver Next.js Storefront"}}'
    ```
 
 4. Paste the `accessToken` into `SHOPIFY_STOREFRONT_ACCESS_TOKEN` in `.env.local`.

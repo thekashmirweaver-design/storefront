@@ -1,6 +1,6 @@
 # Commerce Layer
 
-GULRIZA uses a **ports-and-adapters** commerce boundary under `src/lib/commerce/`. The UI never talks to Shopify or mock data files directly — it goes through one API that can be swapped with an environment variable.
+The Kashmir Weaver uses a **ports-and-adapters** commerce boundary under `src/lib/commerce/`. The UI never talks to Shopify or mock data files directly — it goes through one API that can be swapped with an environment variable.
 
 ## Toggle
 
@@ -33,7 +33,7 @@ Optional:
 ```
 SHOPIFY_STOREFRONT_API_VERSION=2025-01
 SHOPIFY_BLOG_HANDLE=news
-NEXT_PUBLIC_SITE_URL=https://gulriza.com
+NEXT_PUBLIC_SITE_URL=https://thekashmirweaver.com
 ```
 
 **Phase 1 Shopify scope:** catalog reads (products, collections, articles, search) use the Storefront API. Brand, FAQs, newsletter, contact, cart, and wishlist still use mock behavior until Phase 2.

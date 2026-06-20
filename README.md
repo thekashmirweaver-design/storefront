@@ -1,6 +1,6 @@
-# GULRIZA Pashmina Boutique
+# The Kashmir Weaver
 
-Next.js storefront for GULRIZA — handwoven Kashmiri pashmina.
+Next.js storefront for The Kashmir Weaver — handwoven Kashmiri pashmina.
 
 ## Quick start
 

@@ -1,6 +1,6 @@
 # Shopify-Driven Storefront Roadmap
 
-Priority-ordered plan to move the GULRIZA Next.js headless storefront from mock/hardcoded content to **Shopify as the single source of truth** — catalog, navigation, brand, cart/checkout, CMS pages, and customer features.
+Priority-ordered plan to move The Kashmir Weaver Next.js headless storefront from mock/hardcoded content to **Shopify as the single source of truth** — catalog, navigation, brand, cart/checkout, CMS pages, and customer features.
 
 Related docs:
 

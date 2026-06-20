@@ -1,6 +1,6 @@
-# GULRIZA — Luxury Pashmina Site
+# The Kashmir Weaver — Luxury Pashmina Site
 
-Build a multi-page marketing + catalog site closely matching the attached mockups, rebranded from "PASHMINA" to "GULRIZA" with the gold serif "G" logo.
+Build a multi-page marketing + catalog site closely matching the attached mockups, branded as The Kashmir Weaver with the gold serif logo.
 
 ## Design system
 
@@ -24,7 +24,7 @@ Build a multi-page marketing + catalog site closely matching the attached mockup
 
 ## Shared
 
-- Header: G logo + GULRIZA wordmark (tagline "TIMELESS. NATURAL. LUXURIOUS."), nav (SHOP, COLLECTIONS, OUR STORY, CRAFTSMANSHIP, JOURNAL), search/account/bag icons.
+- Header: logo + The Kashmir Weaver wordmark (tagline "TIMELESS. NATURAL. LUXURIOUS."), nav (SHOP, COLLECTIONS, OUR STORY, CRAFTSMANSHIP, JOURNAL), search/account/bag icons.
 - Footer: brand block, 5 link columns, newsletter w/ gold arrow button, socials, legal row.
 - Reusable components: `Eyebrow`, `DiamondDivider`, `ProductCard`, `CollectionCard`, `FilterSidebar`, `Accordion`, `Header`, `Footer`.
 
