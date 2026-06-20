@@ -35,10 +35,10 @@ function fail(message) {
 const POLICIES_QUERY = `
   query ShopPolicies {
     shop {
-      shippingPolicy { body }
-      refundPolicy { body }
-      privacyPolicy { body }
-      termsOfService { body }
+      shippingPolicy { body url }
+      refundPolicy { body url }
+      privacyPolicy { body url }
+      termsOfService { body url }
     }
   }
 `;
@@ -75,19 +75,33 @@ try {
 const shop = data?.shop;
 if (!shop) fail("Unexpected API response — no shop data returned");
 
-const checks = [
+const bodyChecks = [
   ["shippingPolicy", shop.shippingPolicy?.body],
   ["refundPolicy", shop.refundPolicy?.body],
   ["privacyPolicy", shop.privacyPolicy?.body],
   ["termsOfService", shop.termsOfService?.body],
 ];
 
+const urlChecks = [
+  ["privacyPolicy", shop.privacyPolicy?.url],
+  ["termsOfService", shop.termsOfService?.url],
+];
+
 let missing = 0;
-for (const [name, body] of checks) {
+for (const [name, body] of bodyChecks) {
   const len = body?.trim().length ?? 0;
   const ok = len > 0;
-  console.log(`  ${ok ? "✓" : "✗"} shop.${name} — ${len} chars`);
+  console.log(`  ${ok ? "✓" : "✗"} shop.${name}.body — ${len} chars`);
   if (!ok) missing += 1;
+}
+
+console.log("");
+let missingUrls = 0;
+for (const [name, url] of urlChecks) {
+  const value = url?.trim() ?? "";
+  const ok = value.length > 0 && value !== "#";
+  console.log(`  ${ok ? "✓" : "✗"} shop.${name}.url — ${ok ? value : "(missing)"}`);
+  if (!ok) missingUrls += 1;
 }
 
 if (missing) {
@@ -97,4 +111,12 @@ if (missing) {
   );
 }
 
-console.log("\n✓ All shop legal policies present in Storefront API\n");
+if (missingUrls) {
+  fail(
+    `${missingUrls} footer policy URL(s) missing. Seed policies with ` +
+      "`pnpm seed:shopify -- --policies-only`, then confirm Storefront returns " +
+      "shop.privacyPolicy.url and shop.termsOfService.url.",
+  );
+}
+
+console.log("\n✓ All shop legal policies and footer policy URLs present in Storefront API\n");

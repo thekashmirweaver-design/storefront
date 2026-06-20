@@ -67,6 +67,8 @@ const CATALOG_QUERY = `
     shop {
       name
       primaryDomain { url }
+      privacyPolicy { url }
+      termsOfService { url }
       brandTaglineMetafield: metafield(namespace: "custom", key: "brand_tagline") { value }
       contactEmailMetafield: metafield(namespace: "custom", key: "contact_email") { value }
     }
@@ -151,6 +153,8 @@ const mainMenu = data.mainMenu;
 const footerMenu = data.footerMenu;
 const brandTagline = data.shop?.brandTaglineMetafield?.value?.trim();
 const contactEmail = data.shop?.contactEmailMetafield?.value?.trim();
+const privacyPolicyUrl = data.shop?.privacyPolicy?.url?.trim();
+const termsUrl = data.shop?.termsOfService?.url?.trim();
 const collections = data.collections?.nodes ?? [];
 const products = data.products?.nodes ?? [];
 const blog = data.blog;
@@ -189,10 +193,13 @@ console.log(
 console.log(
   `  Brand:      tagline ${brandTagline ? "✓" : "—"}, contact ${contactEmail ? "✓" : "—"}`,
 );
+console.log(`  Legal:      privacy ${privacyPolicyUrl ? "✓" : "—"}, terms ${termsUrl ? "✓" : "—"}`);
 console.log(
   `  Menus:      main-menu ${mainMenu?.items?.length ?? 0} links, footer ${footerMenu?.items?.length ?? 0} columns`,
 );
-console.log(`  FAQs:       ${faqsOnPage.length} on FAQ page (${faqNodes.length} total metaobjects)`);
+console.log(
+  `  FAQs:       ${faqsOnPage.length} on FAQ page (${faqNodes.length} total metaobjects)`,
+);
 
 const warnings = [];
 if (collections.length < 3)
@@ -219,7 +226,9 @@ if (blog && articles.length >= 2 && articlesWithTags.length < articles.length) {
   warnings.push("Some journal articles missing tags — category filters need first tag per article");
 }
 if (!brandTagline) {
-  warnings.push("Shop brand_tagline metafield missing — run `pnpm seed:shopify` for Phase 3 brand fields");
+  warnings.push(
+    "Shop brand_tagline metafield missing — run `pnpm seed:shopify` for Phase 3 brand fields",
+  );
 }
 if (!mainMenu?.items?.length) {
   warnings.push(
@@ -234,6 +243,11 @@ if (!footerMenu?.items?.length) {
 if (faqsOnPage.length < 6) {
   warnings.push(
     `Expected 6 FAQ metaobjects on /faqs — run \`pnpm seed:shopify -- --faqs-only\` (needs read_metaobjects + write_metaobjects on partner app)`,
+  );
+}
+if (!privacyPolicyUrl || !termsUrl) {
+  warnings.push(
+    "Footer policy URLs missing — run `pnpm seed:shopify -- --policies-only` (needs write_legal_policies on partner app)",
   );
 }
 

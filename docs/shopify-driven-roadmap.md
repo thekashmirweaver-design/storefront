@@ -352,7 +352,7 @@ Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collectio
 
 ## Phase 4 — Trust, policies, and FAQs
 
-**Status:** in_progress
+**Status:** done
 
 **Goal:** FAQs and legal/trust copy from Admin.
 
@@ -360,11 +360,11 @@ Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collectio
 |---------|----------------|----------|--------|
 | FAQs | Metaobject `$app:faq` | `/faqs`, `getFaqs()` | **done** |
 | Shipping / returns | Shop policies | PDP accordions | **done** (seeded + wired) |
-| Privacy / Terms | policies or Pages | Footer links | partial — policies seeded; footer still `#`; dedicated policy **pages** TBD |
+| Privacy / Terms | `shop.privacyPolicy.url`, `shop.termsOfService.url` | Footer links | **done** (Shopify-hosted policy URLs) |
 
-Shop legal policies (all four types) are seeded and consumed on PDP Shipping & Returns accordions (Phase 1). Phase 4 still needs footer links to live policy URLs or Next.js policy pages.
+Shop legal policies (all four types) are seeded and consumed on PDP Shipping & Returns accordions (Phase 1). Footer privacy/terms links use Storefront policy URLs via `getShopifyBrand()` → `brand.legal` (falls back to `#` only in mock mode or when policies are unseeded).
 
-### Completed (partial)
+### Completed
 
 - **Date:** 2026-06-20
 - **What was done:**
@@ -372,15 +372,11 @@ Shop legal policies (all four types) are seeded and consumed on PDP Shipping & R
   - Storefront `metaobjects` query + [`getShopifyFaqs()`](../src/lib/commerce/shopify/faqs.ts); `getFaqs()` in Shopify provider with `brandText` token interpolation
   - Seed: 6 FAQ entries via `metaobjectUpsert` in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs); `pnpm seed:shopify -- --faqs-only`
   - Partner app scopes: `read_metaobjects`, `write_metaobjects`, `unauthenticated_read_metaobjects`
-- **Verify:** `pnpm verify:shopify` — expect 6 FAQ metaobjects; `/faqs` with `pnpm dev:shopify`
-- **Remaining:** Footer privacy/terms links (currently `#`); optional standalone `/privacy`, `/terms` routes
-
-### Completed (partial — policies)
-
-- **Date:** 2026-06-20
-- **What was done:**
   - All four shop policies seeded (`SHIPPING_POLICY`, `REFUND_POLICY`, `TERMS_OF_SERVICE`, `PRIVACY_POLICY`) via `pnpm seed:shopify -- --policies-only`
   - PDP Shipping & Returns accordion uses shipping + refund policy HTML via `getShopPolicies()`
+  - Footer privacy/terms links: `SHOP_BRAND_QUERY` → `getShopifyBrand()` maps `shop.privacyPolicy.url` and `shop.termsOfService.url` to `brand.legal` (Shopify checkout-hosted URLs; `#` only when mock provider or policies unseeded)
+- **Verify:** `pnpm verify:shopify`; `pnpm verify:shopify:policies` (policy bodies + footer URLs); `/faqs` and footer links with `pnpm dev:shopify`
+- **Optional later:** Standalone `/privacy`, `/terms` Next.js routes rendering policy HTML on-site
 
 ---
 

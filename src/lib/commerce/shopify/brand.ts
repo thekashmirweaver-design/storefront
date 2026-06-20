@@ -220,7 +220,7 @@ async function fetchShopifyBrand(): Promise<BrandConfig> {
 }
 
 export async function getShopifyBrand(): Promise<BrandConfig> {
-  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v2"], {
+  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v3"], {
     revalidate: BRAND_REVALIDATE_SECONDS,
     tags: ["shopify-brand"],
   })();
