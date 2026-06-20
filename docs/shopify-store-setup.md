@@ -197,6 +197,7 @@ After adding them to `shopify.app.toml`, deploy and **re-approve the app on the 
 | Missing `customer_read_*` scopes on app install | Deploy partner app with scopes above; re-approve app on store |
 | Wrong client ID | Use partner app Client ID from `shopify app info` **after** `[customer_authentication]` deploy, **or** Headless channel Client ID (Option B below) |
 | `redirect_uri` mismatch | `NEXT_PUBLIC_SITE_URL` must match `[customer_authentication].redirect_uris` exactly (re-deploy if ngrok URL changed) |
+| Testing on Vercel preview URL while custom domain is unset | Register **both** production domains in `[customer_authentication]` (e.g. `thekashmirweaver.com` and `*.vercel.app`), deploy the partner app, and set `NEXT_PUBLIC_SITE_URL` to the URL you actually open in the browser |
 
 1. **Shopify Admin → Sales channels → Headless** → your storefront → **Customer Account API**.
 2. Copy **Client ID** from Credentials.
