@@ -8,7 +8,6 @@ import type {
 import { brandText } from "../brand/text";
 import { getShopifyBrand } from "./brand";
 import { getShopifyFaqs } from "./faqs";
-import { subscribeShopifyNewsletter, submitShopifyContact } from "./forms";
 import { createShopifyClient } from "./client";
 import {
   applyClientFilters,
@@ -278,11 +277,17 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     return entries;
   }
 
-  async subscribeNewsletter(email: string) {
-    return subscribeShopifyNewsletter(email);
+  async subscribeNewsletter(_email: string) {
+    return {
+      ok: false,
+      message: "Use subscribeNewsletterAction — Shopify forms run via server actions",
+    };
   }
 
-  async submitContact(form: ContactFormInput) {
-    return submitShopifyContact(form);
+  async submitContact(_form: ContactFormInput) {
+    return {
+      ok: false,
+      message: "Use submitContactAction — Shopify forms run via server actions",
+    };
   }
 }

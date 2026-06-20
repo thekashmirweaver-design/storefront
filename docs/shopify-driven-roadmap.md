@@ -389,7 +389,7 @@ Shop legal policies (all four types) are seeded and consumed on PDP Shipping & R
 | Newsletter | Admin `customerCreate` / `customerEmailMarketingConsentUpdate` + tag `newsletter` |
 | Contact | Admin `customerCreate` / `customerUpdate` + tag `contact-form` + appended note |
 
-Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitContactAction` in Shopify provider via [`forms.ts`](../src/lib/commerce/shopify/forms.ts) + [`admin.ts`](../src/lib/commerce/shopify/admin.ts). Requires `SHOPIFY_ADMIN_ACCESS_TOKEN` with `read_customers` + `write_customers` at runtime.
+Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitContactAction` in Shopify provider via [`forms.server.ts`](../src/lib/commerce/shopify/forms.server.ts) + [`admin.ts`](../src/lib/commerce/shopify/admin.ts). Requires Admin API access via `SHOPIFY_ADMIN_ACCESS_TOKEN` or `SHOPIFY_PARTNER_APP_DIR` + Shopify CLI (`read_customers` + `write_customers`).
 
 ### Completed
 
@@ -397,11 +397,11 @@ Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitCo
 - **What was done:**
   - **Newsletter:** `subscribeShopifyNewsletter()` — validates email, creates customer with `emailMarketingConsent: SUBSCRIBED` or updates existing via `customerEmailMarketingConsentUpdate`; tag `newsletter`
   - **Contact:** `submitShopifyContact()` — creates/updates customer with appended note (name, email, subject, message) and tag `contact-form`
-  - **Admin client:** [`admin.ts`](../src/lib/commerce/shopify/admin.ts) — server-side Admin GraphQL via `SHOPIFY_ADMIN_ACCESS_TOKEN`
+  - **Admin client:** [`admin.ts`](../src/lib/commerce/shopify/admin.ts) — server-side Admin GraphQL via token or `shopify app execute` fallback
   - **Provider:** [`shopify/provider.ts`](../src/lib/commerce/shopify/provider.ts) — replaced mock delegate for forms
   - **Partner app scopes:** `read_customers`, `write_customers` in `shopify.app.toml`
   - **Docs:** [shopify-store-setup.md](./shopify-store-setup.md) — customer scopes + Admin token setup for forms
-- **Verify:** Set `SHOPIFY_ADMIN_ACCESS_TOKEN` in `.env.local`; `pnpm dev:shopify` → footer newsletter + `/contact` form; check **Shopify Admin → Customers** for new records/tags
+- **Verify:** `pnpm verify:shopify` (no admin-token warning); `pnpm dev:shopify` → footer newsletter + `/contact` form; check **Shopify Admin → Customers** for new records/tags
 
 ---
 
@@ -519,8 +519,7 @@ flowchart TD
 
 Phases 0–5 engineering is complete. **Do not start Phase 6** until user picks scope.
 
-1. **User ops:** Add `SHOPIFY_ADMIN_ACCESS_TOKEN` to `.env.local`; re-approve partner app on store if scopes changed
-2. **Phase 6** — Customer Account API (OAuth PKCE), order history, wishlist sync
-3. **Optional (Phase 7 prep):** Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
-4. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
-5. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing
+1. **Phase 6** — Customer Account API (OAuth PKCE), order history, wishlist sync
+2. **Optional (Phase 7 prep):** Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
+3. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
+4. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing

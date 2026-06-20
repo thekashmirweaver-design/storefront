@@ -133,13 +133,19 @@ The API connection can succeed while the store has no published products. Add pr
 
 Run `shopify app dev -s YOUR-STORE.myshopify.com` from your Partner app directory to install and grant scopes.
 
-**Admin API token (`SHOPIFY_ADMIN_ACCESS_TOKEN`)**
+**Admin API for forms (`SHOPIFY_ADMIN_ACCESS_TOKEN` or partner app CLI)**
 
-Required for **newsletter and contact forms** (Phase 5) when running `pnpm dev:shopify`. The Next.js server calls Admin GraphQL (`customerCreate`, `customerEmailMarketingConsentUpdate`, `customerUpdate`, `tagsAdd`) — it does not use `shopify app execute` at request time.
+Newsletter and contact forms call Admin GraphQL (`customerCreate`, `customerEmailMarketingConsentUpdate`, `customerUpdate`, `tagsAdd`) from the Next.js server via [`admin.ts`](../src/lib/commerce/shopify/admin.ts).
 
-1. Deploy partner app scopes (`read_customers`, `write_customers`) — see [Partner app scopes](#partner-app-scopes-admin-api--seed) above.
-2. Create a **custom app** in Shopify Admin (or use an offline token from your installed Partner app) with `read_customers` and `write_customers`.
-3. Paste the Admin API access token into `.env.local` as `SHOPIFY_ADMIN_ACCESS_TOKEN`.
+**Option A — direct token (production):** Set `SHOPIFY_ADMIN_ACCESS_TOKEN` in `.env.local` from a custom app or offline Partner app token with `read_customers` + `write_customers`.
+
+**Option B — partner app CLI (local dev, same as seed):** Set `SHOPIFY_PARTNER_APP_DIR` (default `/tmp/shopify-probe/kashmir-weaver-probe`). When no admin token is set, `admin.ts` falls back to `shopify app execute` — requires Shopify CLI logged in and partner app installed with customer scopes.
+
+Setup for Option B:
+
+1. Deploy partner app scopes — see [Partner app scopes](#partner-app-scopes-admin-api--seed) above (`shopify app deploy --allow-updates` from the partner app dir).
+2. Re-approve on the dev store if prompted — open the app from **Shopify Admin → Apps**, or run `shopify app dev -s YOUR-STORE.myshopify.com` once and accept new permissions.
+3. Verify: `pnpm verify:shopify` should not warn about missing admin access.
 
 Optional: `SHOPIFY_ADMIN_API_VERSION` (default `2025-07`).
 

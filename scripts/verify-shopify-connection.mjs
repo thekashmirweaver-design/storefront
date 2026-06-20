@@ -250,9 +250,17 @@ if (!privacyPolicyUrl || !termsUrl) {
     "Footer policy URLs missing — run `pnpm seed:shopify -- --policies-only` (needs write_legal_policies on partner app)",
   );
 }
-if (!process.env.SHOPIFY_ADMIN_ACCESS_TOKEN) {
+const partnerAppDir =
+  process.env.SHOPIFY_PARTNER_APP_DIR ?? "/tmp/shopify-probe/kashmir-weaver-probe";
+const hasAdminToken = Boolean(process.env.SHOPIFY_ADMIN_ACCESS_TOKEN);
+const hasPartnerAppFallback = existsSync(partnerAppDir);
+if (!hasAdminToken && !hasPartnerAppFallback) {
   warnings.push(
-    "SHOPIFY_ADMIN_ACCESS_TOKEN not set — newsletter + contact forms will fail at runtime (Phase 5; needs read_customers + write_customers)",
+    "No Admin API access for forms — set SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR (needs read_customers + write_customers on partner app)",
+  );
+} else if (!hasAdminToken && hasPartnerAppFallback) {
+  console.log(
+    `\nℹ Admin forms: using shopify app execute fallback (${partnerAppDir}) — set SHOPIFY_ADMIN_ACCESS_TOKEN for production`,
   );
 }
 

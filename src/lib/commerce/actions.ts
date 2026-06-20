@@ -29,10 +29,18 @@ export async function getProductsBySlugsAction(slugs: string[]) {
 }
 
 export async function subscribeNewsletterAction(email: string) {
+  if (isShopifyProvider()) {
+    const { subscribeShopifyNewsletter } = await import("./shopify/forms.server");
+    return subscribeShopifyNewsletter(email);
+  }
   return commerce.subscribeNewsletter(email);
 }
 
 export async function submitContactAction(form: ContactFormInput) {
+  if (isShopifyProvider()) {
+    const { submitShopifyContact } = await import("./shopify/forms.server");
+    return submitShopifyContact(form);
+  }
   return commerce.submitContact(form);
 }
 

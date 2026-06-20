@@ -1,3 +1,5 @@
+import "server-only";
+
 import { brandText } from "../brand/text";
 import type { ContactFormInput } from "../types";
 import { getShopifyAdminConfig, shopifyAdminRequest } from "./admin";
@@ -252,7 +254,9 @@ export async function subscribeShopifyNewsletter(
   }
 
   if (!getShopifyAdminConfig()) {
-    console.error("[shopify/forms] Missing SHOPIFY_ADMIN_ACCESS_TOKEN for newsletter signup");
+    console.error(
+      "[shopify/forms] Admin API not configured — set SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR",
+    );
     return { ok: false, message: formsUnavailableMessage() };
   }
 
@@ -291,7 +295,9 @@ export async function submitShopifyContact(
   }
 
   if (!getShopifyAdminConfig()) {
-    console.error("[shopify/forms] Missing SHOPIFY_ADMIN_ACCESS_TOKEN for contact form");
+    console.error(
+      "[shopify/forms] Admin API not configured — set SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR",
+    );
     return { ok: false, message: formsUnavailableMessage() };
   }
 
