@@ -79,6 +79,103 @@ export type HomepageCollectionSection = {
   previewProducts: CommerceProduct[];
 };
 
+export type EditorialIconName =
+  | "leaf"
+  | "hexagon"
+  | "feather"
+  | "mountain"
+  | "hand"
+  | "home"
+  | "heart"
+  | "infinity";
+
+export type EditorialPillar = {
+  icon: EditorialIconName;
+  title: string;
+  description: string;
+};
+
+export type CommerceHomepageEditorial = {
+  hero: {
+    eyebrow: string;
+    headlineLine1: string;
+    headlineLine2: string;
+    description: string;
+    ctaLabel: string;
+    ctaHref: string;
+    image: CommerceImage;
+  };
+  valueProps: { icon: EditorialIconName; label: string }[];
+  marqueeItems: string[];
+  legacy: {
+    eyebrow: string;
+    titleLine1: string;
+    titleLine2: string;
+    body: string;
+    image: CommerceImage;
+    pillars: EditorialPillar[];
+  };
+  quote: {
+    line1: string;
+    line2: string;
+  };
+  seo: {
+    title: string;
+    description: string;
+  };
+};
+
+export type CommerceOurStoryContent = {
+  hero: {
+    eyebrow: string;
+    title: string;
+    image: CommerceImage;
+  };
+  quote: string;
+  heritage: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    bodyExtra: string;
+    image: CommerceImage;
+  };
+  sustainability: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    image: CommerceImage;
+  };
+};
+
+export type CommerceCraftsmanshipStep = {
+  number: string;
+  title: string;
+  description: string;
+};
+
+export type CommerceCraftsmanshipContent = {
+  hero: {
+    eyebrow: string;
+    title: string;
+    image: CommerceImage;
+  };
+  intro: string;
+  steps: CommerceCraftsmanshipStep[];
+  careGuide: {
+    eyebrow: string;
+    title: string;
+    tips: string[];
+    image: CommerceImage;
+  };
+};
+
+export type CommerceJournalIndexContent = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  image: CommerceImage;
+};
+
 export type CommerceArticle = {
   slug: string;
   title: string;

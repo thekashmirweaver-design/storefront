@@ -55,9 +55,11 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
     if (signedIn) {
       toast.success("Signed in", { description: "Welcome back." });
     } else if (error) {
-      toast.error("Sign in failed", {
-        description: "Please try again or contact support if this continues.",
-      });
+      const description =
+        error === "invalid_client" || error === "access_denied"
+          ? "Customer Account API scopes may need re-approval on the dev store. Redeploy the partner app, then open the app in Shopify Admin and approve updated permissions."
+          : "Please try again or contact support if this continues.";
+      toast.error("Sign in failed", { description });
     }
 
     let cancelled = false;
@@ -173,6 +175,12 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
   }
 
   if (isShopifyAccount) {
+    const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const originMismatch =
+      typeof window !== "undefined" &&
+      configuredSiteUrl &&
+      window.location.origin !== new URL(configuredSiteUrl).origin;
+
     return (
       <section className="mx-auto max-w-md px-6 md:px-10 py-24">
         <div className="text-center mb-10">
@@ -182,6 +190,14 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
             Sign in with your Shopify customer account to view orders and sync your saved pieces.
           </p>
         </div>
+
+        {originMismatch && (
+          <p className="mb-6 text-xs text-amber-200/90 border border-amber-500/40 bg-amber-500/10 px-4 py-3 leading-relaxed">
+            Customer sign-in must use your configured site URL ({configuredSiteUrl}), not{" "}
+            {window.location.origin}. Shopify redirects back over HTTPS — open the tunnel URL while
+            `pnpm dev:shopify` runs locally.
+          </p>
+        )}
 
         <a
           href="/api/auth/customer/login"

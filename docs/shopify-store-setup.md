@@ -183,9 +183,19 @@ Recommended for local dev with the partner app at `SHOPIFY_PARTNER_APP_DIR`.
 
 2. Deploy: `shopify app build && shopify app deploy --allow-updates` (from the partner app directory).
 
-3. Set `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` to the partner app client ID (`shopify app info` → **Client ID**).
+Partner app scopes also need **Customer Account API** scopes (separate from Admin `read_customers`):
 
-### Option B — Headless channel (Admin UI)
+`customer_read_orders`, `customer_read_customers`, `customer_write_customers`
+
+After adding them to `shopify.app.toml`, deploy and **re-approve the app on the dev store** (Shopify Admin → Apps → your app → approve updated permissions). Without this, OAuth shows *“The client credentials provided are invalid or missing.”*
+
+### Troubleshooting: “client credentials invalid or missing” on login
+
+| Cause | Fix |
+|-------|-----|
+| Missing `customer_read_*` scopes on app install | Deploy partner app with scopes above; re-approve app on store |
+| Wrong client ID | Use partner app Client ID from `shopify app info` **after** `[customer_authentication]` deploy, **or** Headless channel Client ID (Option B below) |
+| `redirect_uri` mismatch | `NEXT_PUBLIC_SITE_URL` must match `[customer_authentication].redirect_uris` exactly (re-deploy if ngrok URL changed) |
 
 1. **Shopify Admin → Sales channels → Headless** → your storefront → **Customer Account API**.
 2. Copy **Client ID** from Credentials.
@@ -212,7 +222,7 @@ pnpm dev:shopify
 curl -sS -D - -o /dev/null http://localhost:3000/api/auth/customer/login   # expect 307 → shopify.com/authentication/...
 ```
 
-Then open `/account` and complete sign-in through the ngrok (or production) URL registered above.
+Then open `/account` and complete sign-in through the **same URL** as `NEXT_PUBLIC_SITE_URL` (ngrok or production). **Do not use `http://localhost:3000` for account login** — Shopify requires HTTPS callbacks; OAuth cookies and `redirect_uri` must match the registered tunnel URL.
 
 ## Storefront API reference
 

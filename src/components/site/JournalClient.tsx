@@ -5,13 +5,18 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import mountainImg from "@/assets/journal-mountain.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
-import type { CommerceArticle } from "@/lib/commerce";
+import type { CommerceArticle, CommerceJournalIndexContent } from "@/lib/commerce";
 import { journalCategoryFilterOptions } from "@/lib/commerce/journal-categories";
 
-export function JournalClient({ articles }: { articles: CommerceArticle[] }) {
+export function JournalClient({
+  articles,
+  hero,
+}: {
+  articles: CommerceArticle[];
+  hero: CommerceJournalIndexContent;
+}) {
   const searchParams = useSearchParams();
   const categories = useMemo(() => journalCategoryFilterOptions(articles), [articles]);
   const [activeCat, setActiveCat] = useState("All");
@@ -30,19 +35,19 @@ export function JournalClient({ articles }: { articles: CommerceArticle[] }) {
     <>
       <section className="relative h-[360px] overflow-hidden border-b border-border/40">
         <OptimizedImage
-          src={mountainImg}
-          alt=""
+          src={hero.image.src}
+          alt={hero.image.alt ?? ""}
           fill
           sizes="100vw"
           className="object-cover opacity-60"
+          width={hero.image.width}
+          height={hero.image.height}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
         <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 h-full flex flex-col justify-end pb-12">
-          <Eyebrow>Journal</Eyebrow>
-          <h1 className="mt-4 font-display text-5xl text-cream">Journal</h1>
-          <p className="mt-3 text-sm text-muted-foreground max-w-md">
-            Stories of heritage, craftsmanship, and the timeless beauty of pashmina.
-          </p>
+          <Eyebrow>{hero.eyebrow}</Eyebrow>
+          <h1 className="mt-4 font-display text-5xl text-cream">{hero.title}</h1>
+          <p className="mt-3 text-sm text-muted-foreground max-w-md">{hero.description}</p>
         </div>
       </section>
 

@@ -1,43 +1,54 @@
 import type { Metadata } from "next";
 
-import heroImg from "@/assets/hero-portrait.jpg";
-import mountainImg from "@/assets/journal-mountain.jpg";
-import legacyImg from "@/assets/legacy-stilllife.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
-import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await commerce.getBrand();
+  const [brand, content] = await Promise.all([commerce.getBrand(), commerce.getOurStoryContent()]);
   return buildPageMetadata(brand, {
     title: "Our Story",
     description: `From the highlands of Kashmir to your shoulders — the story of ${brand.name}'s heritage and craft.`,
     openGraph: {
       description: "The story of a centuries-old craft.",
-      images: [{ url: heroImg.src, width: heroImg.width, height: heroImg.height }],
+      images: [
+        {
+          url: content.hero.image.src,
+          width: content.hero.image.width,
+          height: content.hero.image.height,
+        },
+      ],
     },
   });
 }
 
 export default async function OurStoryPage() {
-  const brand = await commerce.getBrand();
+  const content = await commerce.getOurStoryContent();
 
   return (
     <>
       <section className="relative h-[520px] overflow-hidden">
-        <OptimizedImage src={mountainImg} alt="" fill sizes="100vw" className="object-cover" />
+        <OptimizedImage
+          src={content.hero.image.src}
+          alt={content.hero.image.alt ?? ""}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          width={content.hero.image.width}
+          height={content.hero.image.height}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/60" />
         <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 h-full flex flex-col items-center justify-center text-center pt-20">
-          <Eyebrow className="justify-center">Our Story</Eyebrow>
+          <Eyebrow className="justify-center">{content.hero.eyebrow}</Eyebrow>
           <h1 className="mt-4 font-display text-5xl md:text-6xl text-cream max-w-3xl">
-            From the Highlands of Kashmir, Woven with Love
+            {content.hero.title}
           </h1>
         </div>
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="font-display italic text-2xl text-cream leading-relaxed">
-          &ldquo;{brandText(brand.copy.pages.ourStory.nameMeaningQuote, brand)}&rdquo;
+          &ldquo;{content.quote}&rdquo;
         </p>
         <DiamondDivider className="mt-10" />
       </section>
@@ -45,21 +56,21 @@ export default async function OurStoryPage() {
       <section className="mx-auto max-w-[1200px] px-6 md:px-10 pb-24 grid lg:grid-cols-2 gap-14 items-center">
         <div className="relative aspect-[4/5] overflow-hidden">
           <OptimizedImage
-            src={legacyImg}
-            alt=""
+            src={content.heritage.image.src}
+            alt={content.heritage.image.alt ?? ""}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"
+            width={content.heritage.image.width}
+            height={content.heritage.image.height}
           />
         </div>
         <div>
-          <Eyebrow>Heritage</Eyebrow>
-          <h2 className="mt-4 font-display text-4xl text-cream">A Craft Centuries in the Making</h2>
-          <p className="mt-6 text-sm text-muted-foreground leading-relaxed">
-            {brandText(brand.copy.pages.ourStory.heritageBody, brand)}
-          </p>
+          <Eyebrow>{content.heritage.eyebrow}</Eyebrow>
+          <h2 className="mt-4 font-display text-4xl text-cream">{content.heritage.title}</h2>
+          <p className="mt-6 text-sm text-muted-foreground leading-relaxed">{content.heritage.body}</p>
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-            Every shawl is signed and numbered by the weaver who made it. No two are ever identical.
+            {content.heritage.bodyExtra}
           </p>
         </div>
       </section>
@@ -67,21 +78,21 @@ export default async function OurStoryPage() {
       <section className="border-y border-border/40 bg-ink py-24">
         <div className="mx-auto max-w-[1200px] px-6 md:px-10 grid lg:grid-cols-2 gap-14 items-center">
           <div className="order-2 lg:order-1">
-            <Eyebrow>Sustainability</Eyebrow>
-            <h2 className="mt-4 font-display text-4xl text-cream">Made Slowly. Made Honestly.</h2>
+            <Eyebrow>{content.sustainability.eyebrow}</Eyebrow>
+            <h2 className="mt-4 font-display text-4xl text-cream">{content.sustainability.title}</h2>
             <p className="mt-6 text-sm text-muted-foreground leading-relaxed">
-              Our fiber is gathered each spring, only when the goats naturally shed. Our dyes are
-              derived from plants and minerals. Our weavers are paid living wages. We make a small
-              number of pieces each season, and we make them to last for decades.
+              {content.sustainability.body}
             </p>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden order-1 lg:order-2">
             <OptimizedImage
-              src={mountainImg}
-              alt=""
+              src={content.sustainability.image.src}
+              alt={content.sustainability.image.alt ?? ""}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
+              width={content.sustainability.image.width}
+              height={content.sustainability.image.height}
             />
           </div>
         </div>

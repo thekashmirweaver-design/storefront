@@ -76,6 +76,13 @@ export const shopMetafieldDefinitions = [
     type: "multi_line_text_field",
   },
   { name: "Newsletter Placeholder", key: "newsletter_placeholder", type: "single_line_text_field" },
+  { name: "Journal Hero Image URL", key: "journal_hero_image_url", type: "url" },
+  { name: "Journal Hero Title", key: "journal_hero_title", type: "single_line_text_field" },
+  {
+    name: "Journal Hero Description",
+    key: "journal_hero_description",
+    type: "multi_line_text_field",
+  },
 ];
 
 export const shopMetafields = {
@@ -105,6 +112,9 @@ export const shopMetafields = {
   newsletter_title: "Stay Connected",
   newsletter_description: "Be the first to know about new arrivals and exclusive offers.",
   newsletter_placeholder: "Enter your email",
+  journal_hero_title: "Journal",
+  journal_hero_description:
+    "Stories of heritage, craftsmanship, and the timeless beauty of pashmina.",
 };
 
 /** Storefront menu handles — must match src/lib/commerce/shopify/brand.ts */
@@ -171,6 +181,158 @@ export const navigationMenus = [
         ],
       },
     ],
+  },
+];
+
+/** App-owned editorial metaobject types — must match partner app shopify.app.toml and src/lib/commerce/shopify/queries.ts */
+export const HOMEPAGE_HERO_METAOBJECT_TYPE = "$app:homepage_hero";
+export const HOMEPAGE_VALUE_PROP_METAOBJECT_TYPE = "$app:homepage_value_prop";
+export const HOMEPAGE_MARQUEE_METAOBJECT_TYPE = "$app:homepage_marquee_item";
+export const HOMEPAGE_LEGACY_METAOBJECT_TYPE = "$app:homepage_legacy";
+export const HOMEPAGE_QUOTE_METAOBJECT_TYPE = "$app:homepage_quote";
+export const OUR_STORY_METAOBJECT_TYPE = "$app:our_story";
+export const CRAFTSMANSHIP_METAOBJECT_TYPE = "$app:craftsmanship";
+export const CRAFTSMANSHIP_STEP_METAOBJECT_TYPE = "$app:craftsmanship_step";
+
+export const editorialImages = {
+  homepageHero: { file: img("hero-portrait.jpg"), alt: "Woman elegantly styling a Kashmiri pashmina shawl" },
+  homepageLegacy: { file: img("legacy-stilllife.jpg"), alt: "Rolled pashmina with gift box" },
+  ourStoryHero: { file: img("journal-mountain.jpg"), alt: "Kashmir highlands" },
+  ourStoryHeritage: { file: img("legacy-stilllife.jpg"), alt: "Heritage pashmina still life" },
+  ourStorySustainability: { file: img("journal-mountain.jpg"), alt: "Kashmir landscape" },
+  craftsmanshipHero: { file: img("journal-handloom.jpg"), alt: "Handloom weaving in Kashmir" },
+  craftsmanshipCare: { file: img("collection-woven.jpg"), alt: "Woven pashmina detail" },
+  journalHero: { file: img("journal-mountain.jpg"), alt: "Journal hero landscape" },
+};
+
+export const homepageHero = {
+  handle: "main",
+  eyebrow: "Exquisite by Nature",
+  headlineLine1: "The Finest Pashmina",
+  headlineLine2: "Woven by Heritage",
+  description:
+    "Luxuriously soft. Exceptionally rare.\nA timeless wrap of elegance and comfort.",
+  ctaLabel: "Explore Collections",
+  ctaHref: "/#collections",
+  image: editorialImages.homepageHero,
+  seoTitle: "The Finest Pashmina, Woven by Heritage",
+  seoDescription:
+    "Luxuriously soft. Exceptionally rare. Handwoven Kashmiri pashmina shawls crafted from 100% natural fibers.",
+};
+
+export const homepageValueProps = [
+  { handle: "01-leaf", icon: "leaf", label: "100% Natural Yarn" },
+  { handle: "02-hexagon", icon: "hexagon", label: "Handwoven in Kashmir" },
+  { handle: "03-feather", icon: "feather", label: "Ultra Soft & Lightweight" },
+  { handle: "04-mountain", icon: "mountain", label: "Sustainable & Ethical" },
+];
+
+export const homepageMarqueeItems = [
+  { handle: "01", text: "Timeless Elegance" },
+  { handle: "02", text: "100% Pure Pashmina" },
+  { handle: "03", text: "Handwoven in Kashmir" },
+  { handle: "04", text: "Limited Production" },
+  { handle: "05", text: "Ethically Sourced" },
+  { handle: "06", text: "Certificate of Authenticity" },
+  { handle: "07", text: "Complimentary Worldwide Shipping" },
+];
+
+export const homepageLegacy = {
+  handle: "main",
+  eyebrow: "Rooted in Heritage · Made to Last",
+  titleLine1: "A Legacy Woven",
+  titleLine2: "Through Time",
+  body:
+    "From the highlands of Kashmir to the hands of skilled artisans, every {name} {productNoun} is a story of tradition, patience and unmatched craftsmanship. Woven with care. Cherished for a lifetime.",
+  image: editorialImages.homepageLegacy,
+  pillars: [
+    { icon: "hand", title: "Heritage Craft", description: "Centuries-old Kashmiri artistry" },
+    { icon: "home", title: "Pristine Origin", description: "Sourced from the Himalayan highlands" },
+    { icon: "heart", title: "Made with Care", description: "Every piece is woven with love and precision" },
+    { icon: "infinity", title: "Timeless Beauty", description: "Designed to be treasured forever" },
+  ],
+};
+
+export const homepageQuote = {
+  handle: "main",
+  line1: "Pashmina is not just worn, it is felt.",
+  line2: "A part of you, wherever you go.",
+};
+
+export const ourStoryPage = {
+  handle: "main",
+  heroEyebrow: "Our Story",
+  heroTitle: "From the Highlands of Kashmir, Woven with Love",
+  heroImage: editorialImages.ourStoryHero,
+  quoteText:
+    "{name} — artisans who carry forward a centuries-old tradition from the valleys of {origin}, thread by thread.",
+  heritageEyebrow: "Heritage",
+  heritageTitle: "A Craft Centuries in the Making",
+  heritageBody:
+    "For over six hundred years, the artisans of Kashmir have hand-woven pashmina from the soft under-fleece of the Changthangi goat. {name} carries forward this lineage — partnering directly with families of weavers, dyers and spinners who have practiced the craft across generations.",
+  heritageBodyExtra:
+    "Every shawl is signed and numbered by the weaver who made it. No two are ever identical.",
+  heritageImage: editorialImages.ourStoryHeritage,
+  sustainabilityEyebrow: "Sustainability",
+  sustainabilityTitle: "Made Slowly. Made Honestly.",
+  sustainabilityBody:
+    "Our fiber is gathered each spring, only when the goats naturally shed. Our dyes are derived from plants and minerals. Our weavers are paid living wages. We make a small number of pieces each season, and we make them to last for decades.",
+  sustainabilityImage: editorialImages.ourStorySustainability,
+};
+
+export const craftsmanshipPage = {
+  handle: "main",
+  heroEyebrow: "Craftsmanship",
+  heroTitle: "The Slow Art of the Handloom",
+  heroImage: editorialImages.craftsmanshipHero,
+  intro:
+    "A single {name} {productNoun} passes through the hands of more than a dozen artisans before it reaches you. Here is how it is made.",
+  careEyebrow: "Care Guide",
+  careTitle: "Caring for Your Pashmina",
+  careTips: [
+    "Dry clean only, ideally by a specialist familiar with cashmere.",
+    "Store folded, never on a hanger. A breathable cotton bag is ideal.",
+    "Keep cedar or lavender nearby to ward off moths.",
+    "Air your shawl outdoors twice a season to keep it fresh.",
+    "Pulls happen. Gently push the thread back through; never cut.",
+  ],
+  careImage: editorialImages.craftsmanshipCare,
+};
+
+export const craftsmanshipSteps = [
+  {
+    handle: "01",
+    number: "01",
+    title: "Gathering the Fleece",
+    description:
+      "Each spring, mountain herders comb the soft under-fleece from the Changthangi goat, never shearing.",
+  },
+  {
+    handle: "02",
+    number: "02",
+    title: "Hand-Spinning",
+    description:
+      "Women in the valley spin the fiber on the traditional charkha, a craft passed from mother to daughter.",
+  },
+  {
+    handle: "03",
+    number: "03",
+    title: "Natural Dyeing",
+    description:
+      "Plant- and mineral-based dyes are mixed by hand, producing colors that age gracefully.",
+  },
+  {
+    handle: "04",
+    number: "04",
+    title: "Handloom Weaving",
+    description: "A single shawl can take a weaver up to four weeks on the wooden handloom.",
+  },
+  {
+    handle: "05",
+    number: "05",
+    title: "Finishing & Inspection",
+    description:
+      "Each piece is hand-washed in spring water, brushed, and signed by its weaver.",
   },
 ];
 

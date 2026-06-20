@@ -1,84 +1,71 @@
 import type { Metadata } from "next";
 
-import handloomImg from "@/assets/journal-handloom.jpg";
-import wovenImg from "@/assets/collection-woven.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow, DiamondDivider } from "@/components/site/Eyebrow";
-import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
+import { commerce, buildPageMetadata } from "@/lib/commerce";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await commerce.getBrand();
+  const [brand, content] = await Promise.all([
+    commerce.getBrand(),
+    commerce.getCraftsmanshipContent(),
+  ]);
   return buildPageMetadata(brand, {
     title: "Craftsmanship",
     description: "The slow, patient art of weaving pashmina by hand in Kashmir.",
     openGraph: {
       description: "The slow, patient art of weaving pashmina by hand.",
-      images: [{ url: handloomImg.src, width: handloomImg.width, height: handloomImg.height }],
+      images: [
+        {
+          url: content.hero.image.src,
+          width: content.hero.image.width,
+          height: content.hero.image.height,
+        },
+      ],
     },
   });
 }
 
-const steps = [
-  {
-    n: "01",
-    t: "Gathering the Fleece",
-    d: "Each spring, mountain herders comb the soft under-fleece from the Changthangi goat, never shearing.",
-  },
-  {
-    n: "02",
-    t: "Hand-Spinning",
-    d: "Women in the valley spin the fiber on the traditional charkha, a craft passed from mother to daughter.",
-  },
-  {
-    n: "03",
-    t: "Natural Dyeing",
-    d: "Plant- and mineral-based dyes are mixed by hand, producing colors that age gracefully.",
-  },
-  {
-    n: "04",
-    t: "Handloom Weaving",
-    d: "A single shawl can take a weaver up to four weeks on the wooden handloom.",
-  },
-  {
-    n: "05",
-    t: "Finishing & Inspection",
-    d: "Each piece is hand-washed in spring water, brushed, and signed by its weaver.",
-  },
-];
-
 export default async function CraftsmanshipPage() {
-  const brand = await commerce.getBrand();
+  const content = await commerce.getCraftsmanshipContent();
 
   return (
     <>
       <section className="relative h-[460px] overflow-hidden">
-        <OptimizedImage src={handloomImg} alt="" fill sizes="100vw" className="object-cover" />
+        <OptimizedImage
+          src={content.hero.image.src}
+          alt={content.hero.image.alt ?? ""}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          width={content.hero.image.width}
+          height={content.hero.image.height}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/40" />
         <div className="relative mx-auto max-w-[1400px] px-6 md:px-10 h-full flex flex-col items-center justify-center text-center pt-20">
-          <Eyebrow className="justify-center">Craftsmanship</Eyebrow>
+          <Eyebrow className="justify-center">{content.hero.eyebrow}</Eyebrow>
           <h1 className="mt-4 font-display text-5xl md:text-6xl text-cream max-w-3xl">
-            The Slow Art of the Handloom
+            {content.hero.title}
           </h1>
         </div>
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {brandText(brand.copy.pages.craftsmanship.intro, brand)}
-        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{content.intro}</p>
         <DiamondDivider className="mt-10" />
       </section>
 
       <section className="mx-auto max-w-[1100px] px-6 md:px-10 pb-24 space-y-16">
-        {steps.map((s) => (
+        {content.steps.map((step) => (
           <div
-            key={s.n}
+            key={step.number}
             className="grid lg:grid-cols-[120px_1fr] gap-6 items-start border-b border-border/40 pb-12 last:border-0"
           >
-            <div className="font-display text-5xl text-gold/70">{s.n}</div>
+            <div className="font-display text-5xl text-gold/70">{step.number}</div>
             <div>
-              <h3 className="font-display text-3xl text-cream">{s.t}</h3>
-              <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-2xl">{s.d}</p>
+              <h3 className="font-display text-3xl text-cream">{step.title}</h3>
+              <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                {step.description}
+              </p>
             </div>
           </div>
         ))}
@@ -88,22 +75,22 @@ export default async function CraftsmanshipPage() {
         <div className="mx-auto max-w-[1200px] px-6 md:px-10 py-24 grid lg:grid-cols-2 gap-14 items-center">
           <div className="relative aspect-[4/5] overflow-hidden">
             <OptimizedImage
-              src={wovenImg}
-              alt=""
+              src={content.careGuide.image.src}
+              alt={content.careGuide.image.alt ?? ""}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
+              width={content.careGuide.image.width}
+              height={content.careGuide.image.height}
             />
           </div>
           <div>
-            <Eyebrow>Care Guide</Eyebrow>
-            <h2 className="mt-4 font-display text-4xl text-cream">Caring for Your Pashmina</h2>
+            <Eyebrow>{content.careGuide.eyebrow}</Eyebrow>
+            <h2 className="mt-4 font-display text-4xl text-cream">{content.careGuide.title}</h2>
             <ul className="mt-6 space-y-4 text-sm text-muted-foreground leading-relaxed">
-              <li>— Dry clean only, ideally by a specialist familiar with cashmere.</li>
-              <li>— Store folded, never on a hanger. A breathable cotton bag is ideal.</li>
-              <li>— Keep cedar or lavender nearby to ward off moths.</li>
-              <li>— Air your shawl outdoors twice a season to keep it fresh.</li>
-              <li>— Pulls happen. Gently push the thread back through; never cut.</li>
+              {content.careGuide.tips.map((tip) => (
+                <li key={tip}>— {tip}</li>
+              ))}
             </ul>
           </div>
         </div>

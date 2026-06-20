@@ -13,8 +13,19 @@ import { brandText } from "../brand/text";
 import { mockBrand } from "./brand";
 import { mockArticles } from "./data/articles";
 import { mockCollections } from "./data/collections";
+import {
+  mockCraftsmanshipContent,
+  mockHomepageEditorial,
+  mockJournalIndexContent,
+  mockOurStoryContent,
+} from "./data/editorial";
 import { mockFaqs } from "./data/faqs";
 import { mockProducts } from "./data/products";
+import {
+  applyBrandToCraftsmanshipContent,
+  applyBrandToHomepageEditorial,
+  applyBrandToOurStoryContent,
+} from "../editorial-brand";
 
 const CURRENCY = "USD";
 
@@ -213,6 +224,22 @@ export class MockCommerceProvider implements CommerceProvider {
       ...faq,
       answer: brandText(faq.answer, brandConfig),
     }));
+  }
+
+  async getHomepageEditorial() {
+    return applyBrandToHomepageEditorial(mockHomepageEditorial, brandConfig);
+  }
+
+  async getOurStoryContent() {
+    return applyBrandToOurStoryContent(mockOurStoryContent, brandConfig);
+  }
+
+  async getCraftsmanshipContent() {
+    return applyBrandToCraftsmanshipContent(mockCraftsmanshipContent, brandConfig);
+  }
+
+  async getJournalIndexContent() {
+    return mockJournalIndexContent;
   }
 
   async getStorefrontSettings() {

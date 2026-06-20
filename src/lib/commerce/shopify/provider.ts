@@ -6,7 +6,18 @@ import type {
   CommerceSitemapEntry,
 } from "../types";
 import { brandText } from "../brand/text";
+import {
+  applyBrandToCraftsmanshipContent,
+  applyBrandToHomepageEditorial,
+  applyBrandToOurStoryContent,
+} from "../editorial-brand";
 import { getShopifyBrand } from "./brand";
+import {
+  getShopifyCraftsmanshipContent,
+  getShopifyHomepageEditorial,
+  getShopifyJournalIndexContent,
+  getShopifyOurStoryContent,
+} from "./editorial";
 import { getShopifyFaqs } from "./faqs";
 import { createShopifyClient } from "./client";
 import {
@@ -230,6 +241,25 @@ export class ShopifyCommerceProvider implements CommerceProvider {
       ...faq,
       answer: brandText(faq.answer, brand),
     }));
+  }
+
+  async getHomepageEditorial() {
+    const [content, brand] = await Promise.all([getShopifyHomepageEditorial(), this.getBrand()]);
+    return applyBrandToHomepageEditorial(content, brand);
+  }
+
+  async getOurStoryContent() {
+    const [content, brand] = await Promise.all([getShopifyOurStoryContent(), this.getBrand()]);
+    return applyBrandToOurStoryContent(content, brand);
+  }
+
+  async getCraftsmanshipContent() {
+    const [content, brand] = await Promise.all([getShopifyCraftsmanshipContent(), this.getBrand()]);
+    return applyBrandToCraftsmanshipContent(content, brand);
+  }
+
+  async getJournalIndexContent() {
+    return getShopifyJournalIndexContent();
   }
 
   async getStorefrontSettings() {

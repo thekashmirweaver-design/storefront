@@ -6,9 +6,14 @@ export type {
   CommerceCartLine,
   CommerceCollection,
   CommerceColor,
+  CommerceCraftsmanshipContent,
+  CommerceCraftsmanshipStep,
   CommerceFaq,
+  CommerceHomepageEditorial,
   CommerceImage,
+  CommerceJournalIndexContent,
   CommerceMoney,
+  CommerceOurStoryContent,
   CommerceProduct,
   CommerceProductCategory,
   CommerceSearchResult,
@@ -18,6 +23,8 @@ export type {
   CommerceCustomerSession,
   CommerceOrder,
   CommerceOrderLineItem,
+  EditorialIconName,
+  EditorialPillar,
 } from "./types";
 
 export type { CommerceProvider } from "./provider";

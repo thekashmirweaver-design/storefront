@@ -3,7 +3,11 @@ import type {
   CommerceArticle,
   CommerceCart,
   CommerceCollection,
+  CommerceCraftsmanshipContent,
   CommerceFaq,
+  CommerceHomepageEditorial,
+  CommerceJournalIndexContent,
+  CommerceOurStoryContent,
   CommerceProduct,
   CommerceSearchResult,
   CommerceShopPolicies,
@@ -40,6 +44,11 @@ export interface CommerceProvider {
   search(query: string): Promise<CommerceSearchResult>;
 
   getFaqs(): Promise<CommerceFaq[]>;
+
+  getHomepageEditorial(): Promise<CommerceHomepageEditorial>;
+  getOurStoryContent(): Promise<CommerceOurStoryContent>;
+  getCraftsmanshipContent(): Promise<CommerceCraftsmanshipContent>;
+  getJournalIndexContent(): Promise<CommerceJournalIndexContent>;
 
   getStorefrontSettings(): Promise<CommerceStorefrontSettings>;
   getShopPolicies(): Promise<CommerceShopPolicies>;

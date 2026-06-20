@@ -13,13 +13,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function JournalPage() {
-  const articles = await commerce.getArticles();
+  const [articles, hero] = await Promise.all([
+    commerce.getArticles(),
+    commerce.getJournalIndexContent(),
+  ]);
 
   return (
     <Suspense
       fallback={<div className="py-24 text-center text-muted-foreground">Loading journal…</div>}
     >
-      <JournalClient articles={articles} />
+      <JournalClient articles={articles} hero={hero} />
     </Suspense>
   );
 }

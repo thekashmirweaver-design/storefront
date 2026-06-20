@@ -495,6 +495,137 @@ export const FAQS_QUERY = `
   }
 `;
 
+/** App-owned editorial metaobject types — must match partner app shopify.app.toml and seed script. */
+export const SHOPIFY_HOMEPAGE_HERO_METAOBJECT_TYPE = "$app:homepage_hero";
+export const SHOPIFY_HOMEPAGE_VALUE_PROP_METAOBJECT_TYPE = "$app:homepage_value_prop";
+export const SHOPIFY_HOMEPAGE_MARQUEE_METAOBJECT_TYPE = "$app:homepage_marquee_item";
+export const SHOPIFY_HOMEPAGE_LEGACY_METAOBJECT_TYPE = "$app:homepage_legacy";
+export const SHOPIFY_HOMEPAGE_QUOTE_METAOBJECT_TYPE = "$app:homepage_quote";
+export const SHOPIFY_OUR_STORY_METAOBJECT_TYPE = "$app:our_story";
+export const SHOPIFY_CRAFTSMANSHIP_METAOBJECT_TYPE = "$app:craftsmanship";
+export const SHOPIFY_CRAFTSMANSHIP_STEP_METAOBJECT_TYPE = "$app:craftsmanship_step";
+
+const HOMEPAGE_HERO_FIELDS = `
+  eyebrow: field(key: "eyebrow") { value }
+  headlineLine1: field(key: "headline_line1") { value }
+  headlineLine2: field(key: "headline_line2") { value }
+  description: field(key: "description") { value }
+  ctaLabel: field(key: "cta_label") { value }
+  ctaHref: field(key: "cta_href") { value }
+  imageUrl: field(key: "image_url") { value }
+  imageAlt: field(key: "image_alt") { value }
+  seoTitle: field(key: "seo_title") { value }
+  seoDescription: field(key: "seo_description") { value }
+`;
+
+const HOMEPAGE_LEGACY_FIELDS = `
+  eyebrow: field(key: "eyebrow") { value }
+  titleLine1: field(key: "title_line1") { value }
+  titleLine2: field(key: "title_line2") { value }
+  body: field(key: "body") { value }
+  imageUrl: field(key: "image_url") { value }
+  imageAlt: field(key: "image_alt") { value }
+  pillarsJson: field(key: "pillars_json") { value }
+`;
+
+const HOMEPAGE_QUOTE_FIELDS = `
+  line1: field(key: "line1") { value }
+  line2: field(key: "line2") { value }
+`;
+
+const OUR_STORY_FIELDS = `
+  heroEyebrow: field(key: "hero_eyebrow") { value }
+  heroTitle: field(key: "hero_title") { value }
+  heroImageUrl: field(key: "hero_image_url") { value }
+  heroImageAlt: field(key: "hero_image_alt") { value }
+  quoteText: field(key: "quote_text") { value }
+  heritageEyebrow: field(key: "heritage_eyebrow") { value }
+  heritageTitle: field(key: "heritage_title") { value }
+  heritageBody: field(key: "heritage_body") { value }
+  heritageBodyExtra: field(key: "heritage_body_extra") { value }
+  heritageImageUrl: field(key: "heritage_image_url") { value }
+  heritageImageAlt: field(key: "heritage_image_alt") { value }
+  sustainabilityEyebrow: field(key: "sustainability_eyebrow") { value }
+  sustainabilityTitle: field(key: "sustainability_title") { value }
+  sustainabilityBody: field(key: "sustainability_body") { value }
+  sustainabilityImageUrl: field(key: "sustainability_image_url") { value }
+  sustainabilityImageAlt: field(key: "sustainability_image_alt") { value }
+`;
+
+const CRAFTSMANSHIP_FIELDS = `
+  heroEyebrow: field(key: "hero_eyebrow") { value }
+  heroTitle: field(key: "hero_title") { value }
+  heroImageUrl: field(key: "hero_image_url") { value }
+  heroImageAlt: field(key: "hero_image_alt") { value }
+  intro: field(key: "intro") { value }
+  careEyebrow: field(key: "care_eyebrow") { value }
+  careTitle: field(key: "care_title") { value }
+  careTipsJson: field(key: "care_tips_json") { value }
+  careImageUrl: field(key: "care_image_url") { value }
+  careImageAlt: field(key: "care_image_alt") { value }
+`;
+
+export const EDITORIAL_CONTENT_QUERY = `
+  query EditorialContent(
+    $homepageHeroType: String!
+    $homepageValuePropType: String!
+    $homepageMarqueeType: String!
+    $homepageLegacyType: String!
+    $homepageQuoteType: String!
+    $ourStoryType: String!
+    $craftsmanshipType: String!
+    $craftsmanshipStepType: String!
+  ) {
+    shop {
+      journalHeroImageMetafield: metafield(namespace: "custom", key: "journal_hero_image_url") {
+        value
+      }
+      journalHeroTitleMetafield: metafield(namespace: "custom", key: "journal_hero_title") {
+        value
+      }
+      journalHeroDescriptionMetafield: metafield(namespace: "custom", key: "journal_hero_description") {
+        value
+      }
+    }
+    homepageHero: metaobject(handle: { type: $homepageHeroType, handle: "main" }) {
+      ${HOMEPAGE_HERO_FIELDS}
+    }
+    homepageLegacy: metaobject(handle: { type: $homepageLegacyType, handle: "main" }) {
+      ${HOMEPAGE_LEGACY_FIELDS}
+    }
+    homepageQuote: metaobject(handle: { type: $homepageQuoteType, handle: "main" }) {
+      ${HOMEPAGE_QUOTE_FIELDS}
+    }
+    ourStory: metaobject(handle: { type: $ourStoryType, handle: "main" }) {
+      ${OUR_STORY_FIELDS}
+    }
+    craftsmanship: metaobject(handle: { type: $craftsmanshipType, handle: "main" }) {
+      ${CRAFTSMANSHIP_FIELDS}
+    }
+    homepageValueProps: metaobjects(type: $homepageValuePropType, first: 20) {
+      nodes {
+        handle
+        label: field(key: "label") { value }
+        icon: field(key: "icon") { value }
+      }
+    }
+    homepageMarquee: metaobjects(type: $homepageMarqueeType, first: 20) {
+      nodes {
+        handle
+        text: field(key: "text") { value }
+      }
+    }
+    craftsmanshipSteps: metaobjects(type: $craftsmanshipStepType, first: 20) {
+      nodes {
+        handle
+        number: field(key: "number") { value }
+        title: field(key: "title") { value }
+        description: field(key: "description") { value }
+      }
+    }
+  }
+`;
+
 export const SHOP_BRAND_QUERY = `
   query ShopBrand($mainMenuHandle: String!, $footerMenuHandle: String!) {
     shop {

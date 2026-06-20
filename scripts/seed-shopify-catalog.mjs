@@ -7,6 +7,7 @@
  *   pnpm seed:shopify -- --enrich-only   # skip creates, only update existing
  *   pnpm seed:shopify -- --policies-only # shop legal policies only (fast)
  *   pnpm seed:shopify -- --faqs-only      # FAQ metaobjects only (fast)
+ *   pnpm seed:shopify -- --editorial-only # Editorial CMS metaobjects + journal hero (fast)
  *
  * Requires SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR (see docs).
  */
@@ -32,6 +33,23 @@ import {
   navigationMenus,
   FAQ_METAOBJECT_TYPE,
   faqs,
+  HOMEPAGE_HERO_METAOBJECT_TYPE,
+  HOMEPAGE_VALUE_PROP_METAOBJECT_TYPE,
+  HOMEPAGE_MARQUEE_METAOBJECT_TYPE,
+  HOMEPAGE_LEGACY_METAOBJECT_TYPE,
+  HOMEPAGE_QUOTE_METAOBJECT_TYPE,
+  OUR_STORY_METAOBJECT_TYPE,
+  CRAFTSMANSHIP_METAOBJECT_TYPE,
+  CRAFTSMANSHIP_STEP_METAOBJECT_TYPE,
+  homepageHero,
+  homepageValueProps,
+  homepageMarqueeItems,
+  homepageLegacy,
+  homepageQuote,
+  ourStoryPage,
+  craftsmanshipPage,
+  craftsmanshipSteps,
+  editorialImages,
 } from "./seed-shopify-catalog-data.mjs";
 import {
   replaceProductMedia,
@@ -45,6 +63,7 @@ const root = resolve(__dirname, "..");
 const enrichOnly = process.argv.includes("--enrich-only");
 const policiesOnly = process.argv.includes("--policies-only");
 const faqsOnly = process.argv.includes("--faqs-only");
+const editorialOnly = process.argv.includes("--editorial-only");
 
 function loadEnvLocal() {
   const envPath = resolve(root, ".env.local");
@@ -78,24 +97,7 @@ function escapeGqlString(value) {
   return JSON.stringify(value);
 }
 
-async function adminRequest(query, variables) {
-  if (adminToken) {
-    const url = `https://${storeDomain}/admin/api/${apiVersion}/graphql.json`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": adminToken,
-      },
-      body: JSON.stringify({ query, variables }),
-    });
-    const body = await response.json();
-    if (body.errors?.length) {
-      throw new Error(body.errors.map((e) => e.message).join("; "));
-    }
-    return body.data;
-  }
-
+async function adminRequestViaCli(query, variables) {
   const args = ["app", "execute", "--path", partnerAppDir, "-s", storeDomain, "-q", query.trim()];
 
   let tempDir;
@@ -131,6 +133,43 @@ async function adminRequest(query, variables) {
     throw new Error(parsed.errors.map((e) => e.message).join("; "));
   }
   return parsed.data ?? parsed;
+}
+
+async function adminRequestViaToken(query, variables) {
+  const url = `https://${storeDomain}/admin/api/${apiVersion}/graphql.json`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": adminToken,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const body = await response.json();
+  if (body.errors?.length) {
+    throw new Error(body.errors.map((e) => e.message).join("; "));
+  }
+  return body.data;
+}
+
+function shouldFallbackToCli(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /access denied|read_metaobjects|write_metaobjects|write_files|write_images/i.test(message);
+}
+
+async function adminRequest(query, variables) {
+  if (adminToken) {
+    try {
+      return await adminRequestViaToken(query, variables);
+    } catch (error) {
+      if (shouldFallbackToCli(error) && existsSync(partnerAppDir)) {
+        return await adminRequestViaCli(query, variables);
+      }
+      throw error;
+    }
+  }
+
+  return await adminRequestViaCli(query, variables);
 }
 
 async function ensureMetafieldDefinitions(definitions, ownerType) {
@@ -824,32 +863,201 @@ async function upsertArticle(blogId, record) {
   console.log(`  article ${record.handle} (created)`);
 }
 
+async function upsertMetaobject(type, handle, fields) {
+  const data = await adminRequest(
+    `mutation MetaobjectUpsert($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
+      metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
+        metaobject { handle }
+        userErrors { field message }
+      }
+    }`,
+    {
+      handle: { type, handle },
+      metaobject: { fields },
+    },
+  );
+  const errors = data.metaobjectUpsert?.userErrors ?? [];
+  if (errors.length) {
+    throw new Error(`metaobjectUpsert(${type}/${handle}): ${JSON.stringify(errors)}`);
+  }
+}
+
 async function ensureFaqs() {
   for (const faq of faqs) {
-    const data = await adminRequest(
-      `mutation MetaobjectUpsert($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
-        metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
-          metaobject { handle }
-          userErrors { field message }
-        }
-      }`,
-      {
-        handle: { type: FAQ_METAOBJECT_TYPE, handle: faq.handle },
-        metaobject: {
-          fields: [
-            { key: "question", value: faq.question },
-            { key: "answer", value: faq.answer },
-            { key: "show_on_faq_page", value: String(faq.showOnFaqPage ?? true) },
-          ],
-        },
-      },
-    );
-    const errors = data.metaobjectUpsert?.userErrors ?? [];
-    if (errors.length) {
-      throw new Error(`metaobjectUpsert(${faq.handle}): ${JSON.stringify(errors)}`);
-    }
+    await upsertMetaobject(FAQ_METAOBJECT_TYPE, faq.handle, [
+      { key: "question", value: faq.question },
+      { key: "answer", value: faq.answer },
+      { key: "show_on_faq_page", value: String(faq.showOnFaqPage ?? true) },
+    ]);
     console.log(`  faq ${faq.handle}`);
   }
+}
+
+async function ensureJournalHeroMetafield(imageUrl) {
+  const shopData = await adminRequest(`{ shop { id } }`);
+  const shopId = shopData.shop?.id;
+  if (!shopId) throw new Error("Could not resolve shop id");
+
+  const data = await adminRequest(
+    `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+      metafieldsSet(metafields: $metafields) {
+        userErrors { field message }
+      }
+    }`,
+    {
+      metafields: [
+        {
+          ownerId: shopId,
+          namespace: "custom",
+          key: "journal_hero_image_url",
+          type: "url",
+          value: imageUrl,
+        },
+      ],
+    },
+  );
+  const errors = data.metafieldsSet?.userErrors ?? [];
+  if (errors.length) throw new Error(`journal hero metafield: ${JSON.stringify(errors)}`);
+  console.log("  shop metafield journal_hero_image_url");
+}
+
+async function ensureEditorial() {
+  const [
+    homepageHeroImageUrl,
+    homepageLegacyImageUrl,
+    ourStoryHeroImageUrl,
+    ourStoryHeritageImageUrl,
+    ourStorySustainabilityImageUrl,
+    craftsmanshipHeroImageUrl,
+    craftsmanshipCareImageUrl,
+    journalHeroImageUrl,
+  ] = await Promise.all([
+    uploadArticleImage(adminRequest, homepageHero.image),
+    uploadArticleImage(adminRequest, homepageLegacy.image),
+    uploadArticleImage(adminRequest, ourStoryPage.heroImage),
+    uploadArticleImage(adminRequest, ourStoryPage.heritageImage),
+    uploadArticleImage(adminRequest, ourStoryPage.sustainabilityImage),
+    uploadArticleImage(adminRequest, craftsmanshipPage.heroImage),
+    uploadArticleImage(adminRequest, craftsmanshipPage.careImage),
+    uploadArticleImage(adminRequest, editorialImages.journalHero),
+  ]);
+
+  await upsertMetaobject(HOMEPAGE_HERO_METAOBJECT_TYPE, homepageHero.handle, [
+    { key: "eyebrow", value: homepageHero.eyebrow },
+    { key: "headline_line1", value: homepageHero.headlineLine1 },
+    { key: "headline_line2", value: homepageHero.headlineLine2 },
+    { key: "description", value: homepageHero.description },
+    { key: "cta_label", value: homepageHero.ctaLabel },
+    { key: "cta_href", value: homepageHero.ctaHref },
+    { key: "image_url", value: homepageHeroImageUrl },
+    { key: "image_alt", value: homepageHero.image.alt },
+    { key: "seo_title", value: homepageHero.seoTitle },
+    { key: "seo_description", value: homepageHero.seoDescription },
+  ]);
+  console.log("  homepage hero");
+
+  for (const item of homepageValueProps) {
+    await upsertMetaobject(HOMEPAGE_VALUE_PROP_METAOBJECT_TYPE, item.handle, [
+      { key: "icon", value: item.icon },
+      { key: "label", value: item.label },
+    ]);
+    console.log(`  homepage value prop ${item.handle}`);
+  }
+
+  for (const item of homepageMarqueeItems) {
+    await upsertMetaobject(HOMEPAGE_MARQUEE_METAOBJECT_TYPE, item.handle, [
+      { key: "text", value: item.text },
+    ]);
+    console.log(`  homepage marquee ${item.handle}`);
+  }
+
+  await upsertMetaobject(HOMEPAGE_LEGACY_METAOBJECT_TYPE, homepageLegacy.handle, [
+    { key: "eyebrow", value: homepageLegacy.eyebrow },
+    { key: "title_line1", value: homepageLegacy.titleLine1 },
+    { key: "title_line2", value: homepageLegacy.titleLine2 },
+    { key: "body", value: homepageLegacy.body },
+    { key: "image_url", value: homepageLegacyImageUrl },
+    { key: "image_alt", value: homepageLegacy.image.alt },
+    { key: "pillars_json", value: JSON.stringify(homepageLegacy.pillars) },
+  ]);
+  console.log("  homepage legacy");
+
+  await upsertMetaobject(HOMEPAGE_QUOTE_METAOBJECT_TYPE, homepageQuote.handle, [
+    { key: "line1", value: homepageQuote.line1 },
+    { key: "line2", value: homepageQuote.line2 },
+  ]);
+  console.log("  homepage quote");
+
+  await upsertMetaobject(OUR_STORY_METAOBJECT_TYPE, ourStoryPage.handle, [
+    { key: "hero_eyebrow", value: ourStoryPage.heroEyebrow },
+    { key: "hero_title", value: ourStoryPage.heroTitle },
+    { key: "hero_image_url", value: ourStoryHeroImageUrl },
+    { key: "hero_image_alt", value: ourStoryPage.heroImage.alt },
+    { key: "quote_text", value: ourStoryPage.quoteText },
+    { key: "heritage_eyebrow", value: ourStoryPage.heritageEyebrow },
+    { key: "heritage_title", value: ourStoryPage.heritageTitle },
+    { key: "heritage_body", value: ourStoryPage.heritageBody },
+    { key: "heritage_body_extra", value: ourStoryPage.heritageBodyExtra },
+    { key: "heritage_image_url", value: ourStoryHeritageImageUrl },
+    { key: "heritage_image_alt", value: ourStoryPage.heritageImage.alt },
+    { key: "sustainability_eyebrow", value: ourStoryPage.sustainabilityEyebrow },
+    { key: "sustainability_title", value: ourStoryPage.sustainabilityTitle },
+    { key: "sustainability_body", value: ourStoryPage.sustainabilityBody },
+    { key: "sustainability_image_url", value: ourStorySustainabilityImageUrl },
+    { key: "sustainability_image_alt", value: ourStoryPage.sustainabilityImage.alt },
+  ]);
+  console.log("  our story");
+
+  await upsertMetaobject(CRAFTSMANSHIP_METAOBJECT_TYPE, craftsmanshipPage.handle, [
+    { key: "hero_eyebrow", value: craftsmanshipPage.heroEyebrow },
+    { key: "hero_title", value: craftsmanshipPage.heroTitle },
+    { key: "hero_image_url", value: craftsmanshipHeroImageUrl },
+    { key: "hero_image_alt", value: craftsmanshipPage.heroImage.alt },
+    { key: "intro", value: craftsmanshipPage.intro },
+    { key: "care_eyebrow", value: craftsmanshipPage.careEyebrow },
+    { key: "care_title", value: craftsmanshipPage.careTitle },
+    { key: "care_tips_json", value: JSON.stringify(craftsmanshipPage.careTips) },
+    { key: "care_image_url", value: craftsmanshipCareImageUrl },
+    { key: "care_image_alt", value: craftsmanshipPage.careImage.alt },
+  ]);
+  console.log("  craftsmanship");
+
+  for (const step of craftsmanshipSteps) {
+    await upsertMetaobject(CRAFTSMANSHIP_STEP_METAOBJECT_TYPE, step.handle, [
+      { key: "number", value: step.number },
+      { key: "title", value: step.title },
+      { key: "description", value: step.description },
+    ]);
+    console.log(`  craftsmanship step ${step.handle}`);
+  }
+
+  await ensureJournalHeroMetafield(journalHeroImageUrl);
+}
+
+async function seedEditorialOnly() {
+  console.log("Shopify editorial CMS seed\n");
+  console.log(`Store:  ${storeDomain}`);
+  console.log(
+    `Admin:  ${adminToken ? "SHOPIFY_ADMIN_ACCESS_TOKEN" : `shopify app execute (${partnerAppDir})`}\n`,
+  );
+
+  if (!adminToken && !existsSync(partnerAppDir)) {
+    fail(
+      `No SHOPIFY_ADMIN_ACCESS_TOKEN and partner app dir not found at ${partnerAppDir}. ` +
+        "See docs/shopify-store-setup.md",
+    );
+  }
+
+  console.log("Metafield definitions:");
+  await ensureMetafieldDefinitions(shopMetafieldDefinitions, "SHOP");
+
+  console.log("\nShop metafields (journal hero text):");
+  await ensureShopMetafields();
+
+  console.log("\nEditorial metaobjects:");
+  await ensureEditorial();
+  console.log("\n✓ Editorial CMS content updated");
+  console.log("  Verify: pnpm verify:shopify\n");
 }
 
 async function seedFaqsOnly() {
@@ -900,6 +1108,11 @@ async function main() {
 
   if (faqsOnly) {
     await seedFaqsOnly();
+    return;
+  }
+
+  if (editorialOnly) {
+    await seedEditorialOnly();
     return;
   }
 
@@ -962,6 +1175,19 @@ async function main() {
     console.warn(
       `  ⚠ FAQ metaobjects skipped (${short}). Deploy partner app with read_metaobjects + write_metaobjects, ` +
         "re-install, then `pnpm seed:shopify -- --faqs-only`.",
+    );
+  }
+  try {
+    await ensureEditorial();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const short =
+      message.match(/Access denied for metaobjectUpsert[^"]*/)?.[0] ??
+      message.split("\n").find((line) => line.includes("Access denied")) ??
+      message.slice(0, 120);
+    console.warn(
+      `  ⚠ Editorial metaobjects skipped (${short}). Deploy partner app with read_metaobjects + write_metaobjects, ` +
+        "re-install, then `pnpm seed:shopify -- --editorial-only`.",
     );
   }
 

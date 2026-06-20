@@ -81,6 +81,7 @@ export async function createShopifyFile(adminRequest, resourceUrl, alt) {
     `mutation FileCreate($files: [FileCreateInput!]!) {
       fileCreate(files: $files) {
         files {
+          id
           ... on MediaImage {
             image { url }
           }
@@ -102,9 +103,34 @@ export async function createShopifyFile(adminRequest, resourceUrl, alt) {
   const errors = data.fileCreate?.userErrors ?? [];
   if (errors.length) throw new Error(`fileCreate: ${JSON.stringify(errors)}`);
 
-  const url = data.fileCreate.files?.[0]?.image?.url;
-  if (!url) throw new Error("fileCreate returned no image URL");
-  return url;
+  const file = data.fileCreate.files?.[0];
+  const immediateUrl = file?.image?.url;
+  if (immediateUrl) return immediateUrl;
+
+  const fileId = file?.id;
+  if (!fileId) throw new Error("fileCreate returned no file id");
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const status = await adminRequest(
+      `query FileStatus($id: ID!) {
+        node(id: $id) {
+          ... on MediaImage {
+            fileStatus
+            image { url }
+          }
+        }
+      }`,
+      { id: fileId },
+    );
+    const url = status.node?.image?.url;
+    if (url) return url;
+    if (status.node?.fileStatus === "FAILED") {
+      throw new Error(`fileCreate processing failed for ${fileId}`);
+    }
+  }
+
+  throw new Error("fileCreate returned no image URL after processing");
 }
 
 export async function replaceProductMedia(adminRequest, productId, imageEntries) {
@@ -161,7 +187,8 @@ export async function uploadCollectionImage(adminRequest, imageEntry) {
   return stageLocalImage(adminRequest, imageEntry.file, "COLLECTION_IMAGE");
 }
 
-/** Staged upload for articleCreate/articleUpdate(image.url). */
+/** Staged upload → fileCreate → permanent cdn.shopify.com URL for metaobjects and articles. */
 export async function uploadArticleImage(adminRequest, imageEntry) {
-  return stageLocalImage(adminRequest, imageEntry.file, "IMAGE");
+  const resourceUrl = await stageLocalImage(adminRequest, imageEntry.file, "IMAGE");
+  return createShopifyFile(adminRequest, resourceUrl, imageEntry.alt);
 }

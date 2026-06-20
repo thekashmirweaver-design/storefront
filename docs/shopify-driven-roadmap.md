@@ -37,7 +37,7 @@ Status values: `pending` | `in_progress` | `done`
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **done** | Metaobject FAQs + shop policies + footer URLs |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | **done** | Admin customerCreate + consent |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | **done** | Customer Account OAuth PKCE, orders, wishlist metafield |
-| 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | partial | Homepage collection blocks only |
+| 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | **done** | Homepage hero, Our Story, Craftsmanship, journal hero |
 | 8 | [Markets & operations](#phase-8--polish-and-operations) | pending | |
 
 ---
@@ -71,7 +71,6 @@ flowchart LR
     SF[Storefront API]
     Admin[Admin API]
     LS[localStorage]
-    Static[Static page templates]
     SF --> Products
     SF --> Collections
     SF --> Blog
@@ -79,31 +78,29 @@ flowchart LR
     SF --> Brand
     SF --> FAQs
     SF --> Policies
+    SF --> Editorial
     Admin --> Forms
     LS --> WishlistGuest
     CA[Customer Account API] --> Account
     CA --> WishlistAuth
-    Static --> HomepageHero
-    Static --> OurStory
-    Static --> Craftsmanship
   end
 ```
 
-### On Shopify today (Phases 0–5)
+### On Shopify today (Phases 0–7)
 
 - Products, collections, blog articles, search, sitemap, related products
 - Homepage collection sections via [`getHomepageCollectionSections()`](../src/lib/commerce/homepage-collections.ts)
+- Homepage hero, value props, marquee, legacy, quote via app metaobjects + [`getHomepageEditorial()`](../src/lib/commerce/shopify/editorial.ts)
+- Our Story, Craftsmanship, journal index hero via app metaobjects + shop metafields
 - Cart & checkout — Storefront Cart API, httpOnly `cartId` cookie, `checkoutUrl` redirect
 - Brand, nav, footer — shop metafields + Storefront menus (falls back to `brandConfig` when unseeded)
 - FAQs — app metaobject `$app:faq` (falls back to `mockFaqs` when unseeded or API error)
 - Shop policies — PDP Shipping & Returns accordions; footer privacy/terms via Shopify-hosted policy URLs
 - Newsletter + contact — Admin `customerCreate` / consent / notes (requires `SHOPIFY_ADMIN_ACCESS_TOKEN` at runtime)
 
-### Still mock / hardcoded (Phase 7+)
+### Still deferred
 
-- Homepage main hero, marquee, legacy, quote (Phase 7)
-- Our Story, Craftsmanship pages (Phase 7)
-- Optional standalone `/privacy`, `/terms` Next.js routes (deferred; footer links use Shopify policy URLs)
+- Optional standalone `/privacy`, `/terms` Next.js routes (footer links use Shopify policy URLs)
 
 ---
 
@@ -114,15 +111,16 @@ flowchart LR
 | Products | title, handle, description, images, price, variants, availability, tags, `productType`, metafields | PDP layout, accordions shell, JSON-LD template |
 | Collections | title, handle, description, image, sort order, products | Hero/preview layout; metafields for extra hero lines |
 | Filters (color/price) | variant options + prices from collection products | Filter UI in [`ProductListing`](../src/components/site/ProductListing.tsx) |
-| Homepage collection blocks | collections + preview products | Main site hero, marquee, quote (until Phase 7) |
-| Journal | blog articles, `bodyHtml`, images, tags | Index hero image; sidebar labels (map from tags in Phase 1) |
+| Homepage collection blocks | collections + preview products | — |
+| Homepage main hero, marquee, legacy, quote | app metaobjects | Page layout, icon mapping |
+| Journal | blog articles, `bodyHtml`, images, tags | Index hero from shop metafields |
 | Header / footer nav | [Menu API](https://shopify.dev/docs/api/admin-graphql/latest/queries/menus) | Header/Footer components |
 | Brand | shop metafields + Files (logo) | Fonts, CSS, markup |
 | Cart | [Storefront Cart API](https://shopify.dev/docs/api/storefront/latest/mutations/cartCreate) | [`CartDrawer`](../src/components/site/CartDrawer.tsx) UI |
 | Checkout | `cart.checkoutUrl` → hosted checkout | Redirect only |
 | Account / orders | Customer Account API | [`AccountClient`](../src/components/site/AccountClient.tsx) |
 | FAQs | Metaobjects | Accordion UI |
-| Our Story / Craftsmanship | Pages or Metaobjects | Page templates under `app/` |
+| Our Story / Craftsmanship | app metaobjects | Page templates under `app/` |
 | Sitemap / SEO | live handles + `NEXT_PUBLIC_SITE_URL` | `generateMetadata` templates |
 
 **Cannot be Shopify-driven:** React layout, Tailwind, routes, filter UI logic, custom checkout UI.
@@ -437,17 +435,29 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 
 ## Phase 7 — Editorial CMS pages
 
-**Status:** partial
+**Status:** done
 
 **Goal:** Marketing copy and images editable in Shopify.
 
 | Section | Approach |
 |---------|----------|
-| Homepage collection blocks | collections + products (**done** — Storefront) |
-| Homepage main hero, marquee, legacy, quote | shop metaobjects |
-| Our Story | Page `our-story` or metaobject |
-| Craftsmanship | Page or metaobject (steps list) |
-| Journal index hero | shop or blog metafield |
+| Homepage collection blocks | collections + products (Storefront) |
+| Homepage main hero, marquee, legacy, quote | app metaobjects |
+| Our Story | app metaobject `$app:our_story` |
+| Craftsmanship | app metaobjects + steps list |
+| Journal index hero | shop metafields |
+
+### Completed
+
+- **Date:** 2026-06-20
+- **What was done:**
+  - App metaobject types in partner app `shopify.app.toml`: `homepage_hero`, `homepage_value_prop`, `homepage_marquee_item`, `homepage_legacy`, `homepage_quote`, `our_story`, `craftsmanship`, `craftsmanship_step`
+  - Storefront query [`EDITORIAL_CONTENT_QUERY`](../src/lib/commerce/shopify/queries.ts) + mapper [`editorial.ts`](../src/lib/commerce/shopify/editorial.ts) with mock fallbacks
+  - Commerce provider methods: `getHomepageEditorial`, `getOurStoryContent`, `getCraftsmanshipContent`, `getJournalIndexContent`
+  - Pages wired: [`app/page.tsx`](../app/page.tsx), [`app/our-story/page.tsx`](../app/our-story/page.tsx), [`app/craftsmanship/page.tsx`](../app/craftsmanship/page.tsx), [`JournalClient`](../src/components/site/JournalClient.tsx)
+  - Seed: `pnpm seed:shopify -- --editorial-only` in [`seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs)
+  - Shop metafields: `journal_hero_image_url`, `journal_hero_title`, `journal_hero_description`
+- **Verify:** `pnpm build:mock`; `pnpm build:shopify`; `pnpm seed:shopify -- --editorial-only`; `pnpm dev:shopify` → `/`, `/our-story`, `/craftsmanship`, `/journal`
 
 ### Completed (partial)
 
@@ -455,7 +465,6 @@ Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.t
 - **What was done:**
   - Homepage `#collections` driven by `getHomepageCollectionSections()` (Shopify or mock)
   - `CollectionHero` + `CollectionPreview` components
-- **Remaining:** Main hero above collections, Our Story, Craftsmanship, marquee/legacy blocks
 
 ---
 
@@ -527,8 +536,6 @@ flowchart TD
 
 ## Suggested next sprint
 
-Phases 0–6 engineering is complete.
+Phases 0–7 engineering is complete.
 
-1. **Phase 7** — Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
-2. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
-3. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing; checkout SSO (`sso=silent` on `checkoutUrl`)
+1. **Phase 8** — Markets, predictive search, webhooks / revalidation
