@@ -40,6 +40,11 @@ import {
 } from "./mappers";
 import { requestWithInventoryFallback } from "./inventory-scope";
 import {
+  fetchAllShopifyConnectionNodes,
+  fetchAllShopifyConnectionNodesPlain,
+  getStorefrontConnectionPageSize,
+} from "./paginate";
+import {
   ARTICLE_BY_HANDLE_QUERY,
   BLOG_ARTICLES_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
@@ -77,15 +82,18 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   async getProducts(filters?: ProductFilters) {
     const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const nodes = await withShopifyCache(
-      ["shopify-products", marketKey, "v4"],
+      ["shopify-products", marketKey, "v5"],
       [SHOPIFY_CACHE_TAGS.products, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
         const client = getShopifyClientForContext(marketContext);
-        const { data, errors } = await requestWithInventoryFallback<{
-          products?: { nodes?: ShopifyProductNode[] };
-        }>(client, PRODUCTS_QUERY, PRODUCTS_QUERY_NO_INVENTORY, { variables: { first: 50 } });
-        if (errors) throw new Error(`Shopify getProducts: ${JSON.stringify(errors)}`);
-        return (data?.products?.nodes ?? []) as ShopifyProductNode[];
+        return fetchAllShopifyConnectionNodes<ShopifyProductNode>(
+          client,
+          PRODUCTS_QUERY,
+          PRODUCTS_QUERY_NO_INVENTORY,
+          (pageSize, after) => ({ first: pageSize, after }),
+          (data) => (data as { products?: { nodes?: ShopifyProductNode[] } })?.products,
+          "Shopify getProducts",
+        );
       },
     );
     return applyClientFilters(
@@ -169,17 +177,17 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   async getCollections() {
     const { key: marketKey, context: marketContext } = await this.resolveMarket();
     const nodes = await withShopifyCache(
-      ["shopify-collections", marketKey, "v4"],
+      ["shopify-collections", marketKey, "v5"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog],
       async () => {
         const client = getShopifyClientForContext(marketContext);
-        const { data, errors } = await client.request<{
-          collections?: { nodes?: ShopifyCollectionNode[] };
-        }>(COLLECTIONS_QUERY, {
-          variables: { first: 20 },
-        });
-        if (errors) throw new Error(`Shopify getCollections: ${JSON.stringify(errors)}`);
-        return (data?.collections?.nodes ?? []) as ShopifyCollectionNode[];
+        return fetchAllShopifyConnectionNodesPlain<ShopifyCollectionNode>(
+          client,
+          COLLECTIONS_QUERY,
+          (pageSize, after) => ({ first: pageSize, after }),
+          (data) => (data as { collections?: { nodes?: ShopifyCollectionNode[] } })?.collections,
+          "Shopify getCollections",
+        );
       },
     );
     return nodes.map(mapShopifyCollection);
@@ -187,24 +195,58 @@ export class ShopifyCommerceProvider implements CommerceProvider {
 
   async getCollectionBySlug(slug: string, filters?: ProductFilters) {
     const { key: marketKey, context: marketContext } = await this.resolveMarket();
-    const node = await withShopifyCache(
-      ["shopify-collection", slug, marketKey, "v4"],
+    const fetched = await withShopifyCache(
+      ["shopify-collection", slug, marketKey, "v5"],
       [SHOPIFY_CACHE_TAGS.collections, SHOPIFY_CACHE_TAGS.catalog, shopifyCollectionTag(slug)],
       async () => {
         const client = getShopifyClientForContext(marketContext);
-        const { data, errors } = await requestWithInventoryFallback<{
-          collection?: ShopifyCollectionNode | null;
-        }>(client, COLLECTION_BY_HANDLE_QUERY, COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY, {
-          variables: { handle: slug, first: 50 },
-        });
-        if (errors) throw new Error(`Shopify getCollectionBySlug: ${JSON.stringify(errors)}`);
-        return (data?.collection as ShopifyCollectionNode | null | undefined) ?? null;
+        const pageSize = getStorefrontConnectionPageSize();
+        let after: string | null = null;
+        let collectionMeta: ShopifyCollectionNode | null = null;
+        const productNodes: ShopifyProductNode[] = [];
+
+        for (;;) {
+          const result: Awaited<
+            ReturnType<
+              typeof requestWithInventoryFallback<{ collection?: ShopifyCollectionNode | null }>
+            >
+          > = await requestWithInventoryFallback<{ collection?: ShopifyCollectionNode | null }>(
+            client,
+            COLLECTION_BY_HANDLE_QUERY,
+            COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY,
+            {
+              variables: { handle: slug, first: pageSize, after },
+            },
+          );
+          if (result.errors) {
+            throw new Error(`Shopify getCollectionBySlug: ${JSON.stringify(result.errors)}`);
+          }
+
+          const collection = result.data?.collection;
+          if (!collection) return null;
+
+          if (!collectionMeta) {
+            collectionMeta = collection;
+          }
+
+          productNodes.push(...(collection.products?.nodes ?? []));
+
+          const pageInfo = collection.products?.pageInfo;
+          if (!pageInfo?.hasNextPage || !pageInfo.endCursor) break;
+          after = pageInfo.endCursor;
+        }
+
+        if (!collectionMeta) return null;
+
+        return { collection: collectionMeta, productNodes };
       },
     );
-    if (!node) return null;
-    const collection = mapShopifyCollection(node);
+
+    if (!fetched) return null;
+
+    const collection = mapShopifyCollection(fetched.collection);
     const products = applyClientFilters(
-      (node.products?.nodes ?? []).map((n) => mapShopifyProduct(n, { collectionSlug: slug })),
+      fetched.productNodes.map((n) => mapShopifyProduct(n, { collectionSlug: slug })),
       filters,
     );
     return { collection, products };

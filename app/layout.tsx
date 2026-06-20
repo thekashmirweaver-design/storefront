@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 
 import "./globals.css";
 import { Providers } from "./providers";
+import { ExploreShopSection } from "@/components/site/ExploreShopSection";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { AnalyticsScripts } from "@/components/site/AnalyticsScripts";
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <main className="flex-1">{children}</main>
+            <ExploreShopSection />
             <Footer />
             <CartDrawer />
             <SearchDialog />

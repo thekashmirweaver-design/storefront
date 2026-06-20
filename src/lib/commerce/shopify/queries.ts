@@ -159,10 +159,14 @@ export const PRODUCT_FRAGMENT_NO_INVENTORY = `
 
 export const PRODUCTS_QUERY = `
   ${PRODUCT_FRAGMENT}
-  query Products($first: Int!) {
-    products(first: $first) {
+  query Products($first: Int!, $after: String) {
+    products(first: $first, after: $after) {
       nodes {
         ...ProductFields
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -170,10 +174,14 @@ export const PRODUCTS_QUERY = `
 
 export const PRODUCTS_QUERY_NO_INVENTORY = `
   ${PRODUCT_FRAGMENT_NO_INVENTORY}
-  query ProductsNoInventory($first: Int!) {
-    products(first: $first) {
+  query ProductsNoInventory($first: Int!, $after: String) {
+    products(first: $first, after: $after) {
       nodes {
         ...ProductFieldsNoInventory
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -231,8 +239,8 @@ export const COLLECTION_METAFIELD_FRAGMENT = `
 
 export const COLLECTIONS_QUERY = `
   ${COLLECTION_METAFIELD_FRAGMENT}
-  query Collections($first: Int!) {
-    collections(first: $first) {
+  query Collections($first: Int!, $after: String) {
+    collections(first: $first, after: $after) {
       nodes {
         id
         handle
@@ -247,6 +255,10 @@ export const COLLECTIONS_QUERY = `
         }
         ...CollectionMetafields
       }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
   }
 `;
@@ -254,7 +266,7 @@ export const COLLECTIONS_QUERY = `
 export const COLLECTION_BY_HANDLE_QUERY = `
   ${PRODUCT_FRAGMENT}
   ${COLLECTION_METAFIELD_FRAGMENT}
-  query CollectionByHandle($handle: String!, $first: Int!) {
+  query CollectionByHandle($handle: String!, $first: Int!, $after: String) {
     collection(handle: $handle) {
       id
       handle
@@ -268,9 +280,13 @@ export const COLLECTION_BY_HANDLE_QUERY = `
         height
       }
       ...CollectionMetafields
-      products(first: $first) {
+      products(first: $first, after: $after) {
         nodes {
           ...ProductFields
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
@@ -280,7 +296,7 @@ export const COLLECTION_BY_HANDLE_QUERY = `
 export const COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY = `
   ${PRODUCT_FRAGMENT_NO_INVENTORY}
   ${COLLECTION_METAFIELD_FRAGMENT}
-  query CollectionByHandleNoInventory($handle: String!, $first: Int!) {
+  query CollectionByHandleNoInventory($handle: String!, $first: Int!, $after: String) {
     collection(handle: $handle) {
       id
       handle
@@ -294,9 +310,13 @@ export const COLLECTION_BY_HANDLE_QUERY_NO_INVENTORY = `
         height
       }
       ...CollectionMetafields
-      products(first: $first) {
+      products(first: $first, after: $after) {
         nodes {
           ...ProductFieldsNoInventory
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }

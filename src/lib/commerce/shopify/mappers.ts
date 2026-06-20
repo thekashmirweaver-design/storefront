@@ -184,7 +184,10 @@ type ShopifyCollectionNode = {
   description?: string | null;
   descriptionHtml?: string | null;
   image?: ShopifyImage;
-  products?: { nodes: ShopifyProductNode[] };
+  products?: {
+    nodes: ShopifyProductNode[];
+    pageInfo?: { hasNextPage: boolean; endCursor?: string | null };
+  };
   heroHeadlineMetafield?: ShopifyMetafield;
   heroTaglineMetafield?: ShopifyMetafield;
   ctaLabelMetafield?: ShopifyMetafield;
