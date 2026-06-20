@@ -12,6 +12,10 @@ export function getCommerceProviderName(): CommerceProviderName {
   return value;
 }
 
+export function isShopifyProvider(): boolean {
+  return getCommerceProviderName() === "shopify";
+}
+
 export function validateCommerceConfig(): void {
   if (getCommerceProviderName() !== "shopify") return;
 

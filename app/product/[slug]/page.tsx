@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 
 import { ProductClient } from "@/components/site/ProductClient";
 import { ProductJsonLd } from "@/components/site/ProductJsonLd";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { commerce, buildPageMetadata, brandText } from "@/lib/commerce";
+import { resolveProductDetailContent } from "@/lib/commerce/product-detail";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -37,13 +38,25 @@ export default async function ProductPage({ params }: Props) {
   const product = await commerce.getProductBySlug(slug);
   if (!product) notFound();
 
-  const [related, brand, collectionData] = await Promise.all([
+  const shopifyMode = commerce.name === "shopify";
+
+  const [related, brand, collectionData, settings, policies] = await Promise.all([
     commerce.getRelatedProducts(slug, 4),
     commerce.getBrand(),
     product.collectionSlug
       ? commerce.getCollectionBySlug(product.collectionSlug)
       : Promise.resolve(null),
+    commerce.getStorefrontSettings(),
+    commerce.getShopPolicies(),
   ]);
+
+  const detailContent = resolveProductDetailContent(
+    product,
+    settings,
+    policies,
+    shopifyMode,
+    brandText(brand.copy.pages.product.authenticityPromise, brand),
+  );
 
   const colorVariants =
     collectionData?.products.filter((p) => p.collectionSlug === product.collectionSlug) ?? [];
@@ -56,6 +69,7 @@ export default async function ProductPage({ params }: Props) {
         related={related}
         colorVariants={colorVariants.length > 0 ? colorVariants : [product]}
         collectionTitle={collectionData?.collection.title}
+        detailContent={detailContent}
       />
     </>
   );

@@ -4,8 +4,16 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { CollectionListing } from "@/components/site/CollectionListing";
+import { CollectionStory } from "@/components/site/CollectionStory";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { commerce, commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { isShopifyProvider } from "@/lib/commerce/config";
+import {
+  collectionEyebrow,
+  collectionHeadline,
+  collectionMetaDescription,
+  collectionShowItalicTagline,
+} from "@/lib/commerce/collection-copy";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -22,11 +30,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ]);
   if (!data) return { title: "Collection Not Found" };
 
+  const description = collectionMetaDescription(data.collection);
+
   return buildPageMetadata(brand, {
     title: data.collection.title,
-    description: data.collection.tagline,
+    description,
     openGraph: {
-      description: data.collection.tagline,
+      description,
     },
   });
 }
@@ -37,6 +47,7 @@ export default async function CollectionDetailPage({ params }: Props) {
   if (!data) notFound();
 
   const { collection, products } = data;
+  const showItalicTagline = collectionShowItalicTagline(collection);
 
   return (
     <>
@@ -52,11 +63,19 @@ export default async function CollectionDetailPage({ params }: Props) {
             </Link>{" "}
             / <span className="text-gold">{collection.title}</span>
           </nav>
-          <Eyebrow>Collection</Eyebrow>
-          <h1 className="mt-4 font-display text-5xl text-cream">{collection.title}</h1>
-          <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
-            {collection.description ?? collection.tagline}
-          </p>
+          <Eyebrow>{collectionEyebrow(collection)}</Eyebrow>
+          <h1 className="mt-4 font-display text-5xl text-cream">
+            {collectionHeadline(collection)}
+          </h1>
+          {showItalicTagline ? (
+            <p className="mt-3 font-display text-2xl italic text-gold leading-snug">
+              {collection.tagline}
+            </p>
+          ) : null}
+          <CollectionStory
+            collection={collection}
+            className="mt-3 text-sm text-muted-foreground max-w-2xl"
+          />
         </div>
       </section>
 
@@ -65,7 +84,11 @@ export default async function CollectionDetailPage({ params }: Props) {
           <div className="py-24 text-center text-muted-foreground">Loading collection…</div>
         }
       >
-        <CollectionListing products={products} colorCatalog={commerceColors} collectionSlug={slug} />
+        <CollectionListing
+          products={products}
+          colorCatalog={isShopifyProvider() ? [] : commerceColors}
+          collectionSlug={slug}
+        />
       </Suspense>
     </>
   );

@@ -6,7 +6,9 @@ import type {
   CommerceFaq,
   CommerceProduct,
   CommerceSearchResult,
+  CommerceShopPolicies,
   CommerceSitemapEntry,
+  CommerceStorefrontSettings,
   ContactFormInput,
   ProductFilters,
 } from "./types";
@@ -38,6 +40,9 @@ export interface CommerceProvider {
   search(query: string): Promise<CommerceSearchResult>;
 
   getFaqs(): Promise<CommerceFaq[]>;
+
+  getStorefrontSettings(): Promise<CommerceStorefrontSettings>;
+  getShopPolicies(): Promise<CommerceShopPolicies>;
 
   getSitemapEntries(): Promise<CommerceSitemapEntry[]>;
 

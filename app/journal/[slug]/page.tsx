@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { ArticleBody } from "@/components/site/ArticleBody";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { deriveJournalCategories } from "@/lib/commerce/journal-categories";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -49,6 +51,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const idx = articles.findIndex((a) => a.slug === article.slug);
   const prev = articles[idx - 1];
   const next = articles[idx + 1];
+  const journalCategories = deriveJournalCategories(articles);
 
   return (
     <article className="mx-auto max-w-[1200px] px-6 md:px-10 py-12 grid lg:grid-cols-[1fr_240px] gap-14">
@@ -82,11 +85,11 @@ export default async function ArticleDetailPage({ params }: Props) {
           />
         </div>
 
-        <div className="mt-10 space-y-6 text-base text-foreground/85 leading-relaxed">
+        <div className="mt-10">
           {article.bodyHtml ? (
-            <div dangerouslySetInnerHTML={{ __html: article.bodyHtml }} />
+            <ArticleBody html={article.bodyHtml} />
           ) : (
-            <>
+            <div className="space-y-6 text-base text-foreground/85 leading-relaxed">
               <p>
                 Pashmina is more than just a fabric — it is a legacy woven through centuries of rich
                 heritage, artistry, and nature&apos;s finest gifts.
@@ -107,7 +110,7 @@ export default async function ArticleDetailPage({ params }: Props) {
                 symbol of timeless beauty and mindful creation — to be treasured, and passed down
                 through generations.
               </p>
-            </>
+            </div>
           )}
         </div>
 
@@ -152,11 +155,14 @@ export default async function ArticleDetailPage({ params }: Props) {
         <div>
           <h3 className="text-[0.7rem] tracking-[0.25em] uppercase text-gold mb-4">Categories</h3>
           <ul className="space-y-2 text-xs text-muted-foreground">
-            {["Heritage", "Craftsmanship", "Style", "Sustainability", "Travel"].map((c) => (
+            {journalCategories.map((c) => (
               <li key={c}>
-                <a href="#" className="hover:text-gold">
+                <Link
+                  href={`/journal?category=${encodeURIComponent(c)}`}
+                  className="hover:text-gold"
+                >
                   {c}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

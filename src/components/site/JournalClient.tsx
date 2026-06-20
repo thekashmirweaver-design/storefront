@@ -2,17 +2,26 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import mountainImg from "@/assets/journal-mountain.jpg";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import type { CommerceArticle } from "@/lib/commerce";
-
-const cats = ["All", "Heritage", "Craftsmanship", "Style", "Sustainability", "Travel"];
+import { journalCategoryFilterOptions } from "@/lib/commerce/journal-categories";
 
 export function JournalClient({ articles }: { articles: CommerceArticle[] }) {
+  const searchParams = useSearchParams();
+  const categories = useMemo(() => journalCategoryFilterOptions(articles), [articles]);
   const [activeCat, setActiveCat] = useState("All");
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("category");
+    if (fromUrl && categories.includes(fromUrl)) {
+      setActiveCat(fromUrl);
+    }
+  }, [searchParams, categories]);
 
   const filtered =
     activeCat === "All" ? articles : articles.filter((a) => a.category === activeCat);
@@ -40,9 +49,10 @@ export function JournalClient({ articles }: { articles: CommerceArticle[] }) {
       <section className="border-b border-border/40">
         <div className="mx-auto max-w-[1400px] px-6 md:px-10 py-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-6">
-            {cats.map((c) => (
+            {categories.map((c) => (
               <button
                 key={c}
+                type="button"
                 onClick={() => setActiveCat(c)}
                 className={`text-[0.7rem] tracking-[0.25em] uppercase ${
                   activeCat === c

@@ -20,6 +20,7 @@ const CURRENCY = "USD";
 
 function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProduct {
   const primary = staticImageToCommerceImage(record.image, record.name);
+  const compareAtAmount = Math.round(record.price * 1.12);
   return {
     id: record.slug,
     slug: record.slug,
@@ -28,11 +29,17 @@ function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProdu
     categoryLabel: record.categoryLabel,
     collectionSlug: record.collectionSlug,
     price: { amount: record.price, currencyCode: CURRENCY },
+    compareAtPrice:
+      compareAtAmount > record.price
+        ? { amount: compareAtAmount, currencyCode: CURRENCY }
+        : undefined,
     images: [primary, { ...primary, alt: `${record.name} alternate view` }],
     colorHex: record.colorHex,
     description: record.description,
     availableForSale: record.slug.length % 17 !== 0,
     variantId: `mock-variant-${record.slug}`,
+    dimensions: "70 x 200 cm",
+    careInstructions: "Dry clean only. Store folded with cedar to preserve the fiber.",
   };
 }
 
@@ -202,6 +209,26 @@ export class MockCommerceProvider implements CommerceProvider {
       ...faq,
       answer: brandText(faq.answer, brandConfig),
     }));
+  }
+
+  async getStorefrontSettings() {
+    return {
+      authenticityPromise: brandText(
+        brandConfig.copy.pages.product.authenticityPromise,
+        brandConfig,
+      ),
+      shippingBadgeText: "Complimentary express shipping",
+      returnsBadgeText: "Free 30-day returns",
+    };
+  }
+
+  async getShopPolicies() {
+    return {
+      shippingPolicyHtml:
+        "<p>Complimentary worldwide express shipping on all orders. Delivery typically within 5–10 business days.</p>",
+      refundPolicyHtml:
+        "<p>Free returns within 30 days of delivery. Items must be unworn with original packaging.</p>",
+    };
   }
 
   async getSitemapEntries() {

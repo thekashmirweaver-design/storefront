@@ -26,14 +26,51 @@ export const PRODUCT_FRAGMENT = `
         currencyCode
       }
     }
+    options {
+      name
+      optionValues {
+        name
+        swatch {
+          color
+        }
+      }
+    }
     variants(first: 1) {
       nodes {
         id
         availableForSale
+        compareAtPrice {
+          amount
+          currencyCode
+        }
+        selectedOptions {
+          name
+          value
+        }
       }
     }
     productType
     tags
+    collections(first: 1) {
+      nodes {
+        handle
+      }
+    }
+    careInstructionsMetafield: metafield(namespace: "custom", key: "care_instructions") {
+      value
+    }
+    dimensionsMetafield: metafield(namespace: "custom", key: "dimensions") {
+      value
+    }
+    productHighlightsMetafield: metafield(namespace: "custom", key: "product_highlights") {
+      value
+    }
+    shippingReturnsMetafield: metafield(namespace: "custom", key: "shipping_returns_text") {
+      value
+    }
+    authenticityPromiseMetafield: metafield(namespace: "custom", key: "authenticity_promise") {
+      value
+    }
   }
 `;
 
@@ -57,7 +94,31 @@ export const PRODUCT_BY_HANDLE_QUERY = `
   }
 `;
 
+export const PRODUCT_RECOMMENDATIONS_QUERY = `
+  ${PRODUCT_FRAGMENT}
+  query ProductRecommendations($productId: ID!) {
+    productRecommendations(productId: $productId) {
+      ...ProductFields
+    }
+  }
+`;
+
+export const COLLECTION_METAFIELD_FRAGMENT = `
+  fragment CollectionMetafields on Collection {
+    heroHeadlineMetafield: metafield(namespace: "custom", key: "hero_headline") {
+      value
+    }
+    heroTaglineMetafield: metafield(namespace: "custom", key: "hero_tagline") {
+      value
+    }
+    ctaLabelMetafield: metafield(namespace: "custom", key: "cta_label") {
+      value
+    }
+  }
+`;
+
 export const COLLECTIONS_QUERY = `
+  ${COLLECTION_METAFIELD_FRAGMENT}
   query Collections($first: Int!) {
     collections(first: $first) {
       nodes {
@@ -65,12 +126,14 @@ export const COLLECTIONS_QUERY = `
         handle
         title
         description
+        descriptionHtml
         image {
           url
           altText
           width
           height
         }
+        ...CollectionMetafields
       }
     }
   }
@@ -78,18 +141,21 @@ export const COLLECTIONS_QUERY = `
 
 export const COLLECTION_BY_HANDLE_QUERY = `
   ${PRODUCT_FRAGMENT}
+  ${COLLECTION_METAFIELD_FRAGMENT}
   query CollectionByHandle($handle: String!, $first: Int!) {
     collection(handle: $handle) {
       id
       handle
       title
       description
+      descriptionHtml
       image {
         url
         altText
         width
         height
       }
+      ...CollectionMetafields
       products(first: $first) {
         nodes {
           ...ProductFields
@@ -101,6 +167,7 @@ export const COLLECTION_BY_HANDLE_QUERY = `
 
 export const SEARCH_QUERY = `
   ${PRODUCT_FRAGMENT}
+  ${COLLECTION_METAFIELD_FRAGMENT}
   query Search($query: String!, $first: Int!) {
     products(first: $first, query: $query) {
       nodes {
@@ -113,12 +180,14 @@ export const SEARCH_QUERY = `
         handle
         title
         description
+        descriptionHtml
         image {
           url
           altText
           width
           height
         }
+        ...CollectionMetafields
       }
     }
   }
@@ -134,6 +203,7 @@ export const BLOG_ARTICLES_QUERY = `
           title
           excerpt
           publishedAt
+          tags
           image {
             url
             altText
@@ -156,12 +226,44 @@ export const ARTICLE_BY_HANDLE_QUERY = `
         excerpt
         contentHtml
         publishedAt
+        tags
         image {
           url
           altText
           width
           height
         }
+      }
+    }
+  }
+`;
+
+export const SHOP_CONTEXT_QUERY = `
+  query ShopContext {
+    shop {
+      shippingPolicy {
+        body
+      }
+      refundPolicy {
+        body
+      }
+      privacyPolicy {
+        body
+      }
+      termsOfService {
+        body
+      }
+      authenticityPromiseMetafield: metafield(namespace: "custom", key: "authenticity_promise") {
+        value
+      }
+      shippingBadgeMetafield: metafield(namespace: "custom", key: "shipping_badge_text") {
+        value
+      }
+      returnsBadgeMetafield: metafield(namespace: "custom", key: "returns_badge_text") {
+        value
+      }
+      shippingReturnsMetafield: metafield(namespace: "custom", key: "shipping_returns_text") {
+        value
       }
     }
   }

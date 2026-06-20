@@ -24,4 +24,7 @@ export { brandConfig, brandText, brandStorageKey } from "./brand";
 export { staticImageToCommerceImage } from "./mappers/image";
 export { mockColors as commerceColors } from "./mock/data/products";
 export type { HomepageCollectionSection } from "./types";
+export type { CommerceShopPolicies, CommerceStorefrontSettings } from "./types";
 export { getHomepageCollectionSections } from "./homepage-collections";
+export { resolveProductDetailContent } from "./product-detail";
+export type { ProductDetailContent } from "./product-detail";

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { ShopClient } from "@/components/site/ShopClient";
 import { commerce, commerceColors, buildPageMetadata } from "@/lib/commerce";
+import { isShopifyProvider } from "@/lib/commerce/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();
@@ -25,7 +26,11 @@ export default async function ShopPage() {
     <Suspense
       fallback={<div className="py-24 text-center text-muted-foreground">Loading shop…</div>}
     >
-      <ShopClient products={products} colors={commerceColors} collections={collections} />
+      <ShopClient
+        products={products}
+        colors={isShopifyProvider() ? [] : commerceColors}
+        collections={collections}
+      />
     </Suspense>
   );
 }

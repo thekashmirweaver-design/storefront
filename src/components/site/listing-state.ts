@@ -48,7 +48,11 @@ export function deriveListingFacets(
     seenHex.add(hex);
     colors.push({
       hex,
-      name: colorNameByHex.get(hex.toLowerCase()) ?? product.name.split(" ")[0] ?? hex,
+      name:
+        product.colorName ??
+        colorNameByHex.get(hex.toLowerCase()) ??
+        product.name.split(" ")[0] ??
+        hex,
     });
   }
 
@@ -241,4 +245,8 @@ export function buildActiveChips(
 export function formatProductPrice(amount: number, currencyCode: string): string {
   if (currencyCode === "USD") return `$${amount}`;
   return `${amount} ${currencyCode}`;
+}
+
+export function productHasCompareAt(product: CommerceProduct): boolean {
+  return Boolean(product.compareAtPrice && product.compareAtPrice.amount > product.price.amount);
 }

@@ -80,6 +80,20 @@ pnpm dev:shopify    # development
 pnpm build:shopify  # production build with Shopify provider
 ```
 
+## Seed the catalog (Phase 0)
+
+Populate collections, products, and hero metafields from the mock catalog:
+
+```bash
+pnpm seed:shopify
+```
+
+Uses `shopify app execute` via Partner app at `SHOPIFY_PARTNER_APP_DIR` (default: `/tmp/shopify-probe/kashmir-weaver-probe`), or set `SHOPIFY_ADMIN_ACCESS_TOKEN` for direct Admin API access. The app needs `write_products`, `read_publications`, and `write_publications` scopes.
+
+The script fills **all catalog fields** used by the Next.js storefront — titles, HTML descriptions, SEO, vendor, tags, Color variant, SKU, compare-at price, collection hero metafields, product metafields (`care_instructions`, `dimensions`), and **multiple images per product** uploaded from `src/assets/`.
+
+Re-run safely — existing handles are updated in place (images replaced).
+
 ## Current store
 
 | Field | Value |

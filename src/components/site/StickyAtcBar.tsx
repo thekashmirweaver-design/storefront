@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { formatProductPrice } from "@/components/site/listing-state";
+import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
 
@@ -40,9 +40,19 @@ export function StickyAtcBar({ product, qty, observeRef }: StickyAtcBarProps) {
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm text-cream truncate">{product.name}</p>
-        <p className="text-sm text-gold">
-          {formatProductPrice(product.price.amount, product.price.currencyCode)}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className="text-sm text-gold">
+            {formatProductPrice(product.price.amount, product.price.currencyCode)}
+          </p>
+          {productHasCompareAt(product) && product.compareAtPrice && (
+            <p className="text-xs text-muted-foreground line-through">
+              {formatProductPrice(
+                product.compareAtPrice.amount,
+                product.compareAtPrice.currencyCode,
+              )}
+            </p>
+          )}
+        </div>
       </div>
       <button
         type="button"

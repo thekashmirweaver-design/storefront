@@ -29,8 +29,8 @@ Status values: `pending` | `in_progress` | `done`
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
 | — | [Pre-roadmap infrastructure](#pre-roadmap-infrastructure) | **partial** | Connection + UX; not full Shopify catalog |
-| 0 | [Foundation & content migration](#phase-0--foundation-and-content-migration) | pending | Admin catalog + metafield queries |
-| 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | partial | Collection-scoped filters only |
+| 0 | [Foundation & content migration](#phase-0--foundation-and-content-migration) | **done** | Catalog, images, journal seeded |
+| 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | pending | |
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | pending | |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | pending | |
@@ -98,12 +98,9 @@ flowchart LR
 - Header/footer nav, brand, contact, SEO, social
 - FAQs, newsletter, contact form
 - Cart, checkout, wishlist, account
-- Related products, sitemap (Shopify mode uses mock delegate)
-- Product `colorHex` (not from variants)
-- Collection hero metafields (`heroHeadline`, `tagline`, `ctaLabel`) — mock only
 - Homepage main hero, marquee, legacy, quote
 - Our Story, Craftsmanship pages
-- PDP shipping/promise accordion copy
+- Shop shipping/refund **policies** — seeded via `pnpm seed:shopify -- --policies-only` (all four policy types; see Phase 1 completed notes)
 
 **Note:** `.env.local` uses `COMMERCE_PROVIDER=shopify`. Mock catalog is **not** in Shopify Admin yet — live mode shows an empty catalog until Phase 0 Admin work.
 
@@ -144,7 +141,8 @@ Create in Admin (handles = URL slugs):
 - Publish products to **Online Store / Headless**
 - Blog handle: `news` (`SHOPIFY_BLOG_HANDLE`)
 - **Collection metafields** (`custom`): `hero_headline`, `hero_tagline`, `cta_label`
-- **Product metafields** (optional): `care_instructions`, `dimensions`
+- **Product metafields** (optional): `care_instructions`, `dimensions`, `product_highlights`, `shipping_returns_text`, `authenticity_promise`
+- **Shop metafields** (global PDP): `authenticity_promise`, `shipping_badge_text`, `returns_badge_text`
 - **Variant option:** Color (for filter swatches in Phase 1)
 
 ### API access by phase
@@ -159,53 +157,70 @@ Create in Admin (handles = URL slugs):
 
 ## Phase 0 — Foundation and content migration
 
-**Status:** pending
+**Status:** done
 
 **Goal:** Live Shopify store matches the editorial model; app reads real catalog data.
 
 ### Shopify Admin tasks
 
-- [ ] Create 3 collections + flagship products (see mock in [`products.ts`](../src/lib/commerce/mock/data/products.ts))
-- [ ] Upload collection hero images and product media
-- [ ] Write collection descriptions (homepage hero + collection page)
-- [ ] Create journal articles in blog `news`
-- [ ] Define collection metafields in Admin
-- [ ] Regenerate Storefront token if needed ([setup guide](./shopify-store-setup.md))
+- [x] Create 3 collections + flagship products (see mock in [`products.ts`](../src/lib/commerce/mock/data/products.ts)) — `pnpm seed:shopify`
+- [x] Upload collection hero images and product media
+- [x] Write collection descriptions (homepage hero + collection page)
+- [x] Create journal articles in blog `news`
+- [x] Define collection metafields in Admin (`custom.hero_headline`, `hero_tagline`, `cta_label`)
+- [x] Publish catalog to **Online Store** + **Headless** (required for Storefront API)
 
 ### App tasks
 
-- [ ] Extend [`mapShopifyCollection`](../src/lib/commerce/shopify/mappers.ts) for metafields → `heroHeadline`, `tagline`, `ctaLabel`
-- [ ] Add metafield fragments to [`queries.ts`](../src/lib/commerce/shopify/queries.ts)
+- [x] Extend [`mapShopifyCollection`](../src/lib/commerce/shopify/mappers.ts) for metafields → `heroHeadline`, `tagline`, `ctaLabel`
+- [x] Add metafield fragments to [`queries.ts`](../src/lib/commerce/shopify/queries.ts)
+- [x] Seed script: [`scripts/seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs) + `pnpm seed:shopify`
 
 ### Verify
 
-- `pnpm verify:shopify`
+- `pnpm verify:shopify` — expect 3 collections, 9+ products
 - `pnpm dev:shopify`
 - Homepage `#collections`, `/collections/kani-pashmina` with live products
 
 ### Completed
 
-_(none — update when Phase 0 is done)_
+- **Date:** 2026-06-20
+- **What was done:**
+  - Collection hero images via staged upload (`COLLECTION_IMAGE`) + `collectionUpdate` — fixed bare GCS `resourceUrl` by appending upload `key`
+  - Product media on all 9 flagship products (skip re-upload when media already present)
+  - Journal blog `news` + 3 articles with body HTML, excerpts, and cover images
+  - Storefront article queries include `tags` → category mapping in `mapShopifyArticle`
+  - `pnpm verify:shopify` extended — checks collection hero images, product media, blog articles
+- **Verify:** `pnpm verify:shopify` → 3 collections (3 with images), 9 products (9 with images), blog `news` (3 articles); `pnpm seed:shopify`
+
+### Completed (partial)
+
+- **Date:** 2026-06-19
+- **What was done:**
+  - Collection metafield definitions + Storefront queries/mappers for hero copy
+  - `pnpm seed:shopify` — 3 collections, 9 flagship products, prices, Headless publication
+  - Verify script reports collection + product counts
+- **Verify:** `pnpm verify:shopify` → 3 collections; Storefront returns metafields on `jamawar-embroidery`
 
 ---
 
 ## Phase 1 — Complete catalog fidelity
 
-**Status:** partial
+**Status:** done
 
 **Goal:** Every catalog surface uses accurate Shopify data; no mock fallbacks on shopping paths.
 
 ### Tasks
 
-| Task | Files | Shopify source |
-|------|-------|----------------|
-| Map variant colors to filters | `shopify/mappers.ts` | `product.options` / `selectedOptions` |
-| Related products (not mock) | `shopify/provider.ts` | same collection / `productRecommendations` |
-| Dynamic sitemap | `shopify/provider.ts` | live handles |
-| `collectionSlug` on products | mappers | collection membership |
-| `categoryLabel` from tags / `productType` | mappers | tags / productType |
-| PDP metafields (care, dimensions) | `ProductClient.tsx`, queries | product metafields |
-| Journal categories from tags | `JournalClient.tsx` | article tags |
+| Task | Files | Shopify source | Status |
+|------|-------|----------------|--------|
+| Map variant colors to filters | `shopify/mappers.ts`, `queries.ts` | `product.options` / `selectedOptions` / swatches | done |
+| Related products (not mock) | `shopify/provider.ts` | same collection / `productRecommendations` | done |
+| Dynamic sitemap | `shopify/provider.ts` | live handles | done |
+| `collectionSlug` on products | mappers | collection membership | done |
+| `categoryLabel` from tags / `productType` | mappers | tags / productType | done |
+| PDP metafields (care, dimensions) | `ProductClient.tsx`, queries | product metafields | done |
+| Journal categories from tags | `JournalClient.tsx`, journal detail | article tags | done |
 
 ### Completed (partial)
 
@@ -216,10 +231,30 @@ _(none — update when Phase 0 is done)_
   - Default max price uses collection min/max (not global $1,000 cap)
 - **Verify:** `pnpm dev:mock` → `/collections/kani-pashmina` shows collection-specific swatches and price slider
 
-### Remaining
+### Completed (partial)
 
-- Variant colors from Shopify (not mock `colorHex`)
-- Related products, sitemap, metafields, journal tags (see table above)
+- **Date:** 2026-06-20
+- **What was done:**
+  - PDP copy from Shopify: `product_highlights`, `care_instructions`, `dimensions`, optional per-product overrides
+  - Shop metafields for global PDP badges + authenticity promise (`custom.shipping_badge_text`, `returns_badge_text`, `authenticity_promise`)
+  - `getRelatedProducts` — same-collection products from Storefront API (no mock delegate)
+  - `getSitemapEntries` — live product/collection/article handles
+  - `ProductClient` — no hardcoded accordion/bullet copy when `COMMERCE_PROVIDER=shopify`
+  - Seed: `pnpm seed:shopify` creates new metafield definitions + shop metafields
+- **Verify:** Storefront returns highlights on `mustard-jamawar-embroidery-pashmina`; `pnpm dev:shopify` → `/product/mustard-jamawar-embroidery-pashmina`
+
+### Completed
+
+- **Date:** 2026-06-20
+- **What was done:**
+  - **Variant colors:** `PRODUCT_FRAGMENT` fetches `options` (with swatches) + variant `selectedOptions`; `mapShopifyProduct` maps `colorHex` + `colorName` from Color option (hex map → swatch → deterministic hash; `#bcb6ad` only when no Color option)
+  - **Filters / swatches:** `deriveListingFacets` uses `product.colorName`; shop + collection pages skip mock `commerceColors` when `COMMERCE_PROVIDER=shopify`
+  - **`collectionSlug`:** verified on shop listing, search, PDP via `collections(first: 1)` on product fragment
+  - **`categoryLabel`:** `productType` first, then collection handle label, then category enum display label
+  - **Journal:** index filter tabs + article sidebar categories derived from article tags (`mapShopifyArticle` first tag); `?category=` deep link on index
+  - **Verify script:** Phase 1 checks for Color option, collection membership, productType, article tags
+  - **Shop legal policies (complete):** All four standard policies seeded via Admin `shopPolicyUpdate` — `SHIPPING_POLICY`, `REFUND_POLICY`, `TERMS_OF_SERVICE`, `PRIVACY_POLICY`. Partner app scopes: `write_legal_policies`, `read_privacy_settings`, `write_privacy_settings` (deploy + re-install if `ACCESS_DENIED`). Privacy policy requires disabling Shopify auto-management first (`privacyFeaturesDisable(PRIVACY_POLICY)` — handled in seed script). Run `pnpm seed:shopify -- --policies-only`; verify with `pnpm verify:shopify:policies`. Storefront returns all four policy bodies; PDP Shipping & Returns accordion uses shipping + refund HTML via `getShopPolicies()` → `resolveProductDetailContent()`.
+- **Verify:** `pnpm lint`; `pnpm verify:shopify` → Phase 1 fidelity line; `pnpm dev:shopify` → `/shop`, `/collections/kani-pashmina`, `/journal`, PDP color swatches
 
 ---
 
@@ -408,7 +443,7 @@ flowchart TD
 
 | Decision | Choice | Date |
 |----------|--------|------|
-| CMS pattern | _Recommended: metaobjects for FAQs/blocks; Pages for Our Story_ | — |
+| CMS pattern | Shop metafields for global PDP defaults; metaobjects for FAQs (Phase 4) | 2026-06-20 |
 | Admin API app | _Custom Admin app vs Partner `kashmir-weaver-probe`_ | — |
 | Customer Account URLs | _Must match production `NEXT_PUBLIC_SITE_URL`_ | — |
 | Mock mode | _Keep for CI/preview; `dev:shopify` is integration truth_ | 2026-06-19 |
@@ -417,8 +452,8 @@ flowchart TD
 
 ## Suggested next sprint
 
-1. **Phase 0** — Admin content + collection metafield queries
-2. **Phase 1** — related products, sitemap, variant colors
-3. **Phase 2** — Cart API + checkout redirect
+1. **Phase 2** — Cart API + checkout redirect
+2. **Phase 3** — brand, nav, footer from Admin
+3. **Policies** — `pnpm seed:shopify -- --policies-only` (requires `write_legal_policies` on partner app); verify with `pnpm verify:shopify:policies`
 
 Delivers a **sellable, Shopify-driven catalog** before CMS-heavy phases.

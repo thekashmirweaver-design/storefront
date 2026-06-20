@@ -1,17 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Minus,
-  Plus,
-  Check,
-  Leaf,
-  Hexagon,
-  Feather,
-  Heart,
-  Truck,
-  RotateCcw,
-} from "lucide-react";
+import { Minus, Plus, Check, Leaf, Hexagon, Feather, Heart, Truck, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,10 +9,12 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { AnimatedDisclosure } from "@/components/site/AnimatedDisclosure";
 import { ProductGallery } from "@/components/site/ProductGallery";
 import { StickyAtcBar } from "@/components/site/StickyAtcBar";
-import { formatProductPrice } from "@/components/site/listing-state";
+import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
-import { brandText } from "@/lib/commerce";
+import type { ProductDetailContent } from "@/lib/commerce/product-detail";
 import { useCommerce } from "@/lib/commerce/client";
+
+const HIGHLIGHT_ICONS = [Leaf, Hexagon, Feather, Check];
 
 function Accordion({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -30,9 +22,7 @@ function Accordion({ title, children }: { title: string; children: React.ReactNo
       className="border-b border-border/40 py-4"
       triggerClassName="py-0"
       contentClassName="pt-3 text-xs text-muted-foreground leading-relaxed"
-      title={
-        <span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>
-      }
+      title={<span className="text-[0.7rem] tracking-[0.25em] uppercase text-cream">{title}</span>}
     >
       {children}
     </AnimatedDisclosure>
@@ -44,23 +34,21 @@ export function ProductClient({
   related,
   colorVariants,
   collectionTitle,
+  detailContent,
 }: {
   product: CommerceProduct;
   related: CommerceProduct[];
   colorVariants: CommerceProduct[];
   collectionTitle?: string;
+  detailContent: ProductDetailContent;
 }) {
   const [qty, setQty] = useState(1);
   const atcRef = useRef<HTMLDivElement>(null);
-  const { brand, addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
+  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
   const liked = inWishlist(product.slug);
   const soldOut = !product.availableForSale;
 
-  const colorName =
-    colorVariants
-      .find((v) => v.slug === product.slug)
-      ?.name.split(" ")
-      .slice(-1)[0] ?? product.name.split(" ").slice(-1)[0];
+  const colorName = product.colorName ?? product.name.split(" ").slice(-1)[0];
 
   const handleAddToCart = () => {
     if (soldOut) {
@@ -71,6 +59,12 @@ export function ProductClient({
     setCartOpen(true);
     toast.success(`${product.name} added to bag`, { description: `Quantity: ${qty}` });
   };
+
+  const showDescriptionAccordion =
+    Boolean(product.descriptionHtml) || Boolean(product.description) || !detailContent.shopifyMode;
+
+  const showDetailsAccordion =
+    Boolean(product.dimensions) || Boolean(product.careInstructions) || !detailContent.shopifyMode;
 
   return (
     <>
@@ -107,9 +101,19 @@ export function ProductClient({
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-muted-foreground mt-2">
               {product.categoryLabel}
             </p>
-            <p className="text-xl text-gold mt-4">
-              {formatProductPrice(product.price.amount, product.price.currencyCode)}
-            </p>
+            <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-xl text-gold">
+                {formatProductPrice(product.price.amount, product.price.currencyCode)}
+              </p>
+              {productHasCompareAt(product) && product.compareAtPrice && (
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatProductPrice(
+                    product.compareAtPrice.amount,
+                    product.compareAtPrice.currencyCode,
+                  )}
+                </p>
+              )}
+            </div>
             {soldOut && (
               <p className="mt-2 text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground">
                 Currently unavailable
@@ -119,18 +123,18 @@ export function ProductClient({
 
           <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
 
-          <ul className="space-y-2 text-xs text-foreground/80">
-            {[
-              { Icon: Leaf, t: "100% Pure Pashmina" },
-              { Icon: Hexagon, t: "Handwoven in Kashmir" },
-              { Icon: Feather, t: "Ethically Made" },
-              { Icon: Check, t: "Limited Production" },
-            ].map(({ Icon, t }) => (
-              <li key={t} className="flex items-center gap-3">
-                <Icon className="h-4 w-4 text-gold" strokeWidth={1.2} /> {t}
-              </li>
-            ))}
-          </ul>
+          {detailContent.highlights.length > 0 && (
+            <ul className="space-y-2 text-xs text-foreground/80">
+              {detailContent.highlights.map((text, index) => {
+                const Icon = HIGHLIGHT_ICONS[index % HIGHLIGHT_ICONS.length];
+                return (
+                  <li key={text} className="flex items-center gap-3">
+                    <Icon className="h-4 w-4 text-gold" strokeWidth={1.2} /> {text}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           {colorVariants.length > 1 && (
             <div>
@@ -153,10 +157,12 @@ export function ProductClient({
             </div>
           )}
 
-          <div>
-            <p className="text-[0.65rem] tracking-[0.25em] uppercase text-cream mb-2">Size</p>
-            <p className="text-xs text-muted-foreground">70 x 200 cm</p>
-          </div>
+          {product.dimensions && (
+            <div>
+              <p className="text-[0.65rem] tracking-[0.25em] uppercase text-cream mb-2">Size</p>
+              <p className="text-xs text-muted-foreground">{product.dimensions}</p>
+            </div>
+          )}
 
           <div>
             <p className="text-[0.65rem] tracking-[0.25em] uppercase text-cream mb-2">Quantity</p>
@@ -203,32 +209,68 @@ export function ProductClient({
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-[0.65rem] tracking-wider text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <Truck className="h-3.5 w-3.5 text-gold" strokeWidth={1.2} />
-              Complimentary express shipping
-            </span>
-            <span className="flex items-center gap-2">
-              <RotateCcw className="h-3.5 w-3.5 text-gold" strokeWidth={1.2} />
-              Free 30-day returns
-            </span>
-          </div>
+          {(detailContent.shippingBadgeText || detailContent.returnsBadgeText) && (
+            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-[0.65rem] tracking-wider text-muted-foreground">
+              {detailContent.shippingBadgeText && (
+                <span className="flex items-center gap-2">
+                  <Truck className="h-3.5 w-3.5 text-gold" strokeWidth={1.2} />
+                  {detailContent.shippingBadgeText}
+                </span>
+              )}
+              {detailContent.returnsBadgeText && (
+                <span className="flex items-center gap-2">
+                  <RotateCcw className="h-3.5 w-3.5 text-gold" strokeWidth={1.2} />
+                  {detailContent.returnsBadgeText}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="pt-4">
-            <Accordion title="Description">
-              {product.description} Made from the under-fleece of the Changthangi goat from the
-              Himalayas, this piece is a true heirloom.
-            </Accordion>
-            <Accordion title="Details & Care">
-              Dimensions: 70 x 200 cm. Dry clean only. Store folded with cedar to preserve the
-              fiber.
-            </Accordion>
-            <Accordion title="Shipping & Returns">
-              Complimentary worldwide express shipping. Free returns within 30 days.
-            </Accordion>
-            <Accordion title="Our Promise">
-              {brandText(brand.copy.pages.product.authenticityPromise, brand)}
-            </Accordion>
+            {showDescriptionAccordion && (
+              <Accordion title="Description">
+                {product.descriptionHtml ? (
+                  <div
+                    className="prose prose-invert prose-sm max-w-none [&_ul]:list-disc [&_ul]:pl-4"
+                    dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                  />
+                ) : (
+                  <>
+                    {product.description}
+                    {!detailContent.shopifyMode &&
+                      " Made from the under-fleece of the Changthangi goat from the Himalayas, this piece is a true heirloom."}
+                  </>
+                )}
+              </Accordion>
+            )}
+            {showDetailsAccordion && (
+              <Accordion title="Details & Care">
+                {product.dimensions && (
+                  <p className="mb-2">
+                    <span className="text-cream">Dimensions:</span> {product.dimensions}
+                  </p>
+                )}
+                {product.careInstructions && <p>{product.careInstructions}</p>}
+                {!detailContent.shopifyMode && !product.careInstructions && (
+                  <p>Dry clean only. Store folded with cedar to preserve the fiber.</p>
+                )}
+              </Accordion>
+            )}
+            {detailContent.shippingReturnsBody && (
+              <Accordion title="Shipping & Returns">
+                {detailContent.shippingReturnsIsHtml ? (
+                  <div
+                    className="prose prose-invert prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: detailContent.shippingReturnsBody }}
+                  />
+                ) : (
+                  detailContent.shippingReturnsBody
+                )}
+              </Accordion>
+            )}
+            {detailContent.authenticityPromise && (
+              <Accordion title="Our Promise">{detailContent.authenticityPromise}</Accordion>
+            )}
           </div>
         </aside>
       </section>

@@ -1,5 +1,10 @@
 import type { CommerceProvider } from "../provider";
-import type { ContactFormInput, ProductFilters, CommerceArticle } from "../types";
+import type {
+  ContactFormInput,
+  ProductFilters,
+  CommerceArticle,
+  CommerceSitemapEntry,
+} from "../types";
 import { MockCommerceProvider } from "../mock/provider";
 import { brandConfig } from "../brand/config";
 import { mockFaqs } from "../mock/data/faqs";
@@ -9,6 +14,8 @@ import {
   mapShopifyArticle,
   mapShopifyCollection,
   mapShopifyProduct,
+  mapShopifyShopPolicies,
+  mapShopifyStorefrontSettings,
   type ShopifyCollectionNode,
   type ShopifyProductNode,
 } from "./mappers";
@@ -18,13 +25,15 @@ import {
   COLLECTION_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
+  PRODUCT_RECOMMENDATIONS_QUERY,
   PRODUCTS_QUERY,
   SEARCH_QUERY,
+  SHOP_CONTEXT_QUERY,
 } from "./queries";
 
 const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 
-/** Catalog reads from Shopify; brand/forms/faqs fall back to mock until Phase 2. */
+/** Catalog reads from Shopify; brand/forms/faqs fall back to mock until Phase 2+. */
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
   private client = createShopifyClient();
@@ -40,7 +49,10 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     });
     if (errors) throw new Error(`Shopify getProducts: ${JSON.stringify(errors)}`);
     const nodes = (data?.products?.nodes ?? []) as ShopifyProductNode[];
-    return applyClientFilters(nodes.map(mapShopifyProduct), filters);
+    return applyClientFilters(
+      nodes.map((n) => mapShopifyProduct(n)),
+      filters,
+    );
   }
 
   async getProductBySlug(slug: string) {
@@ -58,7 +70,48 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getRelatedProducts(slug: string, limit = 4) {
-    return this.mockDelegate.getRelatedProducts(slug, limit);
+    const product = await this.getProductBySlug(slug);
+    if (!product) return [];
+
+    const fromRecommendations = await this.fetchProductRecommendations(product.id, slug, limit);
+    if (fromRecommendations.length >= limit) return fromRecommendations;
+
+    const seen = new Set([slug, ...fromRecommendations.map((p) => p.slug)]);
+    const siblings = product.collectionSlug
+      ? await this.fetchCollectionSiblings(
+          product.collectionSlug,
+          seen,
+          limit - fromRecommendations.length,
+        )
+      : [];
+
+    return [...fromRecommendations, ...siblings].slice(0, limit);
+  }
+
+  private async fetchProductRecommendations(productId: string, slug: string, limit: number) {
+    try {
+      const { data, errors } = await this.client.request(PRODUCT_RECOMMENDATIONS_QUERY, {
+        variables: { productId },
+      });
+      if (errors) return [];
+      const nodes = (data?.productRecommendations ?? []) as ShopifyProductNode[];
+      return nodes
+        .filter((n) => n.handle !== slug)
+        .slice(0, limit)
+        .map((n) => mapShopifyProduct(n));
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchCollectionSiblings(
+    collectionSlug: string,
+    excludeSlugs: Set<string>,
+    limit: number,
+  ) {
+    const data = await this.getCollectionBySlug(collectionSlug);
+    if (!data || limit <= 0) return [];
+    return data.products.filter((p) => !excludeSlugs.has(p.slug)).slice(0, limit);
   }
 
   async getCollections() {
@@ -79,7 +132,7 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     if (!node) return null;
     const collection = mapShopifyCollection(node);
     const products = applyClientFilters(
-      (node.products?.nodes ?? []).map(mapShopifyProduct),
+      (node.products?.nodes ?? []).map((n) => mapShopifyProduct(n, { collectionSlug: slug })),
       filters,
     );
     return { collection, products };
@@ -126,7 +179,9 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     });
     if (errors) throw new Error(`Shopify search: ${JSON.stringify(errors)}`);
 
-    const products = ((data?.products?.nodes ?? []) as ShopifyProductNode[]).map(mapShopifyProduct);
+    const products = ((data?.products?.nodes ?? []) as ShopifyProductNode[]).map((n) =>
+      mapShopifyProduct(n),
+    );
     const collections = ((data?.collections?.nodes ?? []) as ShopifyCollectionNode[]).map(
       mapShopifyCollection,
     );
@@ -144,8 +199,49 @@ export class ShopifyCommerceProvider implements CommerceProvider {
     return mockFaqs;
   }
 
+  async getStorefrontSettings() {
+    const { data, errors } = await this.client.request(SHOP_CONTEXT_QUERY);
+    if (errors) throw new Error(`Shopify getStorefrontSettings: ${JSON.stringify(errors)}`);
+    return mapShopifyStorefrontSettings(data?.shop);
+  }
+
+  async getShopPolicies() {
+    const { data, errors } = await this.client.request(SHOP_CONTEXT_QUERY);
+    if (errors) throw new Error(`Shopify getShopPolicies: ${JSON.stringify(errors)}`);
+    return mapShopifyShopPolicies(data?.shop);
+  }
+
   async getSitemapEntries() {
-    return this.mockDelegate.getSitemapEntries();
+    const staticPages = [
+      "",
+      "/shop",
+      "/collections",
+      "/journal",
+      "/our-story",
+      "/craftsmanship",
+      "/contact",
+      "/faqs",
+      "/wishlist",
+      "/account",
+    ];
+
+    const entries: CommerceSitemapEntry[] = staticPages.map((path) => ({
+      path: path || "/",
+      changeFrequency: "weekly" as const,
+      priority: path === "" ? 1 : 0.8,
+    }));
+
+    for (const slug of await this.getProductSlugs()) {
+      entries.push({ path: `/product/${slug}`, changeFrequency: "weekly", priority: 0.7 });
+    }
+    for (const slug of await this.getCollectionSlugs()) {
+      entries.push({ path: `/collections/${slug}`, changeFrequency: "weekly", priority: 0.7 });
+    }
+    for (const slug of await this.getArticleSlugs()) {
+      entries.push({ path: `/journal/${slug}`, changeFrequency: "monthly", priority: 0.6 });
+    }
+
+    return entries;
   }
 
   async subscribeNewsletter(email: string) {

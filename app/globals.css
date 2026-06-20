@@ -36,8 +36,6 @@
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --animate-marquee-rtl: marquee-rtl 45s linear infinite;
-  --animate-logo-glow-spin: logo-glow-spin 5s linear infinite;
-  --animate-logo-glow-pulse: logo-glow-pulse 3s ease-in-out infinite;
   --animate-accordion-down: accordion-down 0.25s ease-out;
   --animate-accordion-up: accordion-up 0.25s ease-out;
   --animate-collapsible-down: collapsible-down 0.25s ease-out;
@@ -50,26 +48,6 @@
   }
   to {
     transform: translateX(-50%);
-  }
-}
-
-@keyframes logo-glow-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes logo-glow-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 4px 0 color-mix(in oklch, var(--gold) 20%, transparent),
-      0 0 12px 0 color-mix(in oklch, var(--gold) 8%, transparent);
-  }
-  50% {
-    box-shadow:
-      0 0 6px 1px color-mix(in oklch, var(--gold) 45%, transparent),
-      0 0 18px 2px color-mix(in oklch, var(--gold) 18%, transparent);
   }
 }
 

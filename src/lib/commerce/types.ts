@@ -19,13 +19,40 @@ export type CommerceProduct = {
   category: CommerceProductCategory;
   categoryLabel: string;
   price: CommerceMoney;
+  /** Variant compare-at / was price when set in Shopify Admin */
+  compareAtPrice?: CommerceMoney;
   images: CommerceImage[];
   colorHex: string;
+  /** Display name from variant Color option (Shopify) or mock catalog. */
+  colorName?: string;
   description: string;
   descriptionHtml?: string;
   availableForSale: boolean;
   variantId?: string;
   collectionSlug?: string;
+  /** From Shopify product metafield custom.care_instructions */
+  careInstructions?: string;
+  /** From Shopify product metafield custom.dimensions */
+  dimensions?: string;
+  /** Bullet highlights — metafield custom.product_highlights or parsed from descriptionHtml */
+  highlights?: string[];
+  /** Per-product override for Shipping & Returns accordion */
+  shippingReturnsText?: string;
+  /** Per-product override for Our Promise accordion */
+  authenticityPromise?: string;
+};
+
+export type CommerceStorefrontSettings = {
+  authenticityPromise?: string;
+  shippingBadgeText?: string;
+  returnsBadgeText?: string;
+};
+
+export type CommerceShopPolicies = {
+  shippingPolicyHtml?: string;
+  refundPolicyHtml?: string;
+  privacyPolicyHtml?: string;
+  termsOfServiceHtml?: string;
 };
 
 export type CommerceCollection = {
@@ -37,6 +64,8 @@ export type CommerceCollection = {
   tagline: string;
   /** Longer story copy for the collection hero. */
   description?: string;
+  /** Rich story copy from Shopify collection descriptionHtml. */
+  descriptionHtml?: string;
   category: CommerceProductCategory;
   image?: CommerceImage;
   /** Hero CTA label; defaults to "Explore {title}" when omitted. */

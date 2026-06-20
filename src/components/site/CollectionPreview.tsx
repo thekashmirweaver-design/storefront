@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { ProductCardPreview } from "@/components/site/ProductCardPreview";
 import type { CommerceCollection, CommerceProduct } from "@/lib/commerce";
+import { collectionCtaLabel, collectionHeadline } from "@/lib/commerce/collection-copy";
 
 export function CollectionPreview({
   collection,
@@ -14,12 +15,14 @@ export function CollectionPreview({
   return (
     <section className="mx-auto max-w-[1400px] px-6 md:px-10 py-14 sm:py-16">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-        <h3 className="font-display text-3xl sm:text-4xl text-cream">{collection.title}</h3>
+        <h3 className="font-display text-3xl sm:text-4xl text-cream">
+          {collectionHeadline(collection)}
+        </h3>
         <Link
           href={`/collections/${collection.slug}`}
           className="text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground hover:text-gold inline-flex items-center gap-2 transition-colors"
         >
-          View All <ArrowRight className="h-3 w-3" />
+          {collectionCtaLabel(collection)} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
 

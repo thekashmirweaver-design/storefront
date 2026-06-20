@@ -5,7 +5,7 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
 import { OptimizedImage } from "@/components/site/OptimizedImage";
-import { formatProductPrice } from "@/components/site/listing-state";
+import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
 
@@ -119,8 +119,16 @@ export function ProductCard({ product }: { product: CommerceProduct }) {
         <p className="text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground">
           {product.categoryLabel}
         </p>
-        <p className="text-sm text-gold pt-1">
-          {formatProductPrice(product.price.amount, product.price.currencyCode)}
+        <p className="text-sm text-gold pt-1 flex items-baseline gap-2">
+          <span>{formatProductPrice(product.price.amount, product.price.currencyCode)}</span>
+          {productHasCompareAt(product) && product.compareAtPrice && (
+            <span className="text-xs text-muted-foreground line-through">
+              {formatProductPrice(
+                product.compareAtPrice.amount,
+                product.compareAtPrice.currencyCode,
+              )}
+            </span>
+          )}
         </p>
       </Link>
     </div>

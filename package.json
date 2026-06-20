@@ -12,7 +12,9 @@
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "verify:shopify": "node scripts/verify-shopify-connection.mjs"
+    "verify:shopify": "node scripts/verify-shopify-connection.mjs",
+    "verify:shopify:policies": "node scripts/verify-shopify-policies.mjs",
+    "seed:shopify": "node scripts/seed-shopify-catalog.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
