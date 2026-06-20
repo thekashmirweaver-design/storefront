@@ -19,6 +19,7 @@ import { tmpdir } from "node:os";
 import {
   collectionMetafieldDefinitions,
   productMetafieldDefinitions,
+  customerMetafieldDefinitions,
   shopMetafieldDefinitions,
   shopMetafields,
   shopPolicies,
@@ -134,6 +135,9 @@ async function adminRequest(query, variables) {
 
 async function ensureMetafieldDefinitions(definitions, ownerType) {
   for (const def of definitions) {
+    const access =
+      ownerType === "CUSTOMER" ? { customerAccount: "READ_WRITE" } : { storefront: "PUBLIC_READ" };
+
     const data = await adminRequest(
       `mutation MetafieldDefinitionCreate($definition: MetafieldDefinitionInput!) {
         metafieldDefinitionCreate(definition: $definition) {
@@ -147,7 +151,7 @@ async function ensureMetafieldDefinitions(definitions, ownerType) {
           key: def.key,
           type: def.type ?? "single_line_text_field",
           ownerType,
-          access: { storefront: "PUBLIC_READ" },
+          access,
         },
       },
     );
@@ -462,9 +466,7 @@ let cachedPrimaryLocationId;
 
 async function getPrimaryLocationId() {
   if (cachedPrimaryLocationId) return cachedPrimaryLocationId;
-  const data = await adminRequest(
-    `query ShopLocations { locations(first: 1) { nodes { id } } }`,
-  );
+  const data = await adminRequest(`query ShopLocations { locations(first: 1) { nodes { id } } }`);
   const locationId = data.locations?.nodes?.[0]?.id;
   if (!locationId) throw new Error("No Shopify location found for inventory seeding");
   cachedPrimaryLocationId = locationId;
@@ -918,6 +920,7 @@ async function main() {
   console.log("Metafield definitions:");
   await ensureMetafieldDefinitions(collectionMetafieldDefinitions, "COLLECTION");
   await ensureMetafieldDefinitions(productMetafieldDefinitions, "PRODUCT");
+  await ensureMetafieldDefinitions(customerMetafieldDefinitions, "CUSTOMER");
   await ensureMetafieldDefinitions(shopMetafieldDefinitions, "SHOP");
 
   console.log("\nShop settings + policies:");

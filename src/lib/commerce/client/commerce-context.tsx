@@ -25,9 +25,12 @@ import {
   addToCartAction,
   clearCartAction,
   getCartAction,
+  getCustomerWishlistAction,
   getProductBySlugAction,
   getProductsBySlugsAction,
+  mergeCustomerWishlistAction,
   removeCartLineAction,
+  toggleCustomerWishlistAction,
   updateCartLineAction,
 } from "../actions";
 
@@ -50,7 +53,7 @@ type CommerceContextValue = {
   removeFromCart: (slugOrLineId: string) => Promise<void>;
   setQty: (slugOrLineId: string, qty: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  toggleWishlist: (slug: string) => void;
+  toggleWishlist: (slug: string) => Promise<void>;
   inWishlist: (slug: string) => boolean;
   resolveProducts: (slugs: string[]) => Promise<CommerceProduct[]>;
 };
@@ -97,6 +100,7 @@ export function CommerceProvider({
   const [shopifyCart, setShopifyCart] = useState<CommerceCart | null>(null);
   const [cartLoading, setCartLoading] = useState(isShopifyCart);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [wishlistAuthenticated, setWishlistAuthenticated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -128,12 +132,48 @@ export function CommerceProvider({
   }, [hydrated, isShopifyCart]);
 
   useEffect(() => {
+    if (!isShopifyCart || !hydrated) return;
+
+    let cancelled = false;
+
+    getCustomerWishlistAction()
+      .then(async (remoteWishlist) => {
+        if (cancelled) return;
+
+        if (remoteWishlist == null) {
+          setWishlistAuthenticated(false);
+          return;
+        }
+
+        setWishlistAuthenticated(true);
+        const localWishlist = load<string[]>(wishlistKey, []);
+        if (localWishlist.length) {
+          const merged = await mergeCustomerWishlistAction(localWishlist);
+          if (!cancelled && merged) {
+            setWishlist(merged);
+            return;
+          }
+        }
+
+        setWishlist(remoteWishlist);
+      })
+      .catch(() => {
+        if (!cancelled) setWishlistAuthenticated(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, isShopifyCart, wishlistKey]);
+
+  useEffect(() => {
     if (!isShopifyCart && hydrated) localStorage.setItem(cartKey, JSON.stringify(cart));
   }, [cart, cartKey, hydrated, isShopifyCart]);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem(wishlistKey, JSON.stringify(wishlist));
-  }, [wishlist, wishlistKey, hydrated]);
+    if (!hydrated || (isShopifyCart && wishlistAuthenticated)) return;
+    localStorage.setItem(wishlistKey, JSON.stringify(wishlist));
+  }, [wishlist, wishlistKey, hydrated, isShopifyCart, wishlistAuthenticated]);
 
   const addToCart = useCallback(
     async (slug: string, qty = 1, variantId?: string) => {
@@ -257,9 +297,29 @@ export function CommerceProvider({
     setCart([]);
   }, [isShopifyCart]);
 
-  const toggleWishlist = useCallback((slug: string) => {
-    setWishlist((w) => (w.includes(slug) ? w.filter((s) => s !== slug) : [...w, slug]));
-  }, []);
+  const toggleWishlist = useCallback(
+    async (slug: string) => {
+      if (isShopifyCart && wishlistAuthenticated) {
+        const previous = wishlist;
+        const optimistic = previous.includes(slug)
+          ? previous.filter((item) => item !== slug)
+          : [...previous, slug];
+        setWishlist(optimistic);
+
+        try {
+          const next = await toggleCustomerWishlistAction(slug);
+          if (next) setWishlist(next);
+        } catch {
+          setWishlist(previous);
+          toast.error("Could not update wishlist");
+        }
+        return;
+      }
+
+      setWishlist((w) => (w.includes(slug) ? w.filter((s) => s !== slug) : [...w, slug]));
+    },
+    [isShopifyCart, wishlistAuthenticated, wishlist],
+  );
 
   const inWishlist = useCallback((slug: string) => wishlist.includes(slug), [wishlist]);
 

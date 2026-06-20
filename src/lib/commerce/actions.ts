@@ -9,7 +9,14 @@ import {
   removeShopifyCartLine,
   updateShopifyCartLine,
 } from "./shopify/cart";
-import type { CommerceCart, CommerceCartActionResult, ContactFormInput, ProductFilters } from "./types";
+import type {
+  CommerceCart,
+  CommerceCartActionResult,
+  ContactFormInput,
+  ProductFilters,
+  CommerceCustomerSession,
+  CommerceOrder,
+} from "./types";
 
 export async function searchCommerce(query: string) {
   return commerce.search(query);
@@ -91,4 +98,65 @@ export async function removeCartLineAction(lineId: string): Promise<CommerceCart
 export async function clearCartAction(): Promise<CommerceCartActionResult> {
   if (!isShopifyProvider()) return { cart: null, warnings: [] };
   return clearShopifyCart();
+}
+
+export async function getCustomerSessionAction(): Promise<CommerceCustomerSession> {
+  if (!isShopifyProvider()) return { authenticated: false };
+  const { isCustomerAccountConfigured } = await import("./shopify/customer/config");
+  if (!isCustomerAccountConfigured()) return { authenticated: false };
+
+  const { isCustomerAuthenticated } = await import("./shopify/customer/client");
+  const authenticated = await isCustomerAuthenticated();
+  if (!authenticated) return { authenticated: false };
+
+  const { getCustomerProfile } = await import("./shopify/customer/account");
+  return getCustomerProfile();
+}
+
+export async function getCustomerOrdersAction(): Promise<CommerceOrder[]> {
+  if (!isShopifyProvider()) return [];
+  const { isCustomerAccountConfigured } = await import("./shopify/customer/config");
+  if (!isCustomerAccountConfigured()) return [];
+
+  const { isCustomerAuthenticated } = await import("./shopify/customer/client");
+  if (!(await isCustomerAuthenticated())) return [];
+
+  const { getCustomerOrders } = await import("./shopify/customer/account");
+  return getCustomerOrders();
+}
+
+export async function getCustomerWishlistAction(): Promise<string[] | null> {
+  if (!isShopifyProvider()) return null;
+  const { isCustomerAccountConfigured } = await import("./shopify/customer/config");
+  if (!isCustomerAccountConfigured()) return null;
+
+  const { isCustomerAuthenticated } = await import("./shopify/customer/client");
+  if (!(await isCustomerAuthenticated())) return null;
+
+  const { getCustomerWishlistSlugs } = await import("./shopify/customer/account");
+  return getCustomerWishlistSlugs();
+}
+
+export async function mergeCustomerWishlistAction(localSlugs: string[]): Promise<string[] | null> {
+  if (!isShopifyProvider()) return null;
+  const { isCustomerAccountConfigured } = await import("./shopify/customer/config");
+  if (!isCustomerAccountConfigured()) return null;
+
+  const { isCustomerAuthenticated } = await import("./shopify/customer/client");
+  if (!(await isCustomerAuthenticated())) return null;
+
+  const { mergeCustomerWishlistSlugs } = await import("./shopify/customer/account");
+  return mergeCustomerWishlistSlugs(localSlugs);
+}
+
+export async function toggleCustomerWishlistAction(slug: string): Promise<string[] | null> {
+  if (!isShopifyProvider()) return null;
+  const { isCustomerAccountConfigured } = await import("./shopify/customer/config");
+  if (!isCustomerAccountConfigured()) return null;
+
+  const { isCustomerAuthenticated } = await import("./shopify/customer/client");
+  if (!(await isCustomerAuthenticated())) return null;
+
+  const { toggleCustomerWishlistSlug } = await import("./shopify/customer/account");
+  return toggleCustomerWishlistSlug(slug);
 }

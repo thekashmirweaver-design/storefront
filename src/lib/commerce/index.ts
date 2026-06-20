@@ -15,6 +15,9 @@ export type {
   CommerceSitemapEntry,
   ContactFormInput,
   ProductFilters,
+  CommerceCustomerSession,
+  CommerceOrder,
+  CommerceOrderLineItem,
 } from "./types";
 
 export type { CommerceProvider } from "./provider";

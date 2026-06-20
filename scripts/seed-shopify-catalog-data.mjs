@@ -31,6 +31,8 @@ export const productMetafieldDefinitions = [
   { name: "Inventory Quantity", key: "inventory_quantity", type: "number_integer" },
 ];
 
+export const customerMetafieldDefinitions = [{ name: "Wishlist", key: "wishlist", type: "json" }];
+
 export const shopPolicies = {
   shipping: `<p><strong>Complimentary worldwide express shipping</strong> on all orders. Orders are dispatched from our Kashmir atelier within 1–2 business days of confirmation.</p><p>Delivery typically within <strong>5–10 business days</strong> for most international destinations. You will receive tracking details by email once your parcel ships.</p><p>Customs duties and import taxes, where applicable, are the responsibility of the recipient unless stated otherwise at checkout.</p>`,
   refund: `<p>We want you to love your pashmina. If you are not completely satisfied, you may return unworn items in their original packaging within <strong>30 days of delivery</strong> for a full refund or exchange.</p><p>Initiate a return by contacting <a href="mailto:hello@thekashmirweaver.com">hello@thekashmirweaver.com</a> with your order number. Return shipping is complimentary for eligible orders.</p><p>Final-sale or personalised pieces are non-returnable unless faulty.</p>`,

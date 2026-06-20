@@ -36,7 +36,7 @@ Status values: `pending` | `in_progress` | `done`
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **done** | Storefront menus + shop metafields |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **done** | Metaobject FAQs + shop policies + footer URLs |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | **done** | Admin customerCreate + consent |
-| 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
+| 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | **done** | Customer Account OAuth PKCE, orders, wishlist metafield |
 | 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | partial | Homepage collection blocks only |
 | 8 | [Markets & operations](#phase-8--polish-and-operations) | pending | |
 
@@ -80,7 +80,9 @@ flowchart LR
     SF --> FAQs
     SF --> Policies
     Admin --> Forms
-    LS --> Wishlist
+    LS --> WishlistGuest
+    CA[Customer Account API] --> Account
+    CA --> WishlistAuth
     Static --> HomepageHero
     Static --> OurStory
     Static --> Craftsmanship
@@ -97,9 +99,8 @@ flowchart LR
 - Shop policies — PDP Shipping & Returns accordions; footer privacy/terms via Shopify-hosted policy URLs
 - Newsletter + contact — Admin `customerCreate` / consent / notes (requires `SHOPIFY_ADMIN_ACCESS_TOKEN` at runtime)
 
-### Still mock / hardcoded (Phase 6+)
+### Still mock / hardcoded (Phase 7+)
 
-- Wishlist (localStorage), account (demo UI)
 - Homepage main hero, marquee, legacy, quote (Phase 7)
 - Our Story, Craftsmanship pages (Phase 7)
 - Optional standalone `/privacy`, `/terms` Next.js routes (deferred; footer links use Shopify policy URLs)
@@ -407,7 +408,7 @@ Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitCo
 
 ## Phase 6 — Customer accounts and wishlist
 
-**Status:** pending
+**Status:** done
 
 **Goal:** Login, orders, saved items.
 
@@ -415,13 +416,22 @@ Wire [`subscribeNewsletterAction`](../src/lib/commerce/actions.ts) and `submitCo
 - Order history / profile
 - Wishlist via customer metafield; guest localStorage until login
 
-**Env (partial in `.env.local`):** `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID`, callback/logout URLs must match `NEXT_PUBLIC_SITE_URL`
+**Env:** `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` (+ optional `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET`); callback/logout URLs must match `NEXT_PUBLIC_SITE_URL`
 
-Replace demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.tsx).
+**Admin setup:** Headless → Customer Account API — register redirect `{SITE_URL}/api/auth/customer/callback`, logout `{SITE_URL}/account`, JavaScript origin `{SITE_URL}`. Seed `custom.wishlist` customer metafield via `pnpm seed:shopify`.
+
+Replaces demo UI in [`AccountClient.tsx`](../src/components/site/AccountClient.tsx).
 
 ### Completed
 
-_(none)_
+- **Date:** 2026-06-20
+- **What was done:**
+  - **Customer Account OAuth:** PKCE login/callback/logout routes under `app/api/auth/customer/`; discovery from `/.well-known/openid-configuration`; httpOnly session cookies with refresh
+  - **Account UI:** [`AccountClient.tsx`](../src/components/site/AccountClient.tsx) — Shopify sign-in, profile, order history; mock mode keeps demo form
+  - **Wishlist sync:** guest `localStorage`; logged-in customers persist `custom.wishlist` JSON metafield via Customer Account API `metafieldsSet`; merge on login in [`commerce-context.tsx`](../src/lib/commerce/client/commerce-context.tsx)
+  - **Server actions:** `getCustomerSessionAction`, `getCustomerOrdersAction`, wishlist merge/toggle actions in [`actions.ts`](../src/lib/commerce/actions.ts)
+  - **Seed:** `customerMetafieldDefinitions` (`custom.wishlist`, type `json`, `customerAccount: READ_WRITE`) in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs)
+- **Verify:** `pnpm build:mock`; `pnpm build:shopify`; configure Customer Account API client in Admin, then `pnpm dev:shopify` → `/account` sign-in → orders; toggle wishlist guest + after login
 
 ---
 
@@ -517,9 +527,8 @@ flowchart TD
 
 ## Suggested next sprint
 
-Phases 0–5 engineering is complete. **Do not start Phase 6** until user picks scope.
+Phases 0–6 engineering is complete.
 
-1. **Phase 6** — Customer Account API (OAuth PKCE), order history, wishlist sync
-2. **Optional (Phase 7 prep):** Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
-3. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
-4. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing
+1. **Phase 7** — Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
+2. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
+3. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing; checkout SSO (`sso=silent` on `checkoutUrl`)

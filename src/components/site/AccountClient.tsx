@@ -1,15 +1,201 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Eyebrow } from "@/components/site/Eyebrow";
+import type { CommerceCustomerSession, CommerceOrder } from "@/lib/commerce";
 import { brandText } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
+import { getCustomerOrdersAction, getCustomerSessionAction } from "@/lib/commerce/actions";
 
-export function AccountClient() {
-  const { brand } = useCommerce();
+type AccountClientProps = {
+  accountEnabled: boolean;
+};
+
+function formatOrderDate(value?: string) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMoney(amount: number, currencyCode: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currencyCode,
+  }).format(amount);
+}
+
+function formatStatus(value?: string) {
+  if (!value) return "—";
+  return value.replace(/_/g, " ").toLowerCase();
+}
+
+export function AccountClient({ accountEnabled }: AccountClientProps) {
+  const { brand, cartMode } = useCommerce();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"signin" | "register">("signin");
+  const [session, setSession] = useState<CommerceCustomerSession | null>(null);
+  const [orders, setOrders] = useState<CommerceOrder[]>([]);
+  const [loading, setLoading] = useState(accountEnabled && cartMode === "shopify");
+
+  const isShopifyAccount = cartMode === "shopify" && accountEnabled;
+
+  useEffect(() => {
+    if (!isShopifyAccount) return;
+
+    const signedIn = searchParams.get("signed_in");
+    const error = searchParams.get("error");
+
+    if (signedIn) {
+      toast.success("Signed in", { description: "Welcome back." });
+    } else if (error) {
+      toast.error("Sign in failed", {
+        description: "Please try again or contact support if this continues.",
+      });
+    }
+
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all([getCustomerSessionAction(), getCustomerOrdersAction()])
+      .then(([nextSession, nextOrders]) => {
+        if (cancelled) return;
+        setSession(nextSession);
+        setOrders(nextOrders);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isShopifyAccount, searchParams]);
+
+  if (isShopifyAccount && loading) {
+    return (
+      <section className="mx-auto max-w-3xl px-6 md:px-10 py-24 text-center">
+        <p className="text-sm text-muted-foreground">Loading your account…</p>
+      </section>
+    );
+  }
+
+  if (isShopifyAccount && session?.authenticated) {
+    return (
+      <section className="mx-auto max-w-3xl px-6 md:px-10 py-24">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between mb-12">
+          <div>
+            <Eyebrow>Account</Eyebrow>
+            <h1 className="mt-4 font-display text-4xl text-cream">
+              {session.displayName ?? "Your account"}
+            </h1>
+            {session.email && <p className="mt-3 text-sm text-muted-foreground">{session.email}</p>}
+          </div>
+          <a
+            href="/api/auth/customer/logout"
+            className="self-start border border-border px-5 py-2.5 text-[0.65rem] tracking-[0.25em] uppercase text-cream hover:border-gold hover:text-gold transition-colors"
+          >
+            Sign out
+          </a>
+        </div>
+
+        <div className="space-y-8">
+          <div className="border border-border/60 p-6">
+            <h2 className="font-display text-2xl text-cream mb-4">Profile</h2>
+            <dl className="grid gap-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Name</dt>
+                <dd className="text-cream text-right">
+                  {[session.firstName, session.lastName].filter(Boolean).join(" ") || "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Email</dt>
+                <dd className="text-cream text-right">{session.email ?? "—"}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-2xl text-cream">Order history</h2>
+              <Link href="/wishlist" className="text-xs text-gold hover:underline">
+                View wishlist
+              </Link>
+            </div>
+
+            {orders.length === 0 ? (
+              <p className="text-sm text-muted-foreground border border-border/60 p-6">
+                No orders yet. When you place an order, it will appear here.
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {orders.map((order) => (
+                  <li key={order.id} className="border border-border/60 p-6">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="font-display text-lg text-cream">{order.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatOrderDate(order.processedAt)}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gold">
+                        {formatMoney(order.totalPrice.amount, order.totalPrice.currencyCode)}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3 text-[0.65rem] tracking-[0.15em] uppercase text-muted-foreground">
+                      <span>Payment: {formatStatus(order.financialStatus)}</span>
+                      <span>Fulfillment: {formatStatus(order.fulfillmentStatus)}</span>
+                    </div>
+                    {order.lineItems.length > 0 && (
+                      <ul className="mt-4 space-y-2 text-sm text-cream/90">
+                        {order.lineItems.map((line, index) => (
+                          <li key={`${order.id}-${index}`}>
+                            {line.quantity} × {line.title}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isShopifyAccount) {
+    return (
+      <section className="mx-auto max-w-md px-6 md:px-10 py-24">
+        <div className="text-center mb-10">
+          <Eyebrow>Account</Eyebrow>
+          <h1 className="mt-4 font-display text-4xl text-cream">Welcome Back</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Sign in with your Shopify customer account to view orders and sync your saved pieces.
+          </p>
+        </div>
+
+        <a
+          href="/api/auth/customer/login"
+          className="block w-full bg-gold text-primary-foreground py-3.5 text-center text-[0.7rem] tracking-[0.3em] uppercase hover:bg-gold-soft transition-colors"
+        >
+          Sign in with Shopify
+        </a>
+
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          Your wishlist syncs to your account after sign-in.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-md px-6 md:px-10 py-24">

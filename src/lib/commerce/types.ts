@@ -131,6 +131,31 @@ export type CommerceCartActionResult = {
   warnings: CommerceCartWarning[];
 };
 
+export type CommerceCustomerSession = {
+  authenticated: boolean;
+  displayName?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+};
+
+export type CommerceOrderLineItem = {
+  title: string;
+  quantity: number;
+  imageUrl?: string;
+  imageAlt?: string;
+};
+
+export type CommerceOrder = {
+  id: string;
+  name: string;
+  processedAt?: string;
+  financialStatus?: string;
+  fulfillmentStatus?: string;
+  totalPrice: CommerceMoney;
+  lineItems: CommerceOrderLineItem[];
+};
+
 export type ProductFilters = {
   categories?: CommerceProductCategory[];
   colors?: string[];
