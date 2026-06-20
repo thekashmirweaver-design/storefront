@@ -235,11 +235,44 @@ When the partner app includes `read_checkout_branding_settings` and `write_check
 
 ```bash
 pnpm seed:shopify
+pnpm seed:shopify -- --checkout-branding-only
 ```
 
 Colors align with `app/globals.css` (`#1f1c19` background, `#efe8dc` text, `#c4a052` gold). Logo uses the shop `custom.logo_url` metafield (uploaded to Shopify Files first).
 
-Requires a **Shopify Plus dev store** or Plus-enabled development store for checkout styling API access.
+Requires a **Shopify Plus sandbox**, **Plus production store**, or a classic **Partner development store** plan. **App development stores** (Admin plan name **Basic App Development**, `shopify store info` → `"plan": "basic"`) often return `ACCESS_DENIED` on `checkoutBrandingUpsert` even when scopes are installed.
+
+If `.env.local` sets `SHOPIFY_ADMIN_ACCESS_TOKEN`, the seed uses that token instead of the partner app. Unset it (or omit the variable) so `shopify app execute` runs from `SHOPIFY_PARTNER_APP_DIR` (`/tmp/shopify-probe/kashmir-weaver-probe`).
+
+### Option A2 — Shopify CLI (no Admin UI)
+
+Use the partner app directory and Shopify CLI 4.x:
+
+```bash
+STORE=the-kashmir-weaver-nncjdd3t.myshopify.com
+APP=/tmp/shopify-probe/kashmir-weaver-probe
+
+# Eligibility (API blockers show up here before you seed)
+shopify store info -s "$STORE" --json
+cd "$APP" && shopify app info
+shopify app deploy --allow-updates   # non-interactive shells need this flag
+
+# Checkout profile id for mutations
+shopify app execute -s "$STORE" -q '{ checkoutProfiles(first: 5) { nodes { id name isPublished } } }'
+
+# Store-scoped auth + mutation (account owner; needs eligible store plan)
+shopify store auth -s "$STORE" --scopes read_checkout_branding_settings,write_checkout_branding_settings,write_files,read_files
+shopify store execute -s "$STORE" --allow-mutations \
+  -q 'mutation { checkoutBrandingUpsert(checkoutProfileId: "gid://shopify/CheckoutProfile/ID", checkoutBrandingInput: { designSystem: { colors: { global: { brand: "#c4a052", accent: "#c4a052" } } } }) { userErrors { message } } }'
+
+# Full logo + colors (uploads `public/images/kashmir-weaver-logo.png`, sets `custom.logo_url`)
+env -u SHOPIFY_ADMIN_ACCESS_TOKEN SHOPIFY_PARTNER_APP_DIR="$APP" pnpm seed:shopify -- --checkout-branding-only
+
+# Or use the dedicated CLI script (same mutation as checkoutBrandingUpsert docs)
+pnpm checkout:branding
+```
+
+`shopify app dev` re-grants scopes on install but does **not** change store plan eligibility. There is no CLI command to “enable” checkout branding on an ineligible store; theme CLI does not configure checkout branding. If CLI/API stays blocked, use Option B or move catalog to a Plus sandbox / classic dev store.
 
 ### Option B — Shopify Admin (manual)
 
