@@ -129,12 +129,12 @@ export function Footer() {
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href={brand.legal.privacyPolicyUrl} className="hover:text-gold">
+            <Link href={brand.legal.privacyPolicyUrl} className="hover:text-gold">
               Privacy Policy
-            </a>
-            <a href={brand.legal.termsUrl} className="hover:text-gold">
+            </Link>
+            <Link href={brand.legal.termsUrl} className="hover:text-gold">
               Terms & Conditions
-            </a>
+            </Link>
           </div>
         </div>
       </div>

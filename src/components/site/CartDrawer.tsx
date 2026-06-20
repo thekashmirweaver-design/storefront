@@ -15,6 +15,7 @@ import { useCommerce } from "@/lib/commerce/client";
 
 export function CartDrawer() {
   const {
+    brand,
     cartMode,
     cart,
     shopifyCart,
@@ -281,15 +282,17 @@ export function CartDrawer() {
                   {formatProductPrice(subtotal?.amount ?? 0, subtotal?.currencyCode ?? "USD")}
                 </span>
               </div>
-              <p className="text-[0.65rem] text-muted-foreground">
-                Shipping and taxes calculated at checkout.
+              <p className="text-[0.65rem] text-muted-foreground leading-relaxed">
+                {isShopifyCart
+                  ? `You'll complete your order on our secure ${brand.name} checkout powered by Shopify. Shipping and taxes are calculated there.`
+                  : "Shipping and taxes calculated at checkout."}
               </p>
               <button
                 onClick={handleCheckout}
                 disabled={isShopifyCart && (cartLoading || !checkoutUrl)}
                 className="w-full bg-gold text-primary-foreground py-3.5 text-[0.7rem] tracking-[0.3em] uppercase hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Checkout
+                {isShopifyCart ? "Continue to checkout" : "Checkout"}
               </button>
               <button
                 onClick={() => setCartOpen(false)}

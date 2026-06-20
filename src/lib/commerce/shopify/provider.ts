@@ -390,6 +390,8 @@ export class ShopifyCommerceProvider implements CommerceProvider {
       "/craftsmanship",
       "/contact",
       "/faqs",
+      "/privacy",
+      "/terms",
       "/wishlist",
       "/account",
     ];

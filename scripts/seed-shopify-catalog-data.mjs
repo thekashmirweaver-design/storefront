@@ -40,6 +40,38 @@ export const shopPolicies = {
   privacy: `<p>The Kashmir Weaver respects your privacy. We collect only the information needed to process orders, deliver products, and respond to enquiries—such as name, email, shipping address, and payment details processed securely by our payment partners.</p><p>We do not sell your personal data. We may use your email to send order updates and, with your consent, occasional news about new collections. You may unsubscribe at any time.</p><p>We use industry-standard measures to protect your data. For privacy requests, contact <a href="mailto:hello@thekashmirweaver.com">hello@thekashmirweaver.com</a>.</p>`,
 };
 
+/** Matches app/globals.css — used for Shopify checkoutBrandingUpsert */
+export const checkoutBranding = {
+  colors: {
+    global: {
+      brand: "#c4a052",
+      accent: "#c4a052",
+    },
+    scheme1: {
+      base: {
+        background: "#1f1c19",
+        text: "#efe8dc",
+      },
+      control: {
+        background: "#1f1c19",
+        border: "#5c5348",
+        selected: {
+          background: "#c4a052",
+          border: "#a8863f",
+        },
+      },
+      primaryButton: {
+        background: "#c4a052",
+        text: "#1f1c19",
+        hover: {
+          background: "#a8863f",
+        },
+      },
+    },
+  },
+  logoMaxWidth: 120,
+};
+
 export const shopMetafieldDefinitions = [
   { name: "Authenticity Promise", key: "authenticity_promise", type: "multi_line_text_field" },
   { name: "Shipping Badge Text", key: "shipping_badge_text", type: "single_line_text_field" },

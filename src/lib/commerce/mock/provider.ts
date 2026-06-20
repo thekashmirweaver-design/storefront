@@ -259,6 +259,10 @@ export class MockCommerceProvider implements CommerceProvider {
         "<p>Complimentary worldwide express shipping on all orders. Delivery typically within 5–10 business days.</p>",
       refundPolicyHtml:
         "<p>Free returns within 30 days of delivery. Items must be unworn with original packaging.</p>",
+      privacyPolicyHtml:
+        "<p>We collect only the information needed to process orders and respond to enquiries. We do not sell your personal data.</p><p>You may unsubscribe from marketing emails at any time.</p>",
+      termsOfServiceHtml:
+        "<p>By purchasing from our store, you agree to these terms of service. Natural variations in handwoven pashmina are a hallmark of artisan craft.</p><p>Prices are listed in USD unless otherwise noted.</p>",
     };
   }
 
@@ -272,6 +276,8 @@ export class MockCommerceProvider implements CommerceProvider {
       "/craftsmanship",
       "/contact",
       "/faqs",
+      "/privacy",
+      "/terms",
       "/wishlist",
       "/account",
     ];

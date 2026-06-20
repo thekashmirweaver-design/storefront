@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { Eyebrow } from "@/components/site/Eyebrow";
+import { BrandedPageHeader } from "@/components/site/BrandedPageHeader";
 import type { CommerceCustomerSession, CommerceOrder } from "@/lib/commerce";
 import { brandText } from "@/lib/commerce";
 import { useCommerce } from "@/lib/commerce/client";
@@ -91,17 +91,18 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
   if (isShopifyAccount && session?.authenticated) {
     return (
       <section className="mx-auto max-w-3xl px-6 md:px-10 py-24">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between mb-12">
-          <div>
-            <Eyebrow>Account</Eyebrow>
-            <h1 className="mt-4 font-display text-4xl text-cream">
-              {session.displayName ?? "Your account"}
-            </h1>
-            {session.email && <p className="mt-3 text-sm text-muted-foreground">{session.email}</p>}
-          </div>
+        <BrandedPageHeader
+          brand={brand}
+          eyebrow="Account"
+          title={session.displayName ?? "Your account"}
+          description={session.email ?? undefined}
+          className="mb-12"
+        />
+
+        <div className="flex justify-end mb-8">
           <a
             href="/api/auth/customer/logout"
-            className="self-start border border-border px-5 py-2.5 text-[0.65rem] tracking-[0.25em] uppercase text-cream hover:border-gold hover:text-gold transition-colors"
+            className="border border-border px-5 py-2.5 text-[0.65rem] tracking-[0.25em] uppercase text-cream hover:border-gold hover:text-gold transition-colors"
           >
             Sign out
           </a>
@@ -183,13 +184,13 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
 
     return (
       <section className="mx-auto max-w-md px-6 md:px-10 py-24">
-        <div className="text-center mb-10">
-          <Eyebrow>Account</Eyebrow>
-          <h1 className="mt-4 font-display text-4xl text-cream">Welcome Back</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Sign in with your Shopify customer account to view orders and sync your saved pieces.
-          </p>
-        </div>
+        <BrandedPageHeader
+          brand={brand}
+          eyebrow="Account"
+          title="Sign in to your account"
+          description="Sign in with your Shopify customer account to view orders and sync your saved pieces."
+          className="mb-10"
+        />
 
         {originMismatch && (
           <p className="mb-6 text-xs text-amber-200/90 border border-amber-500/40 bg-amber-500/10 px-4 py-3 leading-relaxed">
@@ -215,17 +216,17 @@ export function AccountClient({ accountEnabled }: AccountClientProps) {
 
   return (
     <section className="mx-auto max-w-md px-6 md:px-10 py-24">
-      <div className="text-center mb-10">
-        <Eyebrow>Account</Eyebrow>
-        <h1 className="mt-4 font-display text-4xl text-cream">
-          {mode === "signin" ? "Welcome Back" : "Create Account"}
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {mode === "signin"
+      <BrandedPageHeader
+        brand={brand}
+        eyebrow="Account"
+        title={mode === "signin" ? "Sign in to your account" : "Create account"}
+        description={
+          mode === "signin"
             ? "Sign in to manage orders and saved pieces."
-            : brandText(brand.copy.pages.account.registerSubtitle, brand)}
-        </p>
-      </div>
+            : brandText(brand.copy.pages.account.registerSubtitle, brand)
+        }
+        className="mb-10"
+      />
 
       <form
         onSubmit={(e) => {

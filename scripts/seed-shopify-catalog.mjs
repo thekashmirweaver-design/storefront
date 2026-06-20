@@ -24,6 +24,7 @@ import {
   shopMetafieldDefinitions,
   shopMetafields,
   shopPolicies,
+  checkoutBranding,
   collections,
   products,
   articles,
@@ -268,6 +269,110 @@ async function ensureShopPolicies() {
   const errors = data.shopPolicyUpdate?.userErrors ?? [];
   if (errors.length) throw new Error(`shopPolicyUpdate(PRIVACY_POLICY): ${JSON.stringify(errors)}`);
   console.log("  shop policy privacy_policy");
+}
+
+async function resolveMediaImageId(adminRequestFn, sourceUrl, alt) {
+  const data = await adminRequestFn(
+    `mutation FileCreate($files: [FileCreateInput!]!) {
+      fileCreate(files: $files) {
+        files { id ... on MediaImage { fileStatus image { url } } }
+        userErrors { field message }
+      }
+    }`,
+    {
+      files: [
+        {
+          originalSource: sourceUrl,
+          contentType: "IMAGE",
+          alt: alt ?? undefined,
+        },
+      ],
+    },
+  );
+
+  const errors = data.fileCreate?.userErrors ?? [];
+  if (errors.length) throw new Error(`fileCreate: ${JSON.stringify(errors)}`);
+
+  const file = data.fileCreate.files?.[0];
+  const fileId = file?.id;
+  if (!fileId) throw new Error("fileCreate returned no file id");
+
+  if (file?.image?.url) return fileId;
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const status = await adminRequestFn(
+      `query FileStatus($id: ID!) {
+        node(id: $id) {
+          ... on MediaImage {
+            fileStatus
+            image { url }
+          }
+        }
+      }`,
+      { id: fileId },
+    );
+    if (status.node?.image?.url) return fileId;
+    if (status.node?.fileStatus === "FAILED") {
+      throw new Error(`fileCreate processing failed for ${fileId}`);
+    }
+  }
+
+  throw new Error("fileCreate returned no image URL after processing");
+}
+
+async function ensureCheckoutBranding() {
+  const profileData = await adminRequest(
+    `{ checkoutProfiles(first: 1, query: "is_published:true") {
+      edges { node { id name } }
+    } }`,
+  );
+  const profileId = profileData.checkoutProfiles?.edges?.[0]?.node?.id;
+  if (!profileId) {
+    throw new Error("No published checkout profile found");
+  }
+
+  let mediaImageId;
+  const logoUrl = shopMetafields.logo_url?.trim();
+  if (logoUrl) {
+    mediaImageId = await resolveMediaImageId(adminRequest, logoUrl, "Store logo");
+  }
+
+  const checkoutBrandingInput = {
+    designSystem: {
+      colors: checkoutBranding.colors,
+    },
+    customizations: mediaImageId
+      ? {
+          header: {
+            logo: {
+              image: { mediaImageId },
+              maxWidth: checkoutBranding.logoMaxWidth,
+              visibility: "VISIBLE",
+            },
+          },
+        }
+      : undefined,
+  };
+
+  const data = await adminRequest(
+    `mutation CheckoutBrandingUpsert($checkoutBrandingInput: CheckoutBrandingInput!, $checkoutProfileId: ID!) {
+      checkoutBrandingUpsert(
+        checkoutBrandingInput: $checkoutBrandingInput
+        checkoutProfileId: $checkoutProfileId
+      ) {
+        userErrors { field message }
+      }
+    }`,
+    { checkoutBrandingInput, checkoutProfileId: profileId },
+  );
+
+  const errors = data.checkoutBrandingUpsert?.userErrors ?? [];
+  if (errors.length) throw new Error(`checkoutBrandingUpsert: ${JSON.stringify(errors)}`);
+
+  console.log(
+    `  checkout branding updated${mediaImageId ? " (logo + colors)" : " (colors only)"}`,
+  );
 }
 
 async function ensureShopMetafields() {
@@ -1162,6 +1267,20 @@ async function main() {
     console.warn(
       `  ⚠ shop policies skipped (${short}). Re-install partner app for write_legal_policies, then ` +
         "`pnpm seed:shopify -- --policies-only`, or set policies in Admin → Settings → Policies.",
+    );
+  }
+  try {
+    await ensureCheckoutBranding();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const short =
+      message.match(/Access denied for checkoutBrandingUpsert[^"]*/)?.[0] ??
+      message.split("\n").find((line) => line.includes("Access denied")) ??
+      message.slice(0, 120);
+    console.warn(
+      `  ⚠ checkout branding skipped (${short}). Add read_checkout_branding_settings + ` +
+        "write_checkout_branding_settings to the partner app, re-install, then re-run seed — " +
+        "or customize in Admin → Settings → Checkout → Customize (see docs/shopify-store-setup.md).",
     );
   }
   try {

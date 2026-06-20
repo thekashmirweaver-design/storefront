@@ -88,6 +88,7 @@ The Partner app at `SHOPIFY_PARTNER_APP_DIR` (default: `/tmp/shopify-probe/kashm
 - **Catalog & content:** `write_products`, `read_publications`, `write_publications`, `read_content`, `write_content`, `write_online_store_navigation`, `read_locations`, `write_inventory`, `read_metaobjects`, `write_metaobjects`
 - **Customers (forms):** `read_customers`, `write_customers`
 - **Policies & privacy:** `write_legal_policies`, `read_privacy_settings`, `write_privacy_settings`
+- **Checkout branding (optional):** `read_checkout_branding_settings`, `write_checkout_branding_settings`
 - **Storefront (unauthenticated):** `unauthenticated_read_product_listings`, `unauthenticated_read_collection_listings`, `unauthenticated_read_content`, `unauthenticated_read_metaobjects`, `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`, `unauthenticated_read_product_inventory`
 
 `read_customers` and `write_customers` are required for newsletter signup and contact form submissions (Phase 5). `write_online_store_navigation` is required for seeding the Online Store main menu. `read_metaobjects` and `write_metaobjects` are required for seeding FAQ metaobjects (`pnpm seed:shopify -- --faqs-only`). The FAQ metaobject definition lives in the partner app `shopify.app.toml` (`[metaobjects.app.faq]`) with `access.storefront = "public_read"` — deploy the app after changing that file (`shopify app deploy --allow-updates`), then re-approve scopes on the dev store if prompted. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
@@ -223,6 +224,35 @@ curl -sS -D - -o /dev/null http://localhost:3000/api/auth/customer/login   # exp
 ```
 
 Then open `/account` and complete sign-in through the **same URL** as `NEXT_PUBLIC_SITE_URL` (ngrok or production). **Do not use `http://localhost:3000` for account login** — Shopify requires HTTPS callbacks; OAuth cookies and `redirect_uri` must match the registered tunnel URL.
+
+## Checkout branding
+
+Checkout runs on Shopify-hosted pages (`cart.checkoutUrl`). Brand the experience to match the storefront cream/gold theme.
+
+### Option A — Seed script (Admin API)
+
+When the partner app includes `read_checkout_branding_settings` and `write_checkout_branding_settings`, the full seed applies colors and logo via `checkoutBrandingUpsert`:
+
+```bash
+pnpm seed:shopify
+```
+
+Colors align with `app/globals.css` (`#1f1c19` background, `#efe8dc` text, `#c4a052` gold). Logo uses the shop `custom.logo_url` metafield (uploaded to Shopify Files first).
+
+Requires a **Shopify Plus dev store** or Plus-enabled development store for checkout styling API access.
+
+### Option B — Shopify Admin (manual)
+
+1. **Shopify Admin → Settings → Checkout → Customize**
+2. **Branding → Logo** — upload the same logo as `custom.logo_url` (square PNG/JPG, not SVG)
+3. **Colors** — suggested palette:
+   - Background: `#1f1c19` (ink)
+   - Text: `#efe8dc` (cream)
+   - Buttons / accents: `#c4a052` (gold)
+   - Button text: `#1f1c19`
+4. Save and preview checkout from the cart drawer **Continue to checkout** button
+
+Customer Account sign-in pages can also be styled under **Settings → Customer accounts → Customize** for a consistent logo and colors.
 
 ## Phase 8 — Catalog webhooks (cache revalidation)
 

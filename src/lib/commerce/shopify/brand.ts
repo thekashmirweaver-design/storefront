@@ -151,12 +151,8 @@ function mapShopifyBrand(data: ShopifyBrandResponse): BrandConfig {
   const siteUrl = brandConfig.siteUrl;
   const name = shop?.name?.trim() || brandConfig.name;
 
-  const privacyPolicyUrl = shop?.privacyPolicy?.url
-    ? normalizeMenuUrl(shop.privacyPolicy.url, siteUrl)
-    : brandConfig.legal.privacyPolicyUrl;
-  const termsUrl = shop?.termsOfService?.url
-    ? normalizeMenuUrl(shop.termsOfService.url, siteUrl)
-    : brandConfig.legal.termsUrl;
+  const privacyPolicyUrl = brandConfig.legal.privacyPolicyUrl;
+  const termsUrl = brandConfig.legal.termsUrl;
 
   return {
     ...brandConfig,

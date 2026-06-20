@@ -89,8 +89,8 @@ export const brandConfig = {
     placeholder: "Enter your email",
   },
   legal: {
-    privacyPolicyUrl: "#",
-    termsUrl: "#",
+    privacyPolicyUrl: "/privacy",
+    termsUrl: "/terms",
   },
   copy: {
     productNoun: "pashmina",
