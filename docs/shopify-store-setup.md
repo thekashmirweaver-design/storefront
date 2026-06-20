@@ -85,11 +85,11 @@ pnpm build:shopify  # production build with Shopify provider
 
 The Partner app at `SHOPIFY_PARTNER_APP_DIR` (default: `/tmp/shopify-probe/kashmir-weaver-probe`) must declare these scopes in `shopify.app.toml` and be deployed to the dev store (`shopify app deploy --allow-updates`), then re-approved on the store if Shopify prompts for new permissions:
 
-- **Catalog & content:** `write_products`, `read_publications`, `write_publications`, `read_content`, `write_content`, `write_online_store_navigation`, `read_locations`, `write_inventory`
+- **Catalog & content:** `write_products`, `read_publications`, `write_publications`, `read_content`, `write_content`, `write_online_store_navigation`, `read_locations`, `write_inventory`, `read_metaobjects`, `write_metaobjects`
 - **Policies & privacy:** `write_legal_policies`, `read_privacy_settings`, `write_privacy_settings`
-- **Storefront (unauthenticated):** `unauthenticated_read_product_listings`, `unauthenticated_read_collection_listings`, `unauthenticated_read_content`, `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`, `unauthenticated_read_product_inventory`
+- **Storefront (unauthenticated):** `unauthenticated_read_product_listings`, `unauthenticated_read_collection_listings`, `unauthenticated_read_content`, `unauthenticated_read_metaobjects`, `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`, `unauthenticated_read_product_inventory`
 
-`write_online_store_navigation` is required for seeding the Online Store main menu. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
+`write_online_store_navigation` is required for seeding the Online Store main menu. `read_metaobjects` and `write_metaobjects` are required for seeding FAQ metaobjects (`pnpm seed:shopify -- --faqs-only`). The FAQ metaobject definition lives in the partner app `shopify.app.toml` (`[metaobjects.app.faq]`) with `access.storefront = "public_read"` — deploy the app after changing that file (`shopify app deploy --allow-updates`), then re-approve scopes on the dev store if prompted. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
 
 ## Seed the catalog (Phase 0)
 

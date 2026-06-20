@@ -5,9 +5,10 @@ import type {
   CommerceArticle,
   CommerceSitemapEntry,
 } from "../types";
+import { brandText } from "../brand/text";
 import { MockCommerceProvider } from "../mock/provider";
 import { getShopifyBrand } from "./brand";
-import { mockFaqs } from "../mock/data/faqs";
+import { getShopifyFaqs } from "./faqs";
 import { createShopifyClient } from "./client";
 import {
   applyClientFilters,
@@ -39,7 +40,7 @@ import {
 
 const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 
-/** Catalog reads from Shopify; brand from Storefront when available; forms/faqs fall back to mock until Phase 5+. */
+/** Catalog reads from Shopify; brand + FAQs from Storefront when available; forms fall back to mock until Phase 5+. */
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
   private client = createShopifyClient();
@@ -226,7 +227,11 @@ export class ShopifyCommerceProvider implements CommerceProvider {
   }
 
   async getFaqs() {
-    return mockFaqs;
+    const [faqs, brand] = await Promise.all([getShopifyFaqs(), this.getBrand()]);
+    return faqs.map((faq) => ({
+      ...faq,
+      answer: brandText(faq.answer, brand),
+    }));
   }
 
   async getStorefrontSettings() {

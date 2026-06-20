@@ -34,7 +34,7 @@ Status values: `pending` | `in_progress` | `done`
 | 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **done** | Storefront menus + shop metafields |
-| 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | pending | |
+| 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **in_progress** | FAQs wired; footer policy links TBD |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | pending | |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
 | 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | partial | Homepage collection blocks only |
@@ -77,7 +77,6 @@ flowchart LR
     SF --> Blog
     SF --> Cart
     Mock --> Brand
-    Mock --> FAQs
     Mock --> Forms
     Mock --> Sitemap
     Mock --> RelatedProducts
@@ -98,7 +97,8 @@ flowchart LR
 ### Still mock / hardcoded
 
 - Header/footer nav, brand, contact, SEO, social — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 3); mock uses `brandConfig`
-- FAQs, newsletter, contact form
+- FAQs — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 4); mock uses `mockFaqs`
+- Newsletter, contact form
 - Wishlist (localStorage), account
 - Homepage main hero, marquee, legacy, quote
 - Our Story, Craftsmanship pages
@@ -352,25 +352,35 @@ Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collectio
 
 ## Phase 4 — Trust, policies, and FAQs
 
-**Status:** pending
+**Status:** in_progress
 
 **Goal:** FAQs and legal/trust copy from Admin.
 
 | Content | Shopify source | Consumer | Status |
 |---------|----------------|----------|--------|
-| FAQs | Metaobject `faq` | `/faqs`, `getFaqs()` | pending |
+| FAQs | Metaobject `$app:faq` | `/faqs`, `getFaqs()` | **done** |
 | Shipping / returns | Shop policies | PDP accordions | **done** (seeded + wired) |
 | Privacy / Terms | policies or Pages | Footer links | partial — policies seeded; footer still `#`; dedicated policy **pages** TBD |
 
-Shop legal policies (all four types) are seeded and consumed on PDP Shipping & Returns accordions (Phase 1). Phase 4 still needs FAQ metaobjects and footer links to live policy URLs or Next.js policy pages.
+Shop legal policies (all four types) are seeded and consumed on PDP Shipping & Returns accordions (Phase 1). Phase 4 still needs footer links to live policy URLs or Next.js policy pages.
 
 ### Completed (partial)
 
 - **Date:** 2026-06-20
 - **What was done:**
+  - App-owned FAQ metaobject `$app:faq` (question, answer, show_on_faq_page) in partner app `shopify.app.toml` with `access.storefront = "public_read"`
+  - Storefront `metaobjects` query + [`getShopifyFaqs()`](../src/lib/commerce/shopify/faqs.ts); `getFaqs()` in Shopify provider with `brandText` token interpolation
+  - Seed: 6 FAQ entries via `metaobjectUpsert` in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs); `pnpm seed:shopify -- --faqs-only`
+  - Partner app scopes: `read_metaobjects`, `write_metaobjects`
+- **Verify:** `pnpm verify:shopify` — expect 6 FAQ metaobjects; `/faqs` with `pnpm dev:shopify`
+- **Remaining:** Footer privacy/terms links (currently `#`); optional standalone `/privacy`, `/terms` routes
+
+### Completed (partial — policies)
+
+- **Date:** 2026-06-20
+- **What was done:**
   - All four shop policies seeded (`SHIPPING_POLICY`, `REFUND_POLICY`, `TERMS_OF_SERVICE`, `PRIVACY_POLICY`) via `pnpm seed:shopify -- --policies-only`
   - PDP Shipping & Returns accordion uses shipping + refund policy HTML via `getShopPolicies()`
-- **Remaining:** FAQ metaobjects; footer privacy/terms links (currently `#`); optional standalone `/privacy`, `/terms` routes
 
 ---
 

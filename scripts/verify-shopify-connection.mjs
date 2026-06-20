@@ -63,7 +63,7 @@ if (!storeDomain) fail("Missing SHOPIFY_STORE_DOMAIN");
 if (!token) fail("Missing SHOPIFY_STOREFRONT_ACCESS_TOKEN");
 
 const CATALOG_QUERY = `
-  query VerifyCatalog($blogHandle: String!, $mainMenuHandle: String!, $footerMenuHandle: String!) {
+  query VerifyCatalog($blogHandle: String!, $mainMenuHandle: String!, $footerMenuHandle: String!, $faqType: String!) {
     shop {
       name
       primaryDomain { url }
@@ -77,6 +77,13 @@ const CATALOG_QUERY = `
     footerMenu: menu(handle: $footerMenuHandle) {
       title
       items { title items { title url } }
+    }
+    faqs: metaobjects(type: $faqType, first: 20) {
+      nodes {
+        handle
+        question: field(key: "question") { value }
+        showOnFaqPage: field(key: "show_on_faq_page") { value }
+      }
     }
     collections(first: 10) {
       nodes {
@@ -129,6 +136,7 @@ try {
     blogHandle,
     mainMenuHandle: "main-menu",
     footerMenuHandle: "footer",
+    faqType: "$app:faq",
   });
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error));
@@ -147,6 +155,10 @@ const collections = data.collections?.nodes ?? [];
 const products = data.products?.nodes ?? [];
 const blog = data.blog;
 const articles = blog?.articles?.nodes ?? [];
+const faqNodes = data.faqs?.nodes ?? [];
+const faqsOnPage = faqNodes.filter(
+  (f) => f.showOnFaqPage?.value?.trim().toLowerCase() !== "false" && f.question?.value?.trim(),
+);
 
 const collectionsWithImages = collections.filter((c) => c.image?.url);
 const productsWithImages = products.filter(
@@ -180,6 +192,7 @@ console.log(
 console.log(
   `  Menus:      main-menu ${mainMenu?.items?.length ?? 0} links, footer ${footerMenu?.items?.length ?? 0} columns`,
 );
+console.log(`  FAQs:       ${faqsOnPage.length} on FAQ page (${faqNodes.length} total metaobjects)`);
 
 const warnings = [];
 if (collections.length < 3)
@@ -216,6 +229,11 @@ if (!mainMenu?.items?.length) {
 if (!footerMenu?.items?.length) {
   warnings.push(
     'Footer menu "footer" empty or missing — run `pnpm seed:shopify` (needs write_online_store_navigation scope)',
+  );
+}
+if (faqsOnPage.length < 6) {
+  warnings.push(
+    `Expected 6 FAQ metaobjects on /faqs — run \`pnpm seed:shopify -- --faqs-only\` (needs read_metaobjects + write_metaobjects on partner app)`,
   );
 }
 

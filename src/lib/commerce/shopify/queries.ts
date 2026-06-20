@@ -476,6 +476,25 @@ export const SHOP_CONTEXT_QUERY = `
   }
 `;
 
+export const FAQS_QUERY = `
+  query Faqs($type: String!, $first: Int!) {
+    metaobjects(type: $type, first: $first) {
+      nodes {
+        handle
+        question: field(key: "question") {
+          value
+        }
+        answer: field(key: "answer") {
+          value
+        }
+        showOnFaqPage: field(key: "show_on_faq_page") {
+          value
+        }
+      }
+    }
+  }
+`;
+
 export const SHOP_BRAND_QUERY = `
   query ShopBrand($mainMenuHandle: String!, $footerMenuHandle: String!) {
     shop {

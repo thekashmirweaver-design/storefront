@@ -172,6 +172,55 @@ export const navigationMenus = [
   },
 ];
 
+/** App-owned FAQ metaobject type — must match partner app shopify.app.toml and src/lib/commerce/shopify/faqs.ts */
+export const FAQ_METAOBJECT_TYPE = "$app:faq";
+
+/** FAQ entries for /faqs — handles prefixed for stable sort order in Admin. */
+export const faqs = [
+  {
+    handle: "01-handwoven",
+    question: "Is each pashmina truly handwoven?",
+    answer:
+      "Yes. Every {name} piece is handwoven on a wooden handloom in Kashmir. A single shawl can take three to four weeks to complete.",
+    showOnFaqPage: true,
+  },
+  {
+    handle: "02-authenticate",
+    question: "How do I authenticate my pashmina?",
+    answer:
+      "Each piece arrives with a signed certificate listing the master weaver, the loom, and the date of completion.",
+    showOnFaqPage: true,
+  },
+  {
+    handle: "03-shipping",
+    question: "Do you ship worldwide?",
+    answer:
+      "We offer complimentary express shipping worldwide. Most orders arrive within 5–7 business days.",
+    showOnFaqPage: true,
+  },
+  {
+    handle: "04-returns",
+    question: "What is your return policy?",
+    answer:
+      "Unworn pieces may be returned within 30 days for a full refund. We cover return shipping.",
+    showOnFaqPage: true,
+  },
+  {
+    handle: "05-care",
+    question: "How do I care for my pashmina?",
+    answer:
+      "Dry clean only, and store folded with cedar. See our Care Guide on the Craftsmanship page.",
+    showOnFaqPage: true,
+  },
+  {
+    handle: "06-color-fade",
+    question: "Will the color fade?",
+    answer:
+      "Our natural dyes are colorfast when properly cared for. Avoid prolonged direct sunlight.",
+    showOnFaqPage: true,
+  },
+];
+
 export const BLOG_HANDLE = "news";
 export const BLOG_TITLE = "Journal";
 

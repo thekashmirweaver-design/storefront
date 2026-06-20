@@ -6,6 +6,7 @@
  *   pnpm seed:shopify          # create missing + enrich all fields/images
  *   pnpm seed:shopify -- --enrich-only   # skip creates, only update existing
  *   pnpm seed:shopify -- --policies-only # shop legal policies only (fast)
+ *   pnpm seed:shopify -- --faqs-only      # FAQ metaobjects only (fast)
  *
  * Requires SHOPIFY_ADMIN_ACCESS_TOKEN or SHOPIFY_PARTNER_APP_DIR (see docs).
  */
@@ -28,6 +29,8 @@ import {
   BLOG_TITLE,
   VENDOR,
   navigationMenus,
+  FAQ_METAOBJECT_TYPE,
+  faqs,
 } from "./seed-shopify-catalog-data.mjs";
 import {
   replaceProductMedia,
@@ -40,6 +43,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const enrichOnly = process.argv.includes("--enrich-only");
 const policiesOnly = process.argv.includes("--policies-only");
+const faqsOnly = process.argv.includes("--faqs-only");
 
 function loadEnvLocal() {
   const envPath = resolve(root, ".env.local");
@@ -799,6 +803,54 @@ async function upsertArticle(blogId, record) {
   console.log(`  article ${record.handle} (created)`);
 }
 
+async function ensureFaqs() {
+  for (const faq of faqs) {
+    const data = await adminRequest(
+      `mutation MetaobjectUpsert($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
+        metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
+          metaobject { handle }
+          userErrors { field message }
+        }
+      }`,
+      {
+        handle: { type: FAQ_METAOBJECT_TYPE, handle: faq.handle },
+        metaobject: {
+          fields: [
+            { key: "question", value: faq.question },
+            { key: "answer", value: faq.answer },
+            { key: "show_on_faq_page", value: String(faq.showOnFaqPage ?? true) },
+          ],
+        },
+      },
+    );
+    const errors = data.metaobjectUpsert?.userErrors ?? [];
+    if (errors.length) {
+      throw new Error(`metaobjectUpsert(${faq.handle}): ${JSON.stringify(errors)}`);
+    }
+    console.log(`  faq ${faq.handle}`);
+  }
+}
+
+async function seedFaqsOnly() {
+  console.log("Shopify FAQ metaobjects seed\n");
+  console.log(`Store:  ${storeDomain}`);
+  console.log(
+    `Admin:  ${adminToken ? "SHOPIFY_ADMIN_ACCESS_TOKEN" : `shopify app execute (${partnerAppDir})`}\n`,
+  );
+
+  if (!adminToken && !existsSync(partnerAppDir)) {
+    fail(
+      `No SHOPIFY_ADMIN_ACCESS_TOKEN and partner app dir not found at ${partnerAppDir}. ` +
+        "See docs/shopify-store-setup.md",
+    );
+  }
+
+  console.log("FAQ metaobjects:");
+  await ensureFaqs();
+  console.log("\n✓ FAQ metaobjects updated");
+  console.log("  Verify: pnpm verify:shopify\n");
+}
+
 async function seedPoliciesOnly() {
   console.log("Shopify legal policies seed\n");
   console.log(`Store:  ${storeDomain}`);
@@ -822,6 +874,11 @@ async function seedPoliciesOnly() {
 async function main() {
   if (policiesOnly) {
     await seedPoliciesOnly();
+    return;
+  }
+
+  if (faqsOnly) {
+    await seedFaqsOnly();
     return;
   }
 
@@ -870,6 +927,19 @@ async function main() {
     console.warn(
       `  ⚠ shop policies skipped (${short}). Re-install partner app for write_legal_policies, then ` +
         "`pnpm seed:shopify -- --policies-only`, or set policies in Admin → Settings → Policies.",
+    );
+  }
+  try {
+    await ensureFaqs();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const short =
+      message.match(/Access denied for metaobjectUpsert[^"]*/)?.[0] ??
+      message.split("\n").find((line) => line.includes("Access denied")) ??
+      message.slice(0, 120);
+    console.warn(
+      `  ⚠ FAQ metaobjects skipped (${short}). Deploy partner app with read_metaobjects + write_metaobjects, ` +
+        "re-install, then `pnpm seed:shopify -- --faqs-only`.",
     );
   }
 

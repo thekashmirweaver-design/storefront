@@ -34,7 +34,7 @@ The client is [`@shopify/storefront-api-client`](../src/lib/commerce/shopify/cli
 | 1 PDP / trust | `shop` policies + shop/product metafields via `ShopContext` | — |
 | 2 Cart | `cart`, `cartCreate`, `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove`, `checkoutUrl`, mutation `warnings` | — |
 | 3 Brand / nav | `shop` metafields, `menu(handle:)`, policy URLs | — |
-| 4+ | Shop policies already read via Storefront | FAQs via Admin metaobjects (not Storefront) |
+| 4 FAQs | `metaobjects(type: "$app:faq")` | FAQs via app-owned metaobjects | [`faqs.ts`](../src/lib/commerce/shopify/faqs.ts) `FAQS_QUERY`; `getFaqs()` |
 | Search | `products(query:)` + `collections(query:)`; articles filtered client-side | Phase 8: predictive `search` query |
 
 Inventory-aware queries use paired `*NoInventory` variants when `quantityAvailable` returns `ACCESS_DENIED` — see [Inventory scope](#inventory-scope-unauthenticated_read_product_inventory).
