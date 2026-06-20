@@ -26,11 +26,13 @@ const SearchDialog = dynamic(() =>
   import("@/components/site/SearchDialog").then((m) => m.SearchDialog),
 );
 
-const brand = await commerce.getBrand();
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await commerce.getBrand();
+  return buildMetadataFromBrand(brand);
+}
 
-export const metadata: Metadata = buildMetadataFromBrand(brand);
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const brand = await commerce.getBrand();
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body>

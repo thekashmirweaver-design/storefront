@@ -80,6 +80,17 @@ pnpm dev:shopify    # development
 pnpm build:shopify  # production build with Shopify provider
 ```
 
+
+## Partner app scopes (Admin API / seed)
+
+The Partner app at `SHOPIFY_PARTNER_APP_DIR` (default: `/tmp/shopify-probe/kashmir-weaver-probe`) must declare these scopes in `shopify.app.toml` and be deployed to the dev store (`shopify app deploy --allow-updates`), then re-approved on the store if Shopify prompts for new permissions:
+
+- **Catalog & content:** `write_products`, `read_publications`, `write_publications`, `read_content`, `write_content`, `write_online_store_navigation`, `read_locations`, `write_inventory`
+- **Policies & privacy:** `write_legal_policies`, `read_privacy_settings`, `write_privacy_settings`
+- **Storefront (unauthenticated):** `unauthenticated_read_product_listings`, `unauthenticated_read_collection_listings`, `unauthenticated_read_content`, `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`, `unauthenticated_read_product_inventory`
+
+`write_online_store_navigation` is required for seeding the Online Store main menu. `read_locations` is required for locations/inventory seeding (Admin API `locations` field). `write_inventory` is required for inventory activation during seed (`inventoryActivate` and related Admin API mutations). `unauthenticated_read_product_inventory` exposes inventory on the Storefront API for product pages.
+
 ## Seed the catalog (Phase 0)
 
 Populate collections, products, and hero metafields from the mock catalog:

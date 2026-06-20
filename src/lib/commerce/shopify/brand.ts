@@ -114,8 +114,31 @@ function mapFooterMenus(
 function resolveLogo(src: string | undefined, name: string): CommerceImage {
   if (!src) return brandConfig.logo;
 
+  const siteUrl = brandConfig.siteUrl;
+  let logoSrc = src.trim();
+
+  if (!logoSrc.startsWith("/") && !logoSrc.startsWith("#")) {
+    try {
+      const parsed = new URL(logoSrc);
+      const siteHost = new URL(siteUrl).hostname;
+      const isLocalPublicAsset =
+        parsed.pathname.startsWith("/images/") || parsed.pathname.startsWith("/icons/");
+      if (
+        isLocalPublicAsset ||
+        parsed.hostname === siteHost ||
+        parsed.hostname === "thekashmirweaver.com" ||
+        parsed.hostname.endsWith(".myshopify.com") ||
+        siteHost.endsWith(".myshopify.com")
+      ) {
+        logoSrc = `${parsed.pathname}${parsed.search}` || brandConfig.logo.src;
+      }
+    } catch {
+      // keep original src
+    }
+  }
+
   return {
-    src,
+    src: logoSrc,
     alt: name,
     width: brandConfig.logo.width,
     height: brandConfig.logo.height,
@@ -197,7 +220,8 @@ async function fetchShopifyBrand(): Promise<BrandConfig> {
 }
 
 export async function getShopifyBrand(): Promise<BrandConfig> {
-  return unstable_cache(fetchShopifyBrand, ["shopify-brand"], {
+  return unstable_cache(fetchShopifyBrand, ["shopify-brand", "v2"], {
     revalidate: BRAND_REVALIDATE_SECONDS,
+    tags: ["shopify-brand"],
   })();
 }

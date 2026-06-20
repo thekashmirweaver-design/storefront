@@ -468,23 +468,40 @@ async function setVariantInventory(variantId, quantity) {
   }
 
   const locationId = await getPrimaryLocationId();
+  const idemSuffix = `${inventoryItemId}-${locationId}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  const levelData = await adminRequest(
+    `query ItemInventoryLevel($itemId: ID!, $locationId: ID!) {
+      inventoryItem(id: $itemId) {
+        inventoryLevel(locationId: $locationId) {
+          quantities(names: ["available"]) { quantity }
+        }
+      }
+    }`,
+    { itemId: inventoryItemId, locationId },
+  );
+  const changeFromQuantity =
+    levelData.inventoryItem?.inventoryLevel?.quantities?.[0]?.quantity ?? 0;
 
   const activate = await adminRequest(
-    `mutation InventoryActivate($inventoryItemId: ID!, $locationId: ID!, $available: Int) {
-      inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId, available: $available) {
+    `mutation InventoryActivate($inventoryItemId: ID!, $locationId: ID!) {
+      inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId) @idempotent(key: "seed-activate-v2-${idemSuffix}") {
         userErrors { field message }
       }
     }`,
-    { inventoryItemId, locationId, available: quantity },
+    { inventoryItemId, locationId },
   );
   const activateErrors = activate.inventoryActivate?.userErrors ?? [];
-  if (activateErrors.length) {
-    throw new Error(`inventoryActivate: ${JSON.stringify(activateErrors)}`);
+  const blockingActivateErrors = activateErrors.filter(
+    (err) => !String(err.message ?? "").includes("already active"),
+  );
+  if (blockingActivateErrors.length) {
+    throw new Error(`inventoryActivate: ${JSON.stringify(blockingActivateErrors)}`);
   }
 
   const setQty = await adminRequest(
     `mutation InventorySetQuantities($input: InventorySetQuantitiesInput!) {
-      inventorySetQuantities(input: $input) {
+      inventorySetQuantities(input: $input) @idempotent(key: "seed-set-v3-${idemSuffix}") {
         userErrors { field message }
       }
     }`,
@@ -492,8 +509,7 @@ async function setVariantInventory(variantId, quantity) {
       input: {
         name: "available",
         reason: "correction",
-        ignoreCompareQuantity: true,
-        quantities: [{ inventoryItemId, locationId, quantity }],
+        quantities: [{ inventoryItemId, locationId, quantity, changeFromQuantity }],
       },
     },
   );
