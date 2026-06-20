@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AccountClient } from "@/components/site/AccountClient";
-import { commerce, buildPageMetadata } from "@/lib/commerce";
+import { buildPageMetadata } from "@/lib/commerce";
+import { commerce } from "@/lib/commerce/server";
 import { isShopifyProvider } from "@/lib/commerce/config";
 import { getSiteUrl } from "@/lib/site-url";
 
