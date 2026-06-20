@@ -17,6 +17,7 @@
     "verify:shopify:inventory": "node scripts/verify-shopify-inventory.mjs",
     "smoke:shopify:forms": "node scripts/smoke-shopify-forms.mjs",
     "test:shopify:webhook": "node scripts/test-shopify-webhook.mjs",
+    "checkout:branding": "node scripts/apply-checkout-branding.mjs",
     "seed:shopify": "node scripts/seed-shopify-catalog.mjs"
   },
   "dependencies": {
