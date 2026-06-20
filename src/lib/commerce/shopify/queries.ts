@@ -595,7 +595,14 @@ const SHOP_BRAND_METAFIELD_FRAGMENT = `
   seoDefaultDescriptionMetafield: metafield(namespace: "custom", key: "seo_default_description") { value }
   seoOgTitleMetafield: metafield(namespace: "custom", key: "seo_og_title") { value }
   seoOgDescriptionMetafield: metafield(namespace: "custom", key: "seo_og_description") { value }
+  brandIdMetafield: metafield(namespace: "custom", key: "brand_id") { value }
+  productNounMetafield: metafield(namespace: "custom", key: "product_noun") { value }
+  brandOriginMetafield: metafield(namespace: "custom", key: "brand_origin") { value }
+  searchPlaceholderMetafield: metafield(namespace: "custom", key: "search_placeholder") { value }
+  copyJsonMetafield: metafield(namespace: "custom", key: "copy_json") { value }
   logoUrlMetafield: metafield(namespace: "custom", key: "logo_url") { value }
+  logoWidthMetafield: metafield(namespace: "custom", key: "logo_width") { value }
+  logoHeightMetafield: metafield(namespace: "custom", key: "logo_height") { value }
   footerDescriptionMetafield: metafield(namespace: "custom", key: "footer_description") { value }
   newsletterTitleMetafield: metafield(namespace: "custom", key: "newsletter_title") { value }
   newsletterDescriptionMetafield: metafield(namespace: "custom", key: "newsletter_description") { value }

@@ -111,7 +111,14 @@ export const shopMetafieldDefinitions = [
   },
   { name: "SEO OG Title", key: "seo_og_title", type: "single_line_text_field" },
   { name: "SEO OG Description", key: "seo_og_description", type: "multi_line_text_field" },
+  { name: "Brand ID", key: "brand_id", type: "single_line_text_field" },
+  { name: "Product Noun", key: "product_noun", type: "single_line_text_field" },
+  { name: "Brand Origin", key: "brand_origin", type: "single_line_text_field" },
+  { name: "Search Placeholder", key: "search_placeholder", type: "single_line_text_field" },
+  { name: "Brand Copy JSON", key: "copy_json", type: "json" },
   { name: "Logo URL", key: "logo_url", type: "url" },
+  { name: "Logo Width", key: "logo_width", type: "number_integer" },
+  { name: "Logo Height", key: "logo_height", type: "number_integer" },
   { name: "Footer Description", key: "footer_description", type: "multi_line_text_field" },
   { name: "Newsletter Title", key: "newsletter_title", type: "single_line_text_field" },
   {
@@ -129,43 +136,83 @@ export const shopMetafieldDefinitions = [
   },
 ];
 
-/** Default public logo URL before CDN upload during seed. */
-export const SHOP_LOGO_URL = "https://thekashmirweaver.com/images/kashmir-weaver-logo.png";
+/** Brand copy pages + messages seeded into shop metafield custom.copy_json (BrandCopy subset). */
+export function buildBrandCopyJson() {
+  return {
+    pages: {
+      home: {
+        legacyBody:
+          "From the highlands of Kashmir to the hands of skilled artisans, every {name} {productNoun} is a story of tradition, patience and unmatched craftsmanship. Woven with care. Cherished for a lifetime.",
+      },
+      shop: {
+        subtitle: "Explore our complete range of handcrafted {name} {productNoun}.",
+      },
+      account: {
+        registerSubtitle: "Join {name} to follow new arrivals and exclusive editions.",
+        newToBrand: "New to {name}?",
+        hasAccount: "Already have an account?",
+      },
+      product: {
+        authenticityPromise:
+          "Every {name} {productNoun} is signed by the master weaver and accompanied by a certificate of authenticity.",
+      },
+      ourStory: {
+        nameMeaningQuote:
+          "{name} — artisans who carry forward a centuries-old tradition from the valleys of {origin}, thread by thread.",
+        heritageBody:
+          "For over six hundred years, the artisans of Kashmir have hand-woven pashmina from the soft under-fleece of the Changthangi goat. {name} carries forward this lineage — partnering directly with families of weavers, dyers and spinners who have practiced the craft across generations.",
+      },
+      craftsmanship: {
+        intro:
+          "A single {name} {productNoun} passes through the hands of more than a dozen artisans before it reaches you. Here is how it is made.",
+      },
+    },
+    messages: {
+      newsletterWelcome: "Welcome to the {name} atelier.",
+    },
+  };
+}
 
 /** Shop metafields for brand chrome — contactEmail comes from Shopify Admin store details. */
 export function buildShopMetafields(contactEmail) {
   const policies = buildShopPolicies(contactEmail);
 
   return {
-  authenticity_promise:
-    "Every The Kashmir Weaver pashmina is signed by the master weaver and accompanied by a certificate of authenticity.",
-  shipping_badge_text: "Complimentary express shipping",
-  returns_badge_text: "Free 30-day returns",
-  shipping_returns_text: `${policies.shipping}\n${policies.refund}`,
-  brand_tagline: "Timeless. Natural. Luxurious.",
-  contact_email: contactEmail.trim(),
-  contact_phone: "+91 194 000 0000",
-  contact_address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
-  contact_hours: "Monday – Saturday · 10:00 – 19:00 IST",
-  social_facebook: "https://facebook.com/thekashmirweaver",
-  social_youtube: "https://youtube.com/thekashmirweaver",
-  social_instagram: "https://instagram.com/thekashmirweaver",
-  social_pinterest: "https://pinterest.com/thekashmirweaver",
-  seo_default_title: "The Kashmir Weaver — Timeless. Natural. Luxurious.",
-  seo_title_template: "%s — The Kashmir Weaver",
-  seo_default_description:
-    "The Kashmir Weaver crafts the world's finest pashmina shawls, handwoven in Kashmir from 100% natural fibers.",
-  seo_og_title: "The Kashmir Weaver — Handwoven Pashmina from Kashmir",
-  seo_og_description: "Exquisite Kashmiri pashmina shawls, woven by heritage.",
-  logo_url: SHOP_LOGO_URL,
-  footer_description:
-    "Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for generations.",
-  newsletter_title: "Stay Connected",
-  newsletter_description: "Be the first to know about new arrivals and exclusive offers.",
-  newsletter_placeholder: "Enter your email",
-  journal_hero_title: "Journal",
-  journal_hero_description:
-    "Stories of heritage, craftsmanship, and the timeless beauty of pashmina.",
+    brand_id: "the-kashmir-weaver",
+    product_noun: "pashmina",
+    brand_origin: "Kashmir",
+    search_placeholder: "Search pashminas, collections…",
+    copy_json: JSON.stringify(buildBrandCopyJson()),
+    logo_width: "48",
+    logo_height: "48",
+    authenticity_promise:
+      "Every The Kashmir Weaver pashmina is signed by the master weaver and accompanied by a certificate of authenticity.",
+    shipping_badge_text: "Complimentary express shipping",
+    returns_badge_text: "Free 30-day returns",
+    shipping_returns_text: `${policies.shipping}\n${policies.refund}`,
+    brand_tagline: "Timeless. Natural. Luxurious.",
+    contact_email: contactEmail.trim(),
+    contact_phone: "+91 194 000 0000",
+    contact_address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
+    contact_hours: "Monday – Saturday · 10:00 – 19:00 IST",
+    social_facebook: "https://facebook.com/thekashmirweaver",
+    social_youtube: "https://youtube.com/thekashmirweaver",
+    social_instagram: "https://instagram.com/thekashmirweaver",
+    social_pinterest: "https://pinterest.com/thekashmirweaver",
+    seo_default_title: "The Kashmir Weaver — Timeless. Natural. Luxurious.",
+    seo_title_template: "%s — The Kashmir Weaver",
+    seo_default_description:
+      "The Kashmir Weaver crafts the world's finest pashmina shawls, handwoven in Kashmir from 100% natural fibers.",
+    seo_og_title: "The Kashmir Weaver — Handwoven Pashmina from Kashmir",
+    seo_og_description: "Exquisite Kashmiri pashmina shawls, woven by heritage.",
+    footer_description:
+      "Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for generations.",
+    newsletter_title: "Stay Connected",
+    newsletter_description: "Be the first to know about new arrivals and exclusive offers.",
+    newsletter_placeholder: "Enter your email",
+    journal_hero_title: "Journal",
+    journal_hero_description:
+      "Stories of heritage, craftsmanship, and the timeless beauty of pashmina.",
   };
 }
 
@@ -247,7 +294,10 @@ export const CRAFTSMANSHIP_METAOBJECT_TYPE = "$app:craftsmanship";
 export const CRAFTSMANSHIP_STEP_METAOBJECT_TYPE = "$app:craftsmanship_step";
 
 export const editorialImages = {
-  homepageHero: { file: img("hero-portrait.jpg"), alt: "Woman elegantly styling a Kashmiri pashmina shawl" },
+  homepageHero: {
+    file: img("hero-portrait.jpg"),
+    alt: "Woman elegantly styling a Kashmiri pashmina shawl",
+  },
   homepageLegacy: { file: img("legacy-stilllife.jpg"), alt: "Rolled pashmina with gift box" },
   ourStoryHero: { file: img("journal-mountain.jpg"), alt: "Kashmir highlands" },
   ourStoryHeritage: { file: img("legacy-stilllife.jpg"), alt: "Heritage pashmina still life" },
@@ -262,8 +312,7 @@ export const homepageHero = {
   eyebrow: "Exquisite by Nature",
   headlineLine1: "The Finest Pashmina",
   headlineLine2: "Woven by Heritage",
-  description:
-    "Luxuriously soft. Exceptionally rare.\nA timeless wrap of elegance and comfort.",
+  description: "Luxuriously soft. Exceptionally rare.\nA timeless wrap of elegance and comfort.",
   ctaLabel: "Explore Collections",
   ctaHref: "/#collections",
   image: editorialImages.homepageHero,
@@ -294,13 +343,16 @@ export const homepageLegacy = {
   eyebrow: "Rooted in Heritage · Made to Last",
   titleLine1: "A Legacy Woven",
   titleLine2: "Through Time",
-  body:
-    "From the highlands of Kashmir to the hands of skilled artisans, every {name} {productNoun} is a story of tradition, patience and unmatched craftsmanship. Woven with care. Cherished for a lifetime.",
+  body: "From the highlands of Kashmir to the hands of skilled artisans, every {name} {productNoun} is a story of tradition, patience and unmatched craftsmanship. Woven with care. Cherished for a lifetime.",
   image: editorialImages.homepageLegacy,
   pillars: [
     { icon: "hand", title: "Heritage Craft", description: "Centuries-old Kashmiri artistry" },
     { icon: "home", title: "Pristine Origin", description: "Sourced from the Himalayan highlands" },
-    { icon: "heart", title: "Made with Care", description: "Every piece is woven with love and precision" },
+    {
+      icon: "heart",
+      title: "Made with Care",
+      description: "Every piece is woven with love and precision",
+    },
     { icon: "infinity", title: "Timeless Beauty", description: "Designed to be treasured forever" },
   ],
 };
@@ -383,8 +435,7 @@ export const craftsmanshipSteps = [
     handle: "05",
     number: "05",
     title: "Finishing & Inspection",
-    description:
-      "Each piece is hand-washed in spring water, brushed, and signed by its weaver.",
+    description: "Each piece is hand-washed in spring water, brushed, and signed by its weaver.",
   },
 ];
 

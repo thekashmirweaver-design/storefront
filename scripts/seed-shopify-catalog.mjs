@@ -26,7 +26,6 @@ import {
   shopMetafieldDefinitions,
   buildShopMetafields,
   buildShopPolicies,
-  SHOP_LOGO_URL,
   checkoutBranding,
   collections,
   products,
@@ -342,6 +341,64 @@ async function resolveMediaImageId(adminRequestFn, sourceUrl, alt) {
   throw new Error("fileCreate returned no image URL after processing");
 }
 
+/** Upload local logo to Shopify Files and set shop custom.logo_url to the CDN URL. */
+async function ensureShopLogoUrl() {
+  const shopData = await adminRequest(
+    `{ shop { id metafield(namespace: "custom", key: "logo_url") { value } } }`,
+  );
+  const shopId = shopData.shop?.id;
+  const existingLogo = shopData.shop?.metafield?.value?.trim();
+
+  let mediaImageId;
+  let cdnUrl = existingLogo?.includes("cdn.shopify.com") ? existingLogo : undefined;
+
+  if (cdnUrl) {
+    try {
+      mediaImageId = await resolveMediaImageId(adminRequest, cdnUrl, "Store logo");
+      return { cdnUrl, mediaImageId };
+    } catch {
+      /* fall through to local upload */
+    }
+  }
+
+  if (!existsSync(checkoutLogoPath)) {
+    return { cdnUrl: existingLogo, mediaImageId: undefined };
+  }
+
+  const resourceUrl = await stageLocalImage(adminRequest, checkoutLogoPath, "FILE");
+  mediaImageId = await resolveMediaImageId(adminRequest, resourceUrl, "Store logo");
+  cdnUrl = await createShopifyFile(adminRequest, resourceUrl, "Store logo");
+
+  if (shopId && cdnUrl) {
+    const setData = await adminRequest(
+      `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          userErrors { field message }
+        }
+      }`,
+      {
+        metafields: [
+          {
+            ownerId: shopId,
+            namespace: "custom",
+            key: "logo_url",
+            type: "url",
+            value: cdnUrl,
+          },
+        ],
+      },
+    );
+    const setErrors = setData.metafieldsSet?.userErrors ?? [];
+    if (setErrors.length) {
+      console.warn(`  shop logo_url metafield: ${JSON.stringify(setErrors)}`);
+    } else {
+      console.log("  shop metafield logo_url (cdn)");
+    }
+  }
+
+  return { cdnUrl, mediaImageId };
+}
+
 async function ensureCheckoutBranding() {
   const profileData = await adminRequest(
     `{ checkoutProfiles(first: 1, query: "is_published:true") {
@@ -353,57 +410,7 @@ async function ensureCheckoutBranding() {
     throw new Error("No published checkout profile found");
   }
 
-  const shopData = await adminRequest(
-    `{ shop { id metafield(namespace: "custom", key: "logo_url") { value } } }`,
-  );
-  const shopId = shopData.shop?.id;
-  const existingLogo = shopData.shop?.metafield?.value?.trim();
-
-  let mediaImageId;
-  if (existingLogo?.includes("cdn.shopify.com")) {
-    try {
-      mediaImageId = await resolveMediaImageId(adminRequest, existingLogo, "Store logo");
-    } catch {
-      /* fall through to local upload */
-    }
-  }
-
-  if (!mediaImageId && existsSync(checkoutLogoPath)) {
-    const resourceUrl = await stageLocalImage(adminRequest, checkoutLogoPath, "FILE");
-    mediaImageId = await resolveMediaImageId(adminRequest, resourceUrl, "Store logo");
-    const cdnUrl = await createShopifyFile(adminRequest, resourceUrl, "Store logo");
-    if (shopId && cdnUrl) {
-      const setData = await adminRequest(
-        `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
-          metafieldsSet(metafields: $metafields) {
-            userErrors { field message }
-          }
-        }`,
-        {
-          metafields: [
-            {
-              ownerId: shopId,
-              namespace: "custom",
-              key: "logo_url",
-              type: "url",
-              value: cdnUrl,
-            },
-          ],
-        },
-      );
-      const setErrors = setData.metafieldsSet?.userErrors ?? [];
-      if (setErrors.length) {
-        console.warn(`  shop logo_url metafield: ${JSON.stringify(setErrors)}`);
-      } else {
-        console.log("  shop metafield logo_url (cdn)");
-      }
-    }
-  } else if (!mediaImageId) {
-    const logoUrl = SHOP_LOGO_URL;
-    if (logoUrl) {
-      mediaImageId = await resolveMediaImageId(adminRequest, logoUrl, "Store logo");
-    }
-  }
+  const { mediaImageId } = await ensureShopLogoUrl();
 
   const checkoutBrandingInput = {
     designSystem: {
@@ -437,9 +444,7 @@ async function ensureCheckoutBranding() {
   const errors = data.checkoutBrandingUpsert?.userErrors ?? [];
   if (errors.length) throw new Error(`checkoutBrandingUpsert: ${JSON.stringify(errors)}`);
 
-  console.log(
-    `  checkout branding updated${mediaImageId ? " (logo + colors)" : " (colors only)"}`,
-  );
+  console.log(`  checkout branding updated${mediaImageId ? " (logo + colors)" : " (colors only)"}`);
 }
 
 async function ensureShopMetafields() {
@@ -447,8 +452,7 @@ async function ensureShopMetafields() {
   const shopId = shopData.shop?.id;
   if (!shopId) throw new Error("Could not resolve shop id");
 
-  const contactEmail =
-    shopData.shop?.contactEmail?.trim() || shopData.shop?.email?.trim() || "";
+  const contactEmail = shopData.shop?.contactEmail?.trim() || shopData.shop?.email?.trim() || "";
   if (!contactEmail) {
     throw new Error("Could not resolve shop contact email from Shopify Admin");
   }
@@ -460,24 +464,28 @@ async function ensureShopMetafields() {
     shopMetafieldDefinitions.map((def) => [def.key, def.type ?? "single_line_text_field"]),
   );
 
-  const data = await adminRequest(
-    `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
-      metafieldsSet(metafields: $metafields) {
-        userErrors { field message }
-      }
-    }`,
-    {
-      metafields: Object.entries(shopMetafields).map(([key, value]) => ({
-        ownerId: shopId,
-        namespace: "custom",
-        key,
-        type: types[key],
-        value,
-      })),
-    },
-  );
-  const errors = data.metafieldsSet?.userErrors ?? [];
-  if (errors.length) throw new Error(`shop metafieldsSet: ${JSON.stringify(errors)}`);
+  const metafieldInputs = Object.entries(shopMetafields).map(([key, value]) => ({
+    ownerId: shopId,
+    namespace: "custom",
+    key,
+    type: types[key],
+    value,
+  }));
+
+  const METAFIELDS_SET_BATCH_SIZE = 25;
+  for (let i = 0; i < metafieldInputs.length; i += METAFIELDS_SET_BATCH_SIZE) {
+    const batch = metafieldInputs.slice(i, i + METAFIELDS_SET_BATCH_SIZE);
+    const data = await adminRequest(
+      `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          userErrors { field message }
+        }
+      }`,
+      { metafields: batch },
+    );
+    const errors = data.metafieldsSet?.userErrors ?? [];
+    if (errors.length) throw new Error(`shop metafieldsSet: ${JSON.stringify(errors)}`);
+  }
   console.log("  shop metafields (PDP badges + brand chrome)");
 }
 
@@ -1261,7 +1269,6 @@ async function seedFaqsOnly() {
   console.log("  Verify: pnpm verify:shopify\n");
 }
 
-
 async function seedBrandOnly() {
   console.log("Shopify brand + contact shop metafields seed\n");
   console.log(`Store:  ${storeDomain}`);
@@ -1281,6 +1288,10 @@ async function seedBrandOnly() {
 
   console.log("\nShop metafields (brand + contact):");
   await ensureShopMetafields();
+
+  console.log("\nShop logo (CDN):");
+  await ensureShopLogoUrl();
+
   console.log("\n✓ Shop brand and contact metafields updated");
   console.log("  Verify: pnpm verify:shopify\n");
 }
