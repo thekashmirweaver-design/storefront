@@ -7,6 +7,7 @@ import { Providers } from "./providers";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { commerce, buildMetadataFromBrand } from "@/lib/commerce";
+import { getCommerceProviderName } from "@/lib/commerce/config";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body>
-        <Providers brand={brand}>
+        <Providers brand={brand} cartMode={getCommerceProviderName()}>
           <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <main className="flex-1">{children}</main>

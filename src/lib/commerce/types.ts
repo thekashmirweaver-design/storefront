@@ -28,6 +28,8 @@ export type CommerceProduct = {
   description: string;
   descriptionHtml?: string;
   availableForSale: boolean;
+  /** Storefront inventory when tracked; null/undefined when unknown. */
+  quantityAvailable?: number | null;
   variantId?: string;
   collectionSlug?: string;
   /** From Shopify product metafield custom.care_instructions */
@@ -102,6 +104,8 @@ export type CommerceCartLine = {
   productSlug: string;
   quantity: number;
   product?: CommerceProduct;
+  /** Line total from Shopify cart cost (shopify provider). */
+  lineTotal?: CommerceMoney;
 };
 
 export type CommerceCart = {
@@ -109,6 +113,22 @@ export type CommerceCart = {
   lines: CommerceCartLine[];
   subtotal: CommerceMoney;
   checkoutUrl: string | null;
+};
+
+export type CommerceCartWarningCode =
+  | "MERCHANDISE_NOT_ENOUGH_STOCK"
+  | "MERCHANDISE_OUT_OF_STOCK"
+  | (string & {});
+
+export type CommerceCartWarning = {
+  code: CommerceCartWarningCode;
+  message: string;
+  target?: string;
+};
+
+export type CommerceCartActionResult = {
+  cart: CommerceCart | null;
+  warnings: CommerceCartWarning[];
 };
 
 export type ProductFilters = {

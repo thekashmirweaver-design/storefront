@@ -28,6 +28,7 @@ export const productMetafieldDefinitions = [
     type: "multi_line_text_field",
   },
   { name: "Authenticity Promise", key: "authenticity_promise", type: "multi_line_text_field" },
+  { name: "Inventory Quantity", key: "inventory_quantity", type: "number_integer" },
 ];
 
 export const shopPolicies = {
@@ -192,6 +193,7 @@ export const products = [
       { file: img("product-opal.jpg"), alt: "Mustard Jamawar shawl — embroidery detail" },
       { file: img("collection-woven.jpg"), alt: "Mustard Jamawar shawl — artisan context" },
     ],
+    inventoryQuantity: 2,
   },
   {
     handle: "black-jamawar-embroidery-pashmina",
@@ -225,6 +227,7 @@ export const products = [
       { file: img("product-ivory.jpg"), alt: "Black Jamawar shawl — contrast detail" },
       { file: img("product-plum.jpg"), alt: "Black Jamawar shawl — drape study" },
     ],
+    inventoryQuantity: 3,
   },
   {
     handle: "salmon-pink-jamawar-embroidery-pashmina",
@@ -258,6 +261,7 @@ export const products = [
       { file: img("product-sand.jpg"), alt: "Salmon pink Jamawar shawl — texture" },
       { file: img("collection-woven.jpg"), alt: "Salmon pink Jamawar shawl — collection styling" },
     ],
+    inventoryQuantity: 5,
   },
   {
     handle: "striped-kani-pashmina-shawl",
@@ -290,6 +294,7 @@ export const products = [
       { file: img("product-sage.jpg"), alt: "Striped Kani shawl — weave detail" },
       { file: img("journal-handloom.jpg"), alt: "Striped Kani shawl — loom context" },
     ],
+    inventoryQuantity: 2,
   },
   {
     handle: "natural-kani-white-buteh-pashmina",

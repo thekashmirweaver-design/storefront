@@ -1,4 +1,5 @@
 import type { CommerceProduct } from "@/lib/commerce";
+import { isProductSoldOut } from "@/lib/commerce/inventory";
 
 export function ProductJsonLd({
   product,
@@ -21,9 +22,9 @@ export function ProductJsonLd({
       "@type": "Offer",
       price: product.price.amount,
       priceCurrency: product.price.currencyCode,
-      availability: product.availableForSale
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      availability: isProductSoldOut(product)
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
     },
   };
 

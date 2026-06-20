@@ -19,6 +19,8 @@ export type MockProductRecord = {
   image: typeof ivory;
   colorHex: string;
   description: string;
+  /** Optional inventory cap for mock cart UX testing. */
+  quantityAvailable?: number;
 };
 
 type ColorSeed = {
@@ -216,5 +218,17 @@ function buildMockProducts(): MockProductRecord[] {
 }
 
 export const mockProducts: MockProductRecord[] = buildMockProducts();
+
+const mockInventoryOverrides: Record<string, number> = {
+  "mustard-jamawar-embroidery-pashmina": 2,
+  "black-jamawar-embroidery-pashmina": 3,
+  "striped-kani-pashmina-shawl": 2,
+  "salmon-pink-jamawar-embroidery-pashmina": 5,
+};
+
+for (const product of mockProducts) {
+  const qty = mockInventoryOverrides[product.slug];
+  if (qty != null) product.quantityAvailable = qty;
+}
 
 export const mockColors = colorSeeds.map((c) => ({ name: c.color, hex: c.hex }));

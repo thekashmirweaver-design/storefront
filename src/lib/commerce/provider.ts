@@ -50,7 +50,7 @@ export interface CommerceProvider {
   submitContact(form: ContactFormInput): Promise<{ ok: boolean; message: string }>;
 }
 
-/** Client-side cart operations (mock localStorage / future Shopify Cart API). */
+/** Client-side cart UI; Shopify cart persistence uses server actions + httpOnly cookie. */
 export interface CommerceCartProvider {
   getCart(): CommerceCart;
   addToCart(slug: string, qty?: number): void;

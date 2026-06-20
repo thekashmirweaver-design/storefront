@@ -14,8 +14,12 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const { brand, cart, wishlist, setCartOpen, setSearchOpen } = useCommerce();
-  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+  const { brand, cart, shopifyCart, cartMode, wishlist, setCartOpen, setSearchOpen } =
+    useCommerce();
+  const cartCount =
+    cartMode === "shopify"
+      ? (shopifyCart?.lines.reduce((s, line) => s + line.quantity, 0) ?? 0)
+      : cart.reduce((s, i) => s + i.qty, 0);
   const nav = brand.headerNav;
 
   useEffect(() => {

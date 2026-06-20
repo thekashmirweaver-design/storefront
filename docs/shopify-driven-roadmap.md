@@ -31,7 +31,7 @@ Status values: `pending` | `in_progress` | `done`
 | — | [Pre-roadmap infrastructure](#pre-roadmap-infrastructure) | **partial** | Connection + UX; not full Shopify catalog |
 | 0 | [Foundation & content migration](#phase-0--foundation-and-content-migration) | **done** | Catalog, images, journal seeded |
 | 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
-| 2 | [Cart & checkout](#phase-2--cart-and-checkout) | pending | |
+| 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | pending | |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | pending | |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | pending | |
@@ -74,12 +74,12 @@ flowchart LR
     SF --> Products
     SF --> Collections
     SF --> Blog
+    SF --> Cart
     Mock --> Brand
     Mock --> FAQs
     Mock --> Forms
     Mock --> Sitemap
     Mock --> RelatedProducts
-    LS --> Cart
     LS --> Wishlist
     Static --> HomepageHero
     Static --> OurStory
@@ -92,15 +92,16 @@ flowchart LR
 - Products, collections, blog articles
 - Search (products/collections)
 - Homepage collection sections via [`getHomepageCollectionSections()`](../src/lib/commerce/homepage-collections.ts)
+- Cart & checkout — Storefront Cart API, httpOnly `cartId` cookie, `checkoutUrl` redirect
 
 ### Still mock / hardcoded
 
 - Header/footer nav, brand, contact, SEO, social
 - FAQs, newsletter, contact form
-- Cart, checkout, wishlist, account
+- Wishlist (localStorage), account
 - Homepage main hero, marquee, legacy, quote
 - Our Story, Craftsmanship pages
-- Shop shipping/refund **policies** — seeded via `pnpm seed:shopify -- --policies-only` (all four policy types; see Phase 1 completed notes)
+- Footer privacy/terms links (`#`) — policy bodies seeded; live footer URLs in Phase 4
 
 **Note:** `.env.local` uses `COMMERCE_PROVIDER=shopify`. Mock catalog is **not** in Shopify Admin yet — live mode shows an empty catalog until Phase 0 Admin work.
 
@@ -258,26 +259,54 @@ Create in Admin (handles = URL slugs):
 
 ---
 
+## PDP content strategy
+
+Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP and trust surfaces through Phases 3–4.
+
+| Layer | Owner | Examples |
+|-------|-------|----------|
+| Merchandising & trust copy | **Shopify** | `description`, product/shop metafields, shop policies, highlights, badges |
+| Layout & interaction | **Next.js** | Accordion shell, icons, qty caps, add-to-cart, cart drawer |
+
+**Still hardcoded in Next.js (until later phases):**
+
+- Accordion **titles** and other PDP UI labels (e.g. “Description”, “Shipping & Returns”) — Phase 3 candidate via shop metafields
+- Footer privacy/terms links (`#`) — Phase 4 (policy **pages** or live policy URLs)
+
+**Optional cleanup (when reached):** Remove duplicate inline product description above the accordions if the Description accordion already shows the same Shopify `description` HTML.
+
+---
+
 ## Phase 2 — Cart and checkout
 
-**Status:** pending
+**Status:** done
 
 **Goal:** Real bag → Shopify hosted checkout.
 
 ### Tasks
 
-- [ ] Storefront Cart API (`cartCreate`, `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove`)
-- [ ] Persist `cartId` in httpOnly cookie
-- [ ] Replace localStorage cart in [`commerce-context.tsx`](../src/lib/commerce/client/commerce-context.tsx) with `variantId` + line IDs
-- [ ] Checkout button → `cart.checkoutUrl` in [`CartDrawer.tsx`](../src/components/site/CartDrawer.tsx)
-- [ ] Server cart actions in `src/lib/commerce/shopify/cart.ts`
-- [ ] Subtotal from cart `cost` fields
+- [x] Storefront Cart API (`cartCreate`, `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove`)
+- [x] Persist `cartId` in httpOnly cookie
+- [x] Replace localStorage cart in [`commerce-context.tsx`](../src/lib/commerce/client/commerce-context.tsx) with `variantId` + line IDs
+- [x] Checkout button → `cart.checkoutUrl` in [`CartDrawer.tsx`](../src/components/site/CartDrawer.tsx)
+- [x] Server cart actions in `src/lib/commerce/shopify/cart.ts`
+- [x] Subtotal from cart `cost` fields
 
 **Shopify scopes:** `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`
 
+**Optional scope (inventory):** `unauthenticated_read_product_inventory` — enables `quantityAvailable` on PDP and cart line caps; degrades gracefully without it (see [`inventory-scope.ts`](../src/lib/commerce/shopify/inventory-scope.ts)).
+
 ### Completed
 
-_(none)_
+- **Date:** 2026-06-20
+- **What was done:**
+  - **Cart module:** [`cart.ts`](../src/lib/commerce/shopify/cart.ts), [`cart-queries.ts`](../src/lib/commerce/shopify/cart-queries.ts), [`cart-cookie.ts`](../src/lib/commerce/shopify/cart-cookie.ts) — create/load cart, line mutations, httpOnly cookie persistence
+  - **Server actions + client context:** cart actions in [`actions.ts`](../src/lib/commerce/actions.ts); [`commerce-context.tsx`](../src/lib/commerce/client/commerce-context.tsx) branches on `COMMERCE_PROVIDER` (Shopify cart vs mock localStorage)
+  - **CartDrawer:** checkout redirect via `cart.checkoutUrl`; subtotals from Storefront cart `cost` fields (not client-side math)
+  - **Inventory UX:** `quantityAvailable` on products/variants; cart quantity warnings; seed uses `inventoryPolicy: DENY`; mock catalog includes low-stock examples via [`inventory.ts`](../src/lib/commerce/inventory.ts)
+  - **Errors & toasts:** [`cart-errors.ts`](../src/lib/commerce/cart-errors.ts); Sonner toasts top-center ([`sonner.tsx`](../src/components/ui/sonner.tsx))
+  - **Storefront scope note:** `unauthenticated_read_product_inventory` optional for full PDP qty caps — works without it, caps hidden when scope missing
+- **Verify:** `pnpm dev:shopify` (add to cart → checkout redirect); `pnpm build:mock`; `pnpm build:shopify`
 
 ---
 
@@ -299,6 +328,8 @@ _(none)_
 
 Menu links must point to Next.js routes (`/shop`, `/#collections`, `/collections/...`), not theme URLs.
 
+**Phase 3 extension (optional):** PDP UI strings, breadcrumbs, and accordion **titles** could move to shop metafields so merchants edit labels without deploys — see [PDP content strategy](#pdp-content-strategy).
+
 ### Completed
 
 _(none)_
@@ -311,15 +342,21 @@ _(none)_
 
 **Goal:** FAQs and legal/trust copy from Admin.
 
-| Content | Shopify source | Consumer |
-|---------|----------------|----------|
-| FAQs | Metaobject `faq` | `/faqs`, `getFaqs()` |
-| Shipping / returns | Shop policies | PDP accordions |
-| Privacy / Terms | policies or Pages | Footer links |
+| Content | Shopify source | Consumer | Status |
+|---------|----------------|----------|--------|
+| FAQs | Metaobject `faq` | `/faqs`, `getFaqs()` | pending |
+| Shipping / returns | Shop policies | PDP accordions | **done** (seeded + wired) |
+| Privacy / Terms | policies or Pages | Footer links | partial — policies seeded; footer still `#`; dedicated policy **pages** TBD |
 
-### Completed
+Shop legal policies (all four types) are seeded and consumed on PDP Shipping & Returns accordions (Phase 1). Phase 4 still needs FAQ metaobjects and footer links to live policy URLs or Next.js policy pages.
 
-_(none)_
+### Completed (partial)
+
+- **Date:** 2026-06-20
+- **What was done:**
+  - All four shop policies seeded (`SHIPPING_POLICY`, `REFUND_POLICY`, `TERMS_OF_SERVICE`, `PRIVACY_POLICY`) via `pnpm seed:shopify -- --policies-only`
+  - PDP Shipping & Returns accordion uses shipping + refund policy HTML via `getShopPolicies()`
+- **Remaining:** FAQ metaobjects; footer privacy/terms links (currently `#`); optional standalone `/privacy`, `/terms` routes
 
 ---
 
@@ -444,6 +481,8 @@ flowchart TD
 | Decision | Choice | Date |
 |----------|--------|------|
 | CMS pattern | Shop metafields for global PDP defaults; metaobjects for FAQs (Phase 4) | 2026-06-20 |
+| PDP content split | Shopify = merchandising/trust copy; Next.js = accordion shell, layout, interaction | 2026-06-20 |
+| Cart persistence | Storefront Cart API + httpOnly cookie; mock mode keeps localStorage | 2026-06-20 |
 | Admin API app | _Custom Admin app vs Partner `kashmir-weaver-probe`_ | — |
 | Customer Account URLs | _Must match production `NEXT_PUBLIC_SITE_URL`_ | — |
 | Mock mode | _Keep for CI/preview; `dev:shopify` is integration truth_ | 2026-06-19 |
@@ -452,8 +491,11 @@ flowchart TD
 
 ## Suggested next sprint
 
-1. **Phase 2** — Cart API + checkout redirect
-2. **Phase 3** — brand, nav, footer from Admin
-3. **Policies** — `pnpm seed:shopify -- --policies-only` (requires `write_legal_policies` on partner app); verify with `pnpm verify:shopify:policies`
+Pick tasks when you reach each item — user chooses scope per phase.
 
-Delivers a **sellable, Shopify-driven catalog** before CMS-heavy phases.
+1. **Commit/push Phase 2 work** — cart/checkout changes are uncommitted on the working tree (as of 2026-06-20); commit when ready
+2. **Phase 3** — brand, nav, footer from Admin (menus, shop metafields, logo)
+3. **Optional PDP cleanup** — dedupe inline description vs Description accordion (see [PDP content strategy](#pdp-content-strategy))
+4. **Inventory scope** — enable `unauthenticated_read_product_inventory` on the Storefront app in Shopify Admin, then re-seed (`pnpm seed:shopify`) for full qty-cap testing
+
+Delivers **editable site chrome** and optional PDP polish on top of the sellable Shopify-driven catalog (Phases 0–2).

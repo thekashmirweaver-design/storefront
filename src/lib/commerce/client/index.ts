@@ -4,4 +4,4 @@ export {
   useCommerceCart,
   useCommerceWishlist,
 } from "./commerce-context";
-export type { CartItem } from "./commerce-context";
+export type { CartItem, CommerceCartMode } from "./commerce-context";

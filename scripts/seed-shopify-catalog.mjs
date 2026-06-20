@@ -339,7 +339,7 @@ async function setVariantPricing(productId, variantId, record) {
     id: variantId,
     price: record.price,
     compareAtPrice: record.compareAtPrice,
-    inventoryPolicy: "CONTINUE",
+    inventoryPolicy: "DENY",
     optionValues: [{ optionName: "Color", name: record.color }],
     inventoryItem: record.sku ? { sku: record.sku } : undefined,
   };
@@ -364,6 +364,72 @@ async function setVariantPricing(productId, variantId, record) {
     `    ↳ price $${record.price} / compare-at $${record.compareAtPrice}` +
       (variant?.compareAtPrice ? " ✓" : ""),
   );
+}
+
+let cachedPrimaryLocationId;
+
+async function getPrimaryLocationId() {
+  if (cachedPrimaryLocationId) return cachedPrimaryLocationId;
+  const data = await adminRequest(
+    `query ShopLocations { locations(first: 1) { nodes { id } } }`,
+  );
+  const locationId = data.locations?.nodes?.[0]?.id;
+  if (!locationId) throw new Error("No Shopify location found for inventory seeding");
+  cachedPrimaryLocationId = locationId;
+  return locationId;
+}
+
+async function setVariantInventory(variantId, quantity) {
+  if (quantity == null || quantity < 0) return;
+
+  const variantData = await adminRequest(
+    `query VariantInventory($id: ID!) {
+      productVariant(id: $id) {
+        inventoryItem { id }
+      }
+    }`,
+    { id: variantId },
+  );
+  const inventoryItemId = variantData.productVariant?.inventoryItem?.id;
+  if (!inventoryItemId) {
+    console.log("    ↳ inventory skipped (no inventory item on variant)");
+    return;
+  }
+
+  const locationId = await getPrimaryLocationId();
+
+  const activate = await adminRequest(
+    `mutation InventoryActivate($inventoryItemId: ID!, $locationId: ID!, $available: Int) {
+      inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId, available: $available) {
+        userErrors { field message }
+      }
+    }`,
+    { inventoryItemId, locationId, available: quantity },
+  );
+  const activateErrors = activate.inventoryActivate?.userErrors ?? [];
+  if (activateErrors.length) {
+    throw new Error(`inventoryActivate: ${JSON.stringify(activateErrors)}`);
+  }
+
+  const setQty = await adminRequest(
+    `mutation InventorySetQuantities($input: InventorySetQuantitiesInput!) {
+      inventorySetQuantities(input: $input) {
+        userErrors { field message }
+      }
+    }`,
+    {
+      input: {
+        name: "available",
+        reason: "correction",
+        ignoreCompareQuantity: true,
+        quantities: [{ inventoryItemId, locationId, quantity }],
+      },
+    },
+  );
+  const setErrors = setQty.inventorySetQuantities?.userErrors ?? [];
+  if (setErrors.length) throw new Error(`inventorySetQuantities: ${JSON.stringify(setErrors)}`);
+
+  console.log(`    ↳ inventory ${quantity} at primary location (DENY policy)`);
 }
 
 async function upsertCollection(record, publicationIds) {
@@ -505,17 +571,27 @@ async function upsertProduct(record, collectionId, publicationIds) {
       }
     }`,
     {
-      metafields: Object.entries(record.metafields).map(([key, value]) => ({
-        ownerId: productId,
-        namespace: "custom",
-        key,
-        type: PRODUCT_METAFIELD_TYPES[key] ?? "single_line_text_field",
-        value: Array.isArray(value) ? JSON.stringify(value) : value,
-      })),
+      metafields: [
+        ...Object.entries(record.metafields).map(([key, value]) => ({
+          ownerId: productId,
+          namespace: "custom",
+          key,
+          type: PRODUCT_METAFIELD_TYPES[key] ?? "single_line_text_field",
+          value: Array.isArray(value) ? JSON.stringify(value) : value,
+        })),
+        {
+          ownerId: productId,
+          namespace: "custom",
+          key: "inventory_quantity",
+          type: "number_integer",
+          value: String(record.inventoryQuantity ?? 50),
+        },
+      ],
     },
   );
 
   await setVariantPricing(productId, variantId, record);
+  await setVariantInventory(variantId, record.inventoryQuantity ?? 50);
 
   const hasMedia = await productHasMedia(adminRequest, productId);
   if (hasMedia) {

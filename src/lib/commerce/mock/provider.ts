@@ -21,6 +21,9 @@ const CURRENCY = "USD";
 function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProduct {
   const primary = staticImageToCommerceImage(record.image, record.name);
   const compareAtAmount = Math.round(record.price * 1.12);
+  const quantityAvailable = record.quantityAvailable;
+  const soldOutBySlug = record.slug.length % 17 === 0;
+  const soldOutByStock = quantityAvailable != null && quantityAvailable <= 0;
   return {
     id: record.slug,
     slug: record.slug,
@@ -36,7 +39,8 @@ function toCommerceProduct(record: (typeof mockProducts)[number]): CommerceProdu
     images: [primary, { ...primary, alt: `${record.name} alternate view` }],
     colorHex: record.colorHex,
     description: record.description,
-    availableForSale: record.slug.length % 17 !== 0,
+    availableForSale: !soldOutBySlug && !soldOutByStock,
+    quantityAvailable,
     variantId: `mock-variant-${record.slug}`,
     dimensions: "70 x 200 cm",
     careInstructions: "Dry clean only. Store folded with cedar to preserve the fiber.",

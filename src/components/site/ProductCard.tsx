@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { OptimizedImage } from "@/components/site/OptimizedImage";
 import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
+import { getCartActionErrorMessage } from "@/lib/commerce/cart-errors";
+import {
+  getProductMaxQuantity,
+  getCartProductQuantity,
+  isProductSoldOut,
+} from "@/lib/commerce/inventory";
 import { useCommerce } from "@/lib/commerce/client";
 
 function categoryBadgeLabel(category: CommerceProduct["category"]): string | null {
@@ -17,23 +23,44 @@ function categoryBadgeLabel(category: CommerceProduct["category"]): string | nul
 }
 
 export function ProductCard({ product }: { product: CommerceProduct }) {
-  const { addToCart, toggleWishlist, inWishlist, setCartOpen } = useCommerce();
+  const { addToCart, toggleWishlist, inWishlist, setCartOpen, cart, shopifyCart, cartMode } =
+    useCommerce();
   const liked = inWishlist(product.slug);
   const primary = product.images[0];
   const secondary = product.images[1];
   const hasAltImage = Boolean(secondary && primary && secondary.src !== primary.src);
-  const soldOut = !product.availableForSale;
+  const soldOut = isProductSoldOut(product);
   const badge = categoryBadgeLabel(product.category);
+  const inCartQty = getCartProductQuantity(cartMode, cart, shopifyCart, product);
+  const maxQty = getProductMaxQuantity(product, inCartQty);
 
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (soldOut) {
       toast("Out of stock", { description: "This piece is currently unavailable." });
       return;
     }
-    addToCart(product.slug, 1);
-    setCartOpen(true);
-    toast.success(`${product.name} added to bag`);
+    if (maxQty != null && maxQty <= 0) {
+      toast.warning("Bag updated", {
+        description:
+          product.quantityAvailable === 1
+            ? "Only 1 available — already in your bag."
+            : `Only ${product.quantityAvailable} available — your bag has the maximum.`,
+      });
+      return;
+    }
+    try {
+      await addToCart(product.slug, 1, product.variantId);
+      setCartOpen(true);
+      toast.success(`${product.name} added to bag`);
+    } catch (error) {
+      toast.error("Could not add to bag", {
+        description: getCartActionErrorMessage(
+          error,
+          "This product is unavailable for checkout right now.",
+        ),
+      });
+    }
   };
 
   return (

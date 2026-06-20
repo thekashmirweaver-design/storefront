@@ -89,9 +89,13 @@ export function WishlistClient() {
                     <h3 className="font-display text-lg text-cream">{p.name}</h3>
                     <p className="text-sm text-gold">${p.price.amount}</p>
                     <button
-                      onClick={() => {
-                        addToCart(p.slug, 1);
-                        setCartOpen(true);
+                      onClick={async () => {
+                        try {
+                          await addToCart(p.slug, 1, p.variantId);
+                          setCartOpen(true);
+                        } catch {
+                          toast.error("Could not add to bag");
+                        }
                       }}
                       className="mt-3 w-full border border-border py-2.5 text-[0.65rem] tracking-[0.3em] uppercase text-cream hover:border-gold hover:text-gold transition-colors flex items-center justify-center gap-2"
                     >

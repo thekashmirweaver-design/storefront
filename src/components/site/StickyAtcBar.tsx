@@ -5,19 +5,22 @@ import { toast } from "sonner";
 
 import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
+import { getCartActionErrorMessage } from "@/lib/commerce/cart-errors";
+import { isProductSoldOut } from "@/lib/commerce/inventory";
 import { useCommerce } from "@/lib/commerce/client";
 
 type StickyAtcBarProps = {
   product: CommerceProduct;
   qty: number;
   observeRef: React.RefObject<HTMLElement | null>;
+  canAddMore?: boolean;
 };
 
-export function StickyAtcBar({ product, qty, observeRef }: StickyAtcBarProps) {
+export function StickyAtcBar({ product, qty, observeRef, canAddMore = true }: StickyAtcBarProps) {
   const [visible, setVisible] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const { addToCart, setCartOpen } = useCommerce();
-  const soldOut = !product.availableForSale;
+  const soldOut = isProductSoldOut(product);
 
   useEffect(() => {
     const target = observeRef.current;
@@ -56,17 +59,35 @@ export function StickyAtcBar({ product, qty, observeRef }: StickyAtcBarProps) {
       </div>
       <button
         type="button"
-        disabled={soldOut}
-        onClick={() => {
+        disabled={soldOut || !canAddMore}
+        onClick={async () => {
           if (soldOut) {
             toast("Join the waitlist", {
               description: "We'll notify you when this piece returns.",
             });
             return;
           }
-          addToCart(product.slug, qty);
-          setCartOpen(true);
-          toast.success(`${product.name} added to bag`);
+          if (!canAddMore) {
+            toast.warning("Bag updated", {
+              description:
+                product.quantityAvailable === 1
+                  ? "Only 1 available — already in your bag."
+                  : `Only ${product.quantityAvailable} available — your bag has the maximum.`,
+            });
+            return;
+          }
+          try {
+            await addToCart(product.slug, qty, product.variantId);
+            setCartOpen(true);
+            toast.success(`${product.name} added to bag`);
+          } catch (error) {
+            toast.error("Could not add to bag", {
+              description: getCartActionErrorMessage(
+                error,
+                "This product is unavailable for checkout right now.",
+              ),
+            });
+          }
         }}
         className="shrink-0 bg-gold text-primary-foreground px-6 py-3 text-[0.65rem] tracking-[0.25em] uppercase disabled:opacity-50 disabled:cursor-not-allowed"
       >

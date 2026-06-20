@@ -1,7 +1,15 @@
 "use server";
 
+import { isShopifyProvider } from "./config";
 import { commerce } from "./index";
-import type { ContactFormInput, ProductFilters } from "./types";
+import {
+  addVariantToShopifyCart,
+  clearShopifyCart,
+  getShopifyCart,
+  removeShopifyCartLine,
+  updateShopifyCartLine,
+} from "./shopify/cart";
+import type { CommerceCart, CommerceCartActionResult, ContactFormInput, ProductFilters } from "./types";
 
 export async function searchCommerce(query: string) {
   return commerce.search(query);
@@ -43,4 +51,36 @@ export async function getRelatedProductsAction(slug: string, limit = 4) {
 
 export async function getCollectionsAction() {
   return commerce.getCollections();
+}
+
+export async function getCartAction(): Promise<CommerceCart | null> {
+  if (!isShopifyProvider()) return null;
+  return getShopifyCart();
+}
+
+export async function addToCartAction(
+  variantId: string,
+  quantity = 1,
+): Promise<CommerceCartActionResult> {
+  if (!isShopifyProvider()) return { cart: null, warnings: [] };
+  if (!variantId) throw new Error("addToCartAction requires a Shopify variant ID");
+  return addVariantToShopifyCart(variantId, quantity);
+}
+
+export async function updateCartLineAction(
+  lineId: string,
+  quantity: number,
+): Promise<CommerceCartActionResult> {
+  if (!isShopifyProvider()) return { cart: null, warnings: [] };
+  return updateShopifyCartLine(lineId, quantity);
+}
+
+export async function removeCartLineAction(lineId: string): Promise<CommerceCartActionResult> {
+  if (!isShopifyProvider()) return { cart: null, warnings: [] };
+  return removeShopifyCartLine(lineId);
+}
+
+export async function clearCartAction(): Promise<CommerceCartActionResult> {
+  if (!isShopifyProvider()) return { cart: null, warnings: [] };
+  return clearShopifyCart();
 }

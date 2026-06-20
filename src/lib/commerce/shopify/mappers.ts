@@ -41,6 +41,7 @@ type ShopifyProductNode = {
     nodes: {
       id: string;
       availableForSale: boolean;
+      quantityAvailable?: number | null;
       compareAtPrice?: ShopifyMoney | null;
       selectedOptions?: { name: string; value: string }[];
     }[];
@@ -53,6 +54,7 @@ type ShopifyProductNode = {
   productHighlightsMetafield?: ShopifyMetafield;
   shippingReturnsMetafield?: ShopifyMetafield;
   authenticityPromiseMetafield?: ShopifyMetafield;
+  inventoryQuantityMetafield?: ShopifyMetafield;
 };
 
 const COLLECTION_CATEGORY_LABELS: Record<string, string> = {
@@ -67,6 +69,28 @@ const CATEGORY_DISPLAY_LABELS: Record<CommerceProductCategory, string> = {
   bridal: "Bridal",
   limited: "Limited Editions",
 };
+
+function parseInventoryMetafield(metafield?: ShopifyMetafield): number | undefined {
+  const raw = metafield?.value?.trim();
+  if (!raw) return undefined;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function resolveQuantityAvailable(
+  variant:
+    | {
+        quantityAvailable?: number | null;
+      }
+    | null
+    | undefined,
+  node: ShopifyProductNode,
+): number | undefined {
+  if (variant?.quantityAvailable != null) {
+    return Math.max(0, variant.quantityAvailable);
+  }
+  return parseInventoryMetafield(node.inventoryQuantityMetafield);
+}
 
 const DEFAULT_COLOR_HEX = "#bcb6ad";
 
@@ -264,6 +288,7 @@ export function mapShopifyProduct(
     description: node.description,
     descriptionHtml: node.descriptionHtml ?? undefined,
     availableForSale: node.availableForSale && (variant?.availableForSale ?? true),
+    quantityAvailable: resolveQuantityAvailable(variant, node),
     variantId: variant?.id,
     collectionSlug,
     careInstructions: node.careInstructionsMetafield?.value?.trim() || undefined,

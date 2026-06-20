@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Minus, Plus, Check, Leaf, Hexagon, Feather, Heart, Truck, RotateCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 
 import { ProductCard } from "@/components/site/ProductCard";
@@ -11,6 +11,15 @@ import { ProductGallery } from "@/components/site/ProductGallery";
 import { StickyAtcBar } from "@/components/site/StickyAtcBar";
 import { formatProductPrice, productHasCompareAt } from "@/components/site/listing-state";
 import type { CommerceProduct } from "@/lib/commerce";
+import { getCartActionErrorMessage } from "@/lib/commerce/cart-errors";
+import {
+  getProductMaxQuantity,
+  getCartProductQuantity,
+  isProductSoldOut,
+  isLowStock,
+  lowStockHint,
+  clampToMaxQuantity,
+} from "@/lib/commerce/inventory";
 import type { ProductDetailContent } from "@/lib/commerce/product-detail";
 import { useCommerce } from "@/lib/commerce/client";
 
@@ -44,20 +53,48 @@ export function ProductClient({
 }) {
   const [qty, setQty] = useState(1);
   const atcRef = useRef<HTMLDivElement>(null);
-  const { addToCart, setCartOpen, toggleWishlist, inWishlist } = useCommerce();
+  const { addToCart, setCartOpen, toggleWishlist, inWishlist, cart, shopifyCart, cartMode } =
+    useCommerce();
   const liked = inWishlist(product.slug);
-  const soldOut = !product.availableForSale;
+  const soldOut = isProductSoldOut(product);
+  const cartQty = getCartProductQuantity(cartMode, cart, shopifyCart, product);
+  const maxQty = getProductMaxQuantity(product, cartQty);
+  const canAddMore = maxQty == null || maxQty > 0;
+  const atMaxQty = maxQty != null && qty >= maxQty;
+
+  useEffect(() => {
+    if (maxQty == null || maxQty <= 0) return;
+    setQty((current) => clampToMaxQuantity(current, maxQty));
+  }, [maxQty]);
 
   const colorName = product.colorName ?? product.name.split(" ").slice(-1)[0];
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (soldOut) {
       toast("Join the waitlist", { description: "We'll notify you when this piece returns." });
       return;
     }
-    addToCart(product.slug, qty);
-    setCartOpen(true);
-    toast.success(`${product.name} added to bag`, { description: `Quantity: ${qty}` });
+    if (!canAddMore) {
+      toast.warning("Bag updated", {
+        description:
+          product.quantityAvailable === 1
+            ? "Only 1 available — already in your bag."
+            : `Only ${product.quantityAvailable} available — your bag has the maximum.`,
+      });
+      return;
+    }
+    try {
+      await addToCart(product.slug, qty, product.variantId);
+      setCartOpen(true);
+      toast.success(`${product.name} added to bag`, { description: `Quantity: ${qty}` });
+    } catch (error) {
+      toast.error("Could not add to bag", {
+        description: getCartActionErrorMessage(
+          error,
+          "This product is unavailable for checkout right now.",
+        ),
+      });
+    }
   };
 
   const showDescriptionAccordion =
@@ -178,20 +215,26 @@ export function ProductClient({
               <span className="px-5 text-sm text-cream">{qty}</span>
               <button
                 type="button"
-                onClick={() => setQty(qty + 1)}
-                className="p-2 text-muted-foreground hover:text-gold"
+                onClick={() => setQty(clampToMaxQuantity(qty + 1, maxQty))}
+                disabled={atMaxQty || !canAddMore}
+                className="p-2 text-muted-foreground hover:text-gold disabled:opacity-40 disabled:pointer-events-none"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-3 w-3" />
               </button>
             </div>
+            {isLowStock(product.quantityAvailable) && (
+              <p className="mt-2 text-[0.65rem] text-muted-foreground">
+                {lowStockHint(product.quantityAvailable!)}
+              </p>
+            )}
           </div>
 
           <div ref={atcRef} className="space-y-2 pt-2">
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={soldOut}
+              disabled={soldOut || !canAddMore}
               className="w-full bg-gold text-primary-foreground py-3.5 text-[0.7rem] tracking-[0.3em] uppercase hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {soldOut ? "Notify Me" : "Add to Bag"}
@@ -275,7 +318,7 @@ export function ProductClient({
         </aside>
       </section>
 
-      <StickyAtcBar product={product} qty={qty} observeRef={atcRef} />
+      <StickyAtcBar product={product} qty={qty} observeRef={atcRef} canAddMore={canAddMore} />
 
       {related.length > 0 && (
         <section className="mx-auto max-w-[1400px] px-6 md:px-10 py-20 pb-28 lg:pb-20">
