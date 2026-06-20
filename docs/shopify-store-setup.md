@@ -153,6 +153,67 @@ Optional: `SHOPIFY_ADMIN_API_VERSION` (default `2025-07`).
 
 **Contact:** creates or updates a customer with tag `contact-form` and an appended note containing name, email, subject, and message. View submissions in **Shopify Admin → Customers** (filter by tag).
 
+## Customer Account API (Phase 6)
+
+Login, order history, and wishlist sync use the **Customer Account API** with OAuth PKCE. Routes live under `app/api/auth/customer/`; session and API helpers in `src/lib/commerce/shopify/customer/`.
+
+### Env vars
+
+| Variable | Required | Description |
+|---|---|---|
+| `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` | Yes | OAuth client ID (see below) |
+| `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET` | No | Only for confidential clients |
+| `SHOPIFY_CUSTOMER_ACCOUNT_API_VERSION` | No | Default `2025-04` |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Must match registered callback/logout/origin URLs |
+
+Callback, logout, and JavaScript origin URLs are derived from `NEXT_PUBLIC_SITE_URL` in code — do not set separate callback env vars.
+
+### Option A — Partner app `customer_authentication` (automatable via CLI)
+
+Recommended for local dev with the partner app at `SHOPIFY_PARTNER_APP_DIR`.
+
+1. Add to the partner app `shopify.app.toml`:
+
+   ```toml
+   [customer_authentication]
+   redirect_uris = ["{NEXT_PUBLIC_SITE_URL}/api/auth/customer/callback"]
+   javascript_origins = ["{NEXT_PUBLIC_SITE_URL}"]
+   logout_urls = ["{NEXT_PUBLIC_SITE_URL}/account"]
+   ```
+
+2. Deploy: `shopify app build && shopify app deploy --allow-updates` (from the partner app directory).
+
+3. Set `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` to the partner app client ID (`shopify app info` → **Client ID**).
+
+### Option B — Headless channel (Admin UI)
+
+1. **Shopify Admin → Sales channels → Headless** → your storefront → **Customer Account API**.
+2. Copy **Client ID** from Credentials.
+3. Under **Application setup**, register:
+   - Callback: `{NEXT_PUBLIC_SITE_URL}/api/auth/customer/callback`
+   - Logout: `{NEXT_PUBLIC_SITE_URL}/account`
+   - JavaScript origin: `{NEXT_PUBLIC_SITE_URL}`
+
+### Wishlist metafield
+
+Seed the `custom.wishlist` customer metafield definition (JSON, `customerAccount: READ_WRITE`):
+
+```bash
+pnpm seed:shopify
+```
+
+The definition step runs at the start of the seed; re-run is safe if `custom.wishlist (exists)` is logged.
+
+### Verify
+
+```bash
+pnpm build:shopify
+pnpm dev:shopify
+curl -sS -D - -o /dev/null http://localhost:3000/api/auth/customer/login   # expect 307 → shopify.com/authentication/...
+```
+
+Then open `/account` and complete sign-in through the ngrok (or production) URL registered above.
+
 ## Storefront API reference
 
 For a full map of Storefront queries, mutations, fields, and scopes used by this app (plus Phase 3+ planned usage), see **[shopify-storefront-api-reference.md](./shopify-storefront-api-reference.md)**.
