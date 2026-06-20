@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AccountClient } from "@/components/site/AccountClient";
 import { commerce, buildPageMetadata } from "@/lib/commerce";
 import { isShopifyProvider } from "@/lib/commerce/config";
+import { getSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await commerce.getBrand();
@@ -21,11 +22,13 @@ export default async function AccountPage() {
     accountEnabled = isCustomerAccountConfigured();
   }
 
+  const canonicalSiteUrl = getSiteUrl();
+
   return (
     <Suspense
       fallback={<div className="py-24 text-center text-sm text-muted-foreground">Loading…</div>}
     >
-      <AccountClient accountEnabled={accountEnabled} />
+      <AccountClient accountEnabled={accountEnabled} canonicalSiteUrl={canonicalSiteUrl} />
     </Suspense>
   );
 }

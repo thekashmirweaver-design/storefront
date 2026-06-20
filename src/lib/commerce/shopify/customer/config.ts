@@ -1,13 +1,13 @@
 import "server-only";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 import { CommerceConfigError } from "../../errors";
 
 export const WISHLIST_METAFIELD_NAMESPACE = "custom";
 export const WISHLIST_METAFIELD_KEY = "wishlist";
 
-export function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
+export { getSiteUrl };
 
 export function getCustomerAccountCallbackUrl(): string {
   return `${getSiteUrl()}/api/auth/customer/callback`;

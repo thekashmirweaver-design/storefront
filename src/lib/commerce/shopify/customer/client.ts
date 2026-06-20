@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 import { getCustomerAccountConfig } from "./config";
 import { getCustomerAccountDiscovery } from "./discovery";
 import { getValidCustomerAccessToken } from "./auth";
@@ -24,13 +26,12 @@ export async function customerAccountRequest<T>(
   const { api } = await getCustomerAccountDiscovery(storeDomain);
   const endpoint = api.graphql_api;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: accessToken,
-      ...(siteUrl ? { Origin: siteUrl } : {}),
+      Origin: getSiteUrl(),
     },
     body: JSON.stringify({ query, variables }),
   });

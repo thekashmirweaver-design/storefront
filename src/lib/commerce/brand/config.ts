@@ -1,6 +1,8 @@
+import { getSiteUrl } from "@/lib/site-url";
+
 import type { BrandConfig } from "../types";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thekashmirweaver.com";
+const siteUrl = getSiteUrl();
 
 /** Single source of truth for all brand identity across the storefront. */
 export const brandConfig = {

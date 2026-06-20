@@ -1,5 +1,7 @@
 import { unstable_cache } from "next/cache";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 import { brandConfig } from "../brand/config";
 import type { BrandConfig, CommerceImage } from "../types";
 import { SHOPIFY_CACHE_TAGS } from "./cache-tags";
@@ -148,7 +150,7 @@ function resolveLogo(src: string | undefined, name: string): CommerceImage {
 
 function mapShopifyBrand(data: ShopifyBrandResponse): BrandConfig {
   const shop = data.shop;
-  const siteUrl = brandConfig.siteUrl;
+  const siteUrl = getSiteUrl();
   const name = shop?.name?.trim() || brandConfig.name;
 
   const privacyPolicyUrl = brandConfig.legal.privacyPolicyUrl;
@@ -156,6 +158,7 @@ function mapShopifyBrand(data: ShopifyBrandResponse): BrandConfig {
 
   return {
     ...brandConfig,
+    siteUrl,
     name,
     tagline: metafieldValue(shop?.brandTaglineMetafield) ?? brandConfig.tagline,
     logo: resolveLogo(metafieldValue(shop?.logoUrlMetafield), name),

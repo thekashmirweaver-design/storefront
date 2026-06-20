@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 import { getCustomerAccountConfig, getCustomerAccountLogoutUrl } from "./config";
 import { getCustomerAccountDiscovery } from "./discovery";
 import {
@@ -32,10 +34,7 @@ async function requestToken(
     headers.Authorization = basicAuthHeader(clientId, clientSecret);
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (siteUrl) {
-    headers.origin = siteUrl;
-  }
+  headers.origin = getSiteUrl();
 
   const response = await fetch(tokenEndpoint, {
     method: "POST",
