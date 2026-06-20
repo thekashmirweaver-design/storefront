@@ -33,7 +33,7 @@ The client is [`@shopify/storefront-api-client`](../src/lib/commerce/shopify/cli
 | 0–1 Catalog | `products`, `product`, `collections`, `collection`, `productRecommendations`, product/collection `metafield`, blog/articles | — |
 | 1 PDP / trust | `shop` policies + shop/product metafields via `ShopContext` | — |
 | 2 Cart | `cart`, `cartCreate`, `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove`, `checkoutUrl`, mutation `warnings` | — |
-| 3 Brand / nav | — (brand still mock via [`brand/config.ts`](../src/lib/commerce/brand/config.ts)) | **Admin API** [`menus`](https://shopify.dev/docs/api/admin-graphql/latest/queries/menus) for header/footer nav; shop metafields for logo, contact, SEO (may extend existing `ShopContext` query). Storefront also exposes [`menu`](https://shopify.dev/docs/api/storefront/latest/queries/menu) — roadmap chose Admin for editable Online Store menus |
+| 3 Brand / nav | `shop` metafields, `menu(handle:)`, policy URLs | — |
 | 4+ | Shop policies already read via Storefront | FAQs via Admin metaobjects (not Storefront) |
 | Search | `products(query:)` + `collections(query:)`; articles filtered client-side | Phase 8: predictive `search` query |
 
@@ -109,7 +109,9 @@ Policies are **seeded via Admin API** (`shopPolicyUpdate`) but **read via Storef
 |-------------|---------------------|----------|---------------|
 | Global PDP badges / authenticity | `shop.metafield(namespace: "custom", key: …)` | [Shop](https://shopify.dev/docs/api/storefront/latest/objects/Shop) · [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | `SHOP_CONTEXT_QUERY`; keys: `authenticity_promise`, `shipping_badge_text`, `returns_badge_text`, `shipping_returns_text` |
 | PDP page settings | Same query → `getStorefrontSettings()` | [shop](https://shopify.dev/docs/api/storefront/latest/queries/shop) | [`provider.ts`](../src/lib/commerce/shopify/provider.ts); [`app/product/[slug]/page.tsx`](../app/product/[slug]/page.tsx) |
-| Phase 3 (planned) | Extend `shop.metafield` for brand name, tagline, contact, social, SEO, newsletter copy | [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | Roadmap Phase 3 — still via Storefront read; values edited in Admin |
+| Phase 3 (brand chrome) | Extend `shop.metafield` for tagline, contact, social, SEO, logo, newsletter, footer copy | [`brand.ts`](../src/lib/commerce/shopify/brand.ts) `getShopifyBrand()` |
+| Phase 3 (navigation) | `menu(handle:)` — handles `main-menu`, `footer` | [`queries.ts`](../src/lib/commerce/shopify/queries.ts) `SHOP_BRAND_QUERY`; seeded via Admin `menuCreate` / `menuUpdate` |
+| Phase 3 (legal links) | `shop.privacyPolicy.url`, `shop.termsOfService.url` | `getShopifyBrand()` → `brand.legal` |
 
 ---
 
@@ -153,20 +155,30 @@ Other catalog scopes in use: `unauthenticated_read_product_listings` (required f
 
 ---
 
+## Brand, navigation & chrome (Phase 3)
+
+| App feature | Storefront operation | Doc link | Code location |
+|-------------|---------------------|----------|---------------|
+| Brand name, tagline, contact, social, SEO, newsletter, footer copy | `shop.name` + `shop.metafield(namespace: "custom", key: …)` | [Shop](https://shopify.dev/docs/api/storefront/latest/objects/Shop) · [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | `SHOP_BRAND_QUERY`; [`brand.ts`](../src/lib/commerce/shopify/brand.ts) |
+| Header nav | `menu(handle: "main-menu")` | [menu](https://shopify.dev/docs/api/storefront/latest/queries/menu) | `getShopifyBrand()` → `headerNav`; fallback [`brandConfig`](../src/lib/commerce/brand/config.ts) |
+| Footer link columns | `menu(handle: "footer")` nested `MenuItem` | [Menu](https://shopify.dev/docs/api/storefront/latest/objects/Menu) · [MenuItem](https://shopify.dev/docs/api/storefront/latest/objects/MenuItem) | `getShopifyBrand()` → `footerMenus` |
+| Logo | shop metafield `custom.logo_url` | [Metafield](https://shopify.dev/docs/api/storefront/latest/objects/Metafield) | `brand.logo` |
+| Footer privacy / terms links | `shop.privacyPolicy.url`, `shop.termsOfService.url` | [ShopPolicy](https://shopify.dev/docs/api/storefront/latest/objects/ShopPolicy) | `brand.legal` |
+
+**Menu writes (seed only):** Admin GraphQL `menuCreate` / `menuUpdate` in [`seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs). Scope: `write_online_store_navigation`.
+
+---
+
 ## Phase 3 planned: navigation & brand (Admin API, not Storefront today)
 
-Header/footer navigation is **not** wired to Shopify yet. Phase 3 will use the **Admin GraphQL API**, not Storefront, for Online Store menus:
+_Header/footer navigation reads use Storefront `menu` (implemented). Admin API is used only for seeding menu structure._
 
-| App feature | API | Doc link | Code location (planned) |
-|-------------|-----|----------|-------------------------|
-| Header nav | Admin `menus` / menu items | [menus query (Admin)](https://shopify.dev/docs/api/admin-graphql/latest/queries/menus) | Roadmap → `getBrand()` via Admin |
-| Footer menus | Admin menus | [Menu (Admin object)](https://shopify.dev/docs/api/admin-graphql/latest/objects/Menu) | Roadmap → `footerMenus` |
-| Logo | Admin Files + shop metafield | [File (Admin)](https://shopify.dev/docs/api/admin-graphql/latest/objects/File) | `brand.logo` |
-| Brand copy | Shop metafields (read via Storefront `shop.metafield`) | [Shop metafields (Storefront)](https://shopify.dev/docs/api/storefront/latest/objects/Shop) | Extend `SHOP_CONTEXT_QUERY` |
+| App feature | API | Doc link | Code location |
+|-------------|-----|----------|---------------|
+| Menu seed writes | Admin `menuCreate` / `menuUpdate` | [menuCreate (Admin)](https://shopify.dev/docs/api/admin-graphql/latest/mutations/menuCreate) | [`seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs) |
+| Shop metafield seed writes | Admin `metafieldsSet` | [metafieldsSet (Admin)](https://shopify.dev/docs/api/admin-graphql/latest/mutations/metafieldsSet) | seed script |
 
-**Alternative:** Storefront [`menu(handle:)`](https://shopify.dev/docs/api/storefront/latest/queries/menu) can expose Online Store navigation with a public token; this project’s roadmap explicitly chose Admin API for menu editing consistency with seed scripts.
-
-**Env:** Phase 3 requires `SHOPIFY_ADMIN_ACCESS_TOKEN` (see [roadmap API access table](./shopify-driven-roadmap.md#api-access-by-phase)).
+**Env:** Admin token or partner app for seed; Storefront token for runtime reads.
 
 ---
 
@@ -183,14 +195,15 @@ Distinct Storefront GraphQL operations referenced in app code and scripts:
 | 5 | Query | `collection` | `queries.ts` |
 | 6 | Query | `blog` / `articles` | `queries.ts` |
 | 7 | Query | `articleByHandle` | `queries.ts` |
-| 8 | Query | `shop` | `queries.ts`, verify scripts |
-| 9 | Query | `cart` | `cart-queries.ts` |
-| 10 | Mutation | `cartCreate` | `cart-queries.ts` |
-| 11 | Mutation | `cartLinesAdd` | `cart-queries.ts` |
-| 12 | Mutation | `cartLinesUpdate` | `cart-queries.ts` |
-| 13 | Mutation | `cartLinesRemove` | `cart-queries.ts` |
+| 8 | Query | `menu` | `queries.ts`, `brand.ts` |
+| 9 | Query | `shop` | `queries.ts`, verify scripts |
+| 10 | Query | `cart` | `cart-queries.ts` |
+| 11 | Mutation | `cartCreate` | `cart-queries.ts` |
+| 12 | Mutation | `cartLinesAdd` | `cart-queries.ts` |
+| 13 | Mutation | `cartLinesUpdate` | `cart-queries.ts` |
+| 14 | Mutation | `cartLinesRemove` | `cart-queries.ts` |
 
-**Total: 13 mapped Storefront operations** (9 queries + 4 mutations). Search reuses `products` and `collections` with the `query` argument; verify scripts add no new root fields beyond those listed.
+**Total: 14 mapped Storefront operations** (10 queries + 4 mutations). Search reuses `products` and `collections` with the `query` argument; verify scripts add no new root fields beyond those listed.
 
 Paired `*NoInventory` query strings are implementation variants of the same operations, not separate API surface area.
 

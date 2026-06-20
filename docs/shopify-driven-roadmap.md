@@ -33,7 +33,7 @@ Status values: `pending` | `in_progress` | `done`
 | 0 | [Foundation & content migration](#phase-0--foundation-and-content-migration) | **done** | Catalog, images, journal seeded |
 | 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
-| 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **in_progress** | Admin menus + shop metafields |
+| 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **done** | Storefront menus + shop metafields |
 | 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | pending | |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | pending | |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
@@ -97,12 +97,12 @@ flowchart LR
 
 ### Still mock / hardcoded
 
-- Header/footer nav, brand, contact, SEO, social
+- Header/footer nav, brand, contact, SEO, social — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 3); mock uses `brandConfig`
 - FAQs, newsletter, contact form
 - Wishlist (localStorage), account
 - Homepage main hero, marquee, legacy, quote
 - Our Story, Craftsmanship pages
-- Footer privacy/terms links (`#`) — policy bodies seeded; live footer URLs in Phase 4
+- Footer privacy/terms links — Shopify policy URLs when available (Phase 3); dedicated policy **pages** optional in Phase 4
 
 **Note:** `.env.local` uses `COMMERCE_PROVIDER=shopify`. Mock catalog is **not** in Shopify Admin yet — live mode shows an empty catalog until Phase 0 Admin work.
 
@@ -313,29 +313,40 @@ Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP an
 
 ## Phase 3 — Global chrome: brand, nav, footer
 
-**Status:** in_progress
+**Status:** done
 
 **Goal:** Header, footer, contact, SEO editable in Shopify without deploys.
 
-**Reference:** [Storefront API reference](./shopify-storefront-api-reference.md) (today’s reads) · Admin [`menus`](https://shopify.dev/docs/api/admin-graphql/latest/queries/menus) (Phase 3 nav)
+**Reference:** [Storefront API reference](./shopify-storefront-api-reference.md) · Storefront [`menu`](https://shopify.dev/docs/api/storefront/latest/queries/menu) (reads) · Admin [`menuCreate`](https://shopify.dev/docs/api/admin-graphql/latest/mutations/menuCreate) (seed writes)
 
 | Surface | Shopify | App |
 |---------|---------|-----|
-| Header nav | Menu API | `getBrand()` via Admin API |
-| Footer menus | Menus | `footerMenus` |
-| Logo | Files + metafield | `brand.logo` |
-| Name, tagline, contact, social, SEO | shop metafields | `BrandConfig` |
+| Header nav | Storefront `menu(handle: "main-menu")` | `getShopifyBrand()` → `headerNav` |
+| Footer menus | Storefront `menu(handle: "footer")` nested items | `footerMenus` |
+| Logo | shop metafield `custom.logo_url` | `brand.logo` (static fallback) |
+| Name, tagline, contact, social, SEO | shop metafields + `shop.name` | `BrandConfig` |
 | Newsletter copy | shop metafields | `brand.newsletter` (submit in Phase 5) |
+| Privacy / Terms links | `shop.privacyPolicy.url`, `shop.termsOfService.url` | Footer `<a>` (Shopify-hosted policy URLs) |
 
-**Requires:** `SHOPIFY_ADMIN_ACCESS_TOKEN`, cache with `revalidate` (~300s)
+Menu links are seeded with Next.js routes (`/shop`, `/#collections`, `/collections/…`), not theme URLs. Falls back to [`brandConfig`](../src/lib/commerce/brand/config.ts) when menus or metafields are missing.
 
-Menu links must point to Next.js routes (`/shop`, `/#collections`, `/collections/...`), not theme URLs.
+**Requires:** Storefront token (read); Admin `write_online_store_navigation` for seed (`pnpm seed:shopify`). Brand cached ~300s via `unstable_cache`.
 
-**Phase 3 extension (optional):** PDP UI strings, breadcrumbs, and accordion **titles** could move to shop metafields so merchants edit labels without deploys — see [PDP content strategy](#pdp-content-strategy).
+**Phase 3 extension (optional):** PDP UI strings, breadcrumbs, and accordion **titles** could move to shop metafields — see [PDP content strategy](#pdp-content-strategy).
 
 ### Completed
 
-_(none)_
+- **Date:** 2026-06-20
+- **What was done:**
+  - **Storefront brand read:** [`brand.ts`](../src/lib/commerce/shopify/brand.ts) — `getShopifyBrand()` merges `SHOP_BRAND_QUERY` (shop metafields, policy URLs, menus) with `brandConfig` for `copy.pages` templates
+  - **Provider:** [`shopify/provider.ts`](../src/lib/commerce/shopify/provider.ts) `getBrand()` → cached Shopify brand (mock unchanged)
+  - **Queries:** extended [`SHOP_CONTEXT_QUERY`](../src/lib/commerce/shopify/queries.ts) + `SHOP_BRAND_QUERY` with brand metafields; Storefront `menu(handle:)` for `main-menu` and `footer`
+  - **Seed:** 18 shop metafield definitions/values + navigation menus in [`seed-shopify-catalog-data.mjs`](../scripts/seed-shopify-catalog-data.mjs) / [`seed-shopify-catalog.mjs`](../scripts/seed-shopify-catalog.mjs) (`menuCreate` / `menuUpdate`, graceful skip if scope missing)
+  - **Verify:** `pnpm verify:shopify` reports brand metafields + menu link counts
+  - **Header/Footer:** unchanged components — already consume `brand` from commerce context
+- **Verify:** `pnpm build:mock`; `pnpm build:shopify`; `pnpm verify:shopify`
+- **Admin menus:** Online Store → Navigation → menus `main-menu`, `footer` (after seed)
+- **Blocker note:** Partner app needs `write_online_store_navigation` to seed menus; without it, app falls back to `brandConfig` nav
 
 ---
 

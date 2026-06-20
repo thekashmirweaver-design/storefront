@@ -27,6 +27,7 @@ import {
   BLOG_HANDLE,
   BLOG_TITLE,
   VENDOR,
+  navigationMenus,
 } from "./seed-shopify-catalog-data.mjs";
 import {
   replaceProductMedia,
@@ -249,7 +250,77 @@ async function ensureShopMetafields() {
   );
   const errors = data.metafieldsSet?.userErrors ?? [];
   if (errors.length) throw new Error(`shop metafieldsSet: ${JSON.stringify(errors)}`);
-  console.log("  shop metafields (authenticity, badges)");
+  console.log("  shop metafields (PDP badges + brand chrome)");
+}
+
+function mapMenuItemsForAdmin(items) {
+  return items.map((item) => ({
+    title: item.title,
+    type: "HTTP",
+    url: item.url,
+    items: mapMenuItemsForAdmin(item.items ?? []),
+  }));
+}
+
+async function getMenuIdByHandle(handle) {
+  const data = await adminRequest(
+    `query MenusByHandle($query: String!) {
+      menus(first: 10, query: $query) {
+        nodes { id handle }
+      }
+    }`,
+    { query: `handle:${handle}` },
+  );
+  return data.menus?.nodes?.find((menu) => menu.handle === handle)?.id;
+}
+
+async function ensureNavigationMenus() {
+  for (const menuDef of navigationMenus) {
+    const items = mapMenuItemsForAdmin(menuDef.items);
+    const existingId = await getMenuIdByHandle(menuDef.handle);
+
+    if (existingId) {
+      const data = await adminRequest(
+        `mutation MenuUpdate($id: ID!, $title: String!, $handle: String!, $items: [MenuItemUpdateInput!]!) {
+          menuUpdate(id: $id, title: $title, handle: $handle, items: $items) {
+            menu { handle }
+            userErrors { field message }
+          }
+        }`,
+        {
+          id: existingId,
+          title: menuDef.title,
+          handle: menuDef.handle,
+          items,
+        },
+      );
+      const errors = data.menuUpdate?.userErrors ?? [];
+      if (errors.length) {
+        throw new Error(`menuUpdate(${menuDef.handle}): ${JSON.stringify(errors)}`);
+      }
+      console.log(`  menu ${menuDef.handle} (updated)`);
+      continue;
+    }
+
+    const data = await adminRequest(
+      `mutation MenuCreate($title: String!, $handle: String!, $items: [MenuItemCreateInput!]!) {
+        menuCreate(title: $title, handle: $handle, items: $items) {
+          menu { handle }
+          userErrors { field message }
+        }
+      }`,
+      {
+        title: menuDef.title,
+        handle: menuDef.handle,
+        items,
+      },
+    );
+    const errors = data.menuCreate?.userErrors ?? [];
+    if (errors.length) {
+      throw new Error(`menuCreate(${menuDef.handle}): ${JSON.stringify(errors)}`);
+    }
+    console.log(`  menu ${menuDef.handle} (created)`);
+  }
 }
 
 async function getPublications() {
@@ -759,6 +830,19 @@ async function main() {
 
   console.log("\nShop settings + policies:");
   await ensureShopMetafields();
+  try {
+    await ensureNavigationMenus();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const short =
+      message.match(/Access denied for menu(Update|Create)[^"]*/)?.[0] ??
+      message.split("\n").find((line) => line.includes("Access denied")) ??
+      message.slice(0, 120);
+    console.warn(
+      `  ⚠ navigation menus skipped (${short}). Re-install partner app for write_online_store_navigation, ` +
+        "then re-run `pnpm seed:shopify`, or edit menus in Admin → Online Store → Navigation.",
+    );
+  }
   try {
     await ensureShopPolicies();
   } catch (error) {

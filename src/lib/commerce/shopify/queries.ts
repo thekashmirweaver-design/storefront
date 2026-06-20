@@ -404,20 +404,60 @@ export const ARTICLE_BY_HANDLE_QUERY = `
   }
 `;
 
+const SHOP_BRAND_METAFIELD_FRAGMENT = `
+  brandTaglineMetafield: metafield(namespace: "custom", key: "brand_tagline") { value }
+  contactEmailMetafield: metafield(namespace: "custom", key: "contact_email") { value }
+  contactPhoneMetafield: metafield(namespace: "custom", key: "contact_phone") { value }
+  contactAddressMetafield: metafield(namespace: "custom", key: "contact_address") { value }
+  contactHoursMetafield: metafield(namespace: "custom", key: "contact_hours") { value }
+  socialFacebookMetafield: metafield(namespace: "custom", key: "social_facebook") { value }
+  socialYoutubeMetafield: metafield(namespace: "custom", key: "social_youtube") { value }
+  socialInstagramMetafield: metafield(namespace: "custom", key: "social_instagram") { value }
+  socialPinterestMetafield: metafield(namespace: "custom", key: "social_pinterest") { value }
+  seoDefaultTitleMetafield: metafield(namespace: "custom", key: "seo_default_title") { value }
+  seoTitleTemplateMetafield: metafield(namespace: "custom", key: "seo_title_template") { value }
+  seoDefaultDescriptionMetafield: metafield(namespace: "custom", key: "seo_default_description") { value }
+  seoOgTitleMetafield: metafield(namespace: "custom", key: "seo_og_title") { value }
+  seoOgDescriptionMetafield: metafield(namespace: "custom", key: "seo_og_description") { value }
+  logoUrlMetafield: metafield(namespace: "custom", key: "logo_url") { value }
+  footerDescriptionMetafield: metafield(namespace: "custom", key: "footer_description") { value }
+  newsletterTitleMetafield: metafield(namespace: "custom", key: "newsletter_title") { value }
+  newsletterDescriptionMetafield: metafield(namespace: "custom", key: "newsletter_description") { value }
+  newsletterPlaceholderMetafield: metafield(namespace: "custom", key: "newsletter_placeholder") { value }
+`;
+
+const MENU_ITEM_FRAGMENT = `
+  title
+  url
+  items {
+    title
+    url
+    items {
+      title
+      url
+    }
+  }
+`;
+
 export const SHOP_CONTEXT_QUERY = `
   query ShopContext {
     shop {
+      name
       shippingPolicy {
         body
+        url
       }
       refundPolicy {
         body
+        url
       }
       privacyPolicy {
         body
+        url
       }
       termsOfService {
         body
+        url
       }
       authenticityPromiseMetafield: metafield(namespace: "custom", key: "authenticity_promise") {
         value
@@ -430,6 +470,34 @@ export const SHOP_CONTEXT_QUERY = `
       }
       shippingReturnsMetafield: metafield(namespace: "custom", key: "shipping_returns_text") {
         value
+      }
+      ${SHOP_BRAND_METAFIELD_FRAGMENT}
+    }
+  }
+`;
+
+export const SHOP_BRAND_QUERY = `
+  query ShopBrand($mainMenuHandle: String!, $footerMenuHandle: String!) {
+    shop {
+      name
+      privacyPolicy {
+        url
+      }
+      termsOfService {
+        url
+      }
+      ${SHOP_BRAND_METAFIELD_FRAGMENT}
+    }
+    mainMenu: menu(handle: $mainMenuHandle) {
+      title
+      items {
+        ${MENU_ITEM_FRAGMENT}
+      }
+    }
+    footerMenu: menu(handle: $footerMenuHandle) {
+      title
+      items {
+        ${MENU_ITEM_FRAGMENT}
       }
     }
   }

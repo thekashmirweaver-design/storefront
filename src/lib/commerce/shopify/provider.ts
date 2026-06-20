@@ -6,7 +6,7 @@ import type {
   CommerceSitemapEntry,
 } from "../types";
 import { MockCommerceProvider } from "../mock/provider";
-import { brandConfig } from "../brand/config";
+import { getShopifyBrand } from "./brand";
 import { mockFaqs } from "../mock/data/faqs";
 import { createShopifyClient } from "./client";
 import {
@@ -39,14 +39,14 @@ import {
 
 const BLOG_HANDLE = process.env.SHOPIFY_BLOG_HANDLE ?? "news";
 
-/** Catalog reads from Shopify; brand/forms/faqs fall back to mock until Phase 2+. */
+/** Catalog reads from Shopify; brand from Storefront when available; forms/faqs fall back to mock until Phase 5+. */
 export class ShopifyCommerceProvider implements CommerceProvider {
   readonly name = "shopify" as const;
   private client = createShopifyClient();
   private mockDelegate = new MockCommerceProvider();
 
   async getBrand() {
-    return brandConfig;
+    return getShopifyBrand();
   }
 
   async getProducts(filters?: ProductFilters) {

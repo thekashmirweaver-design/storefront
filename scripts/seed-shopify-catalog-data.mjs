@@ -47,6 +47,33 @@ export const shopMetafieldDefinitions = [
     key: "shipping_returns_text",
     type: "multi_line_text_field",
   },
+  { name: "Brand Tagline", key: "brand_tagline", type: "single_line_text_field" },
+  { name: "Contact Email", key: "contact_email", type: "single_line_text_field" },
+  { name: "Contact Phone", key: "contact_phone", type: "single_line_text_field" },
+  { name: "Contact Address", key: "contact_address", type: "multi_line_text_field" },
+  { name: "Contact Hours", key: "contact_hours", type: "single_line_text_field" },
+  { name: "Social Facebook", key: "social_facebook", type: "url" },
+  { name: "Social YouTube", key: "social_youtube", type: "url" },
+  { name: "Social Instagram", key: "social_instagram", type: "url" },
+  { name: "Social Pinterest", key: "social_pinterest", type: "url" },
+  { name: "SEO Default Title", key: "seo_default_title", type: "single_line_text_field" },
+  { name: "SEO Title Template", key: "seo_title_template", type: "single_line_text_field" },
+  {
+    name: "SEO Default Description",
+    key: "seo_default_description",
+    type: "multi_line_text_field",
+  },
+  { name: "SEO OG Title", key: "seo_og_title", type: "single_line_text_field" },
+  { name: "SEO OG Description", key: "seo_og_description", type: "multi_line_text_field" },
+  { name: "Logo URL", key: "logo_url", type: "url" },
+  { name: "Footer Description", key: "footer_description", type: "multi_line_text_field" },
+  { name: "Newsletter Title", key: "newsletter_title", type: "single_line_text_field" },
+  {
+    name: "Newsletter Description",
+    key: "newsletter_description",
+    type: "multi_line_text_field",
+  },
+  { name: "Newsletter Placeholder", key: "newsletter_placeholder", type: "single_line_text_field" },
 ];
 
 export const shopMetafields = {
@@ -55,7 +82,95 @@ export const shopMetafields = {
   shipping_badge_text: "Complimentary express shipping",
   returns_badge_text: "Free 30-day returns",
   shipping_returns_text: `${shopPolicies.shipping}\n${shopPolicies.refund}`,
+  brand_tagline: "Timeless. Natural. Luxurious.",
+  contact_email: "care@thekashmirweaver.com",
+  contact_phone: "+91 194 000 0000",
+  contact_address: "Dal Lake Road, Srinagar\nKashmir, India 190001",
+  contact_hours: "Monday – Saturday · 10:00 – 19:00 IST",
+  social_facebook: "https://facebook.com/thekashmirweaver",
+  social_youtube: "https://youtube.com/thekashmirweaver",
+  social_instagram: "https://instagram.com/thekashmirweaver",
+  social_pinterest: "https://pinterest.com/thekashmirweaver",
+  seo_default_title: "The Kashmir Weaver — Timeless. Natural. Luxurious.",
+  seo_title_template: "%s — The Kashmir Weaver",
+  seo_default_description:
+    "The Kashmir Weaver crafts the world's finest pashmina shawls, handwoven in Kashmir from 100% natural fibers.",
+  seo_og_title: "The Kashmir Weaver — Handwoven Pashmina from Kashmir",
+  seo_og_description: "Exquisite Kashmiri pashmina shawls, woven by heritage.",
+  logo_url: "https://thekashmirweaver.com/images/kashmir-weaver-logo.png",
+  footer_description:
+    "Ethically crafted in Kashmir using the finest natural fibers. Made to be treasured for generations.",
+  newsletter_title: "Stay Connected",
+  newsletter_description: "Be the first to know about new arrivals and exclusive offers.",
+  newsletter_placeholder: "Enter your email",
 };
+
+/** Storefront menu handles — must match src/lib/commerce/shopify/brand.ts */
+export const MAIN_MENU_HANDLE = "main-menu";
+export const FOOTER_MENU_HANDLE = "footer";
+
+/** Navigation menus seeded for headless routes (not theme URLs). */
+export const navigationMenus = [
+  {
+    handle: MAIN_MENU_HANDLE,
+    title: "Main menu",
+    items: [
+      { title: "Shop", url: "/shop" },
+      { title: "Collections", url: "/#collections" },
+      { title: "Our Story", url: "/our-story" },
+      { title: "Craftsmanship", url: "/craftsmanship" },
+      { title: "Journal", url: "/journal" },
+      { title: "Contact", url: "/contact" },
+    ],
+  },
+  {
+    handle: FOOTER_MENU_HANDLE,
+    title: "Footer",
+    items: [
+      {
+        title: "Shop",
+        url: "#",
+        items: [
+          { title: "All Pashminas", url: "/shop" },
+          { title: "Jamawar Embroidery", url: "/collections/jamawar-embroidery" },
+          { title: "Kani Pashmina", url: "/collections/kani-pashmina" },
+          { title: "Reversible Cashmere", url: "/collections/reversible-cashmere" },
+        ],
+      },
+      {
+        title: "Collections",
+        url: "#",
+        items: [
+          { title: "Jamawar Embroidery", url: "/collections/jamawar-embroidery" },
+          { title: "Kani Pashmina", url: "/collections/kani-pashmina" },
+          { title: "Reversible Cashmere", url: "/collections/reversible-cashmere" },
+          { title: "Shop All", url: "/shop" },
+        ],
+      },
+      {
+        title: "Our Story",
+        url: "#",
+        items: [
+          { title: "Our Heritage", url: "/our-story" },
+          { title: "Sustainability", url: "/our-story" },
+          { title: "Craftsmanship", url: "/craftsmanship" },
+          { title: "The Kashmir Valley", url: "/our-story" },
+        ],
+      },
+      {
+        title: "Help",
+        url: "#",
+        items: [
+          { title: "FAQs", url: "/faqs" },
+          { title: "Shipping & Delivery", url: "/faqs" },
+          { title: "Returns & Exchanges", url: "/faqs" },
+          { title: "Care Guide", url: "/craftsmanship" },
+          { title: "Contact Us", url: "/contact" },
+        ],
+      },
+    ],
+  },
+];
 
 export const BLOG_HANDLE = "news";
 export const BLOG_TITLE = "Journal";

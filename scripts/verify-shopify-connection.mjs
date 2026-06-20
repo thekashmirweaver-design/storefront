@@ -63,8 +63,21 @@ if (!storeDomain) fail("Missing SHOPIFY_STORE_DOMAIN");
 if (!token) fail("Missing SHOPIFY_STOREFRONT_ACCESS_TOKEN");
 
 const CATALOG_QUERY = `
-  query VerifyCatalog($blogHandle: String!) {
-    shop { name primaryDomain { url } }
+  query VerifyCatalog($blogHandle: String!, $mainMenuHandle: String!, $footerMenuHandle: String!) {
+    shop {
+      name
+      primaryDomain { url }
+      brandTaglineMetafield: metafield(namespace: "custom", key: "brand_tagline") { value }
+      contactEmailMetafield: metafield(namespace: "custom", key: "contact_email") { value }
+    }
+    mainMenu: menu(handle: $mainMenuHandle) {
+      title
+      items { title url }
+    }
+    footerMenu: menu(handle: $footerMenuHandle) {
+      title
+      items { title items { title url } }
+    }
     collections(first: 10) {
       nodes {
         handle
@@ -112,7 +125,11 @@ const CATALOG_QUERY = `
 
 let data;
 try {
-  data = await storefrontRequest(CATALOG_QUERY, { blogHandle });
+  data = await storefrontRequest(CATALOG_QUERY, {
+    blogHandle,
+    mainMenuHandle: "main-menu",
+    footerMenuHandle: "footer",
+  });
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error));
 }
@@ -122,6 +139,10 @@ if (!data?.shop) {
 }
 
 const { name, primaryDomain } = data.shop;
+const mainMenu = data.mainMenu;
+const footerMenu = data.footerMenu;
+const brandTagline = data.shop?.brandTaglineMetafield?.value?.trim();
+const contactEmail = data.shop?.contactEmailMetafield?.value?.trim();
 const collections = data.collections?.nodes ?? [];
 const products = data.products?.nodes ?? [];
 const blog = data.blog;
@@ -153,6 +174,12 @@ console.log(
 console.log(
   `  Catalog fidelity: ${productsWithColorOption.length}/${products.length} with Color option, ${productsWithCollection.length}/${products.length} with collection, ${productsWithProductType.length}/${products.length} with productType`,
 );
+console.log(
+  `  Brand:      tagline ${brandTagline ? "✓" : "—"}, contact ${contactEmail ? "✓" : "—"}`,
+);
+console.log(
+  `  Menus:      main-menu ${mainMenu?.items?.length ?? 0} links, footer ${footerMenu?.items?.length ?? 0} columns`,
+);
 
 const warnings = [];
 if (collections.length < 3)
@@ -177,6 +204,19 @@ if (products.length >= 9 && productsWithCollection.length < products.length) {
 }
 if (blog && articles.length >= 2 && articlesWithTags.length < articles.length) {
   warnings.push("Some journal articles missing tags — category filters need first tag per article");
+}
+if (!brandTagline) {
+  warnings.push("Shop brand_tagline metafield missing — run `pnpm seed:shopify` for Phase 3 brand fields");
+}
+if (!mainMenu?.items?.length) {
+  warnings.push(
+    'Main menu "main-menu" empty or missing — run `pnpm seed:shopify` (needs write_online_store_navigation scope)',
+  );
+}
+if (!footerMenu?.items?.length) {
+  warnings.push(
+    'Footer menu "footer" empty or missing — run `pnpm seed:shopify` (needs write_online_store_navigation scope)',
+  );
 }
 
 if (warnings.length) {
