@@ -34,7 +34,7 @@ Status values: `pending` | `in_progress` | `done`
 | 1 | [Catalog fidelity](#phase-1--complete-catalog-fidelity) | **done** | Colors, tags, collectionSlug |
 | 2 | [Cart & checkout](#phase-2--cart-and-checkout) | **done** | Storefront Cart API, httpOnly cookie, checkoutUrl, inventory UX |
 | 3 | [Brand, nav, footer](#phase-3--global-chrome-brand-nav-footer) | **done** | Storefront menus + shop metafields |
-| 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **in_progress** | FAQs wired; footer policy links TBD |
+| 4 | [FAQs & policies](#phase-4--trust-policies-and-faqs) | **done** | Metaobject FAQs + shop policies + footer URLs |
 | 5 | [Newsletter & contact](#phase-5--forms-newsletter-and-contact) | **done** | Admin customerCreate + consent |
 | 6 | [Accounts & wishlist](#phase-6--customer-accounts-and-wishlist) | pending | |
 | 7 | [Editorial CMS pages](#phase-7--editorial-cms-pages) | partial | Homepage collection blocks only |
@@ -67,18 +67,19 @@ Work completed before formal phase tracking (app + dev setup, not full Shopify c
 
 ```mermaid
 flowchart LR
-  subgraph today [COMMERCE_PROVIDER=shopify]
+  subgraph shopify [COMMERCE_PROVIDER=shopify]
     SF[Storefront API]
-    Mock[Mock delegate]
+    Admin[Admin API]
     LS[localStorage]
-    Static[Static assets + hardcoded copy]
+    Static[Static page templates]
     SF --> Products
     SF --> Collections
     SF --> Blog
     SF --> Cart
-    Mock --> Brand
-    Mock --> Sitemap
-    Mock --> RelatedProducts
+    SF --> Brand
+    SF --> FAQs
+    SF --> Policies
+    Admin --> Forms
     LS --> Wishlist
     Static --> HomepageHero
     Static --> OurStory
@@ -86,24 +87,22 @@ flowchart LR
   end
 ```
 
-### On Shopify today (Storefront API)
+### On Shopify today (Phases 0–5)
 
-- Products, collections, blog articles
-- Search (products/collections)
+- Products, collections, blog articles, search, sitemap, related products
 - Homepage collection sections via [`getHomepageCollectionSections()`](../src/lib/commerce/homepage-collections.ts)
 - Cart & checkout — Storefront Cart API, httpOnly `cartId` cookie, `checkoutUrl` redirect
+- Brand, nav, footer — shop metafields + Storefront menus (falls back to `brandConfig` when unseeded)
+- FAQs — app metaobject `$app:faq` (falls back to `mockFaqs` when unseeded or API error)
+- Shop policies — PDP Shipping & Returns accordions; footer privacy/terms via Shopify-hosted policy URLs
+- Newsletter + contact — Admin `customerCreate` / consent / notes (requires `SHOPIFY_ADMIN_ACCESS_TOKEN` at runtime)
 
-### Still mock / hardcoded
+### Still mock / hardcoded (Phase 6+)
 
-- Header/footer nav, brand, contact, SEO, social — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 3); mock uses `brandConfig`
-- FAQs — **Shopify when `COMMERCE_PROVIDER=shopify`** (Phase 4); mock uses `mockFaqs`
-- Newsletter, contact form — **Shopify Admin API when `COMMERCE_PROVIDER=shopify`** (Phase 5); requires `SHOPIFY_ADMIN_ACCESS_TOKEN`
-- Wishlist (localStorage), account
-- Homepage main hero, marquee, legacy, quote
-- Our Story, Craftsmanship pages
-- Footer privacy/terms links — Shopify policy URLs when available (Phase 3); dedicated policy **pages** optional in Phase 4
-
-**Note:** `.env.local` uses `COMMERCE_PROVIDER=shopify`. Mock catalog is **not** in Shopify Admin yet — live mode shows an empty catalog until Phase 0 Admin work.
+- Wishlist (localStorage), account (demo UI)
+- Homepage main hero, marquee, legacy, quote (Phase 7)
+- Our Story, Craftsmanship pages (Phase 7)
+- Optional standalone `/privacy`, `/terms` Next.js routes (deferred; footer links use Shopify policy URLs)
 
 ---
 
@@ -268,10 +267,10 @@ Agreed split between Shopify (content) and Next.js (UI shell). Applies to PDP an
 | Merchandising & trust copy | **Shopify** | `description`, product/shop metafields, shop policies, highlights, badges |
 | Layout & interaction | **Next.js** | Accordion shell, icons, qty caps, add-to-cart, cart drawer |
 
-**Still hardcoded in Next.js (until later phases):**
+**Still hardcoded in Next.js (Phase 6+):**
 
-- Accordion **titles** and other PDP UI labels (e.g. “Description”, “Shipping & Returns”) — Phase 3 candidate via shop metafields
-- Footer privacy/terms links (`#`) — Phase 4 (policy **pages** or live policy URLs)
+- Accordion **titles** and other PDP UI labels (e.g. “Description”, “Shipping & Returns”) — optional Phase 3 extension via shop metafields
+- Homepage hero, Our Story, Craftsmanship (Phase 7)
 
 **Optional cleanup (when reached):** Remove duplicate inline product description above the accordions if the Description accordion already shows the same Shopify `description` HTML.
 
@@ -518,11 +517,10 @@ flowchart TD
 
 ## Suggested next sprint
 
-Pick tasks when you reach each item — user chooses scope per phase.
+Phases 0–5 engineering is complete. **Do not start Phase 6** until user picks scope.
 
-1. **Commit/push Phase 2 work** — cart/checkout changes are uncommitted on the working tree (as of 2026-06-20); commit when ready
-2. **Phase 3** — brand, nav, footer from Admin (menus, shop metafields, logo)
-3. **Optional PDP cleanup** — dedupe inline description vs Description accordion (see [PDP content strategy](#pdp-content-strategy))
-4. **Inventory scope** — enable `unauthenticated_read_product_inventory` on the Storefront app in Shopify Admin, then re-seed (`pnpm seed:shopify`) for full qty-cap testing
-
-Delivers **editable site chrome** and optional PDP polish on top of the sellable Shopify-driven catalog (Phases 0–2).
+1. **User ops:** Add `SHOPIFY_ADMIN_ACCESS_TOKEN` to `.env.local`; re-approve partner app on store if scopes changed
+2. **Phase 6** — Customer Account API (OAuth PKCE), order history, wishlist sync
+3. **Optional (Phase 7 prep):** Homepage hero / Our Story / Craftsmanship from Pages or metaobjects
+4. **Optional polish:** Dedupe inline PDP description vs Description accordion; standalone `/privacy` / `/terms` routes
+5. **Optional ops:** Enable `unauthenticated_read_product_inventory` for full qty-cap testing
