@@ -6,6 +6,7 @@
  *   pnpm seed:shopify          # create missing + enrich all fields/images
  *   pnpm seed:shopify -- --enrich-only   # skip creates, only update existing
  *   pnpm seed:shopify -- --policies-only # shop legal policies only (fast)
+ *   pnpm seed:shopify -- --brand-only     # shop metafield defs + contact/brand metafields (fast)
  *   pnpm seed:shopify -- --faqs-only      # FAQ metaobjects only (fast)
  *   pnpm seed:shopify -- --editorial-only # Editorial CMS metaobjects + journal hero (fast)
  *   pnpm seed:shopify -- --checkout-branding-only # Checkout logo + colors (fast)
@@ -69,6 +70,7 @@ const policiesOnly = process.argv.includes("--policies-only");
 const faqsOnly = process.argv.includes("--faqs-only");
 const editorialOnly = process.argv.includes("--editorial-only");
 const checkoutBrandingOnly = process.argv.includes("--checkout-branding-only");
+const brandOnly = process.argv.includes("--brand-only");
 
 function loadEnvLocal() {
   const envPath = resolve(root, ".env.local");
@@ -1236,6 +1238,30 @@ async function seedFaqsOnly() {
   console.log("  Verify: pnpm verify:shopify\n");
 }
 
+
+async function seedBrandOnly() {
+  console.log("Shopify brand + contact shop metafields seed\n");
+  console.log(`Store:  ${storeDomain}`);
+  console.log(
+    `Admin:  ${adminToken ? "SHOPIFY_ADMIN_ACCESS_TOKEN" : `shopify app execute (${partnerAppDir})`}\n`,
+  );
+
+  if (!adminToken && !existsSync(partnerAppDir)) {
+    fail(
+      `No SHOPIFY_ADMIN_ACCESS_TOKEN and partner app dir not found at ${partnerAppDir}. ` +
+        "See docs/shopify-store-setup.md",
+    );
+  }
+
+  console.log("Metafield definitions:");
+  await ensureMetafieldDefinitions(shopMetafieldDefinitions, "SHOP");
+
+  console.log("\nShop metafields (brand + contact):");
+  await ensureShopMetafields();
+  console.log("\n✓ Shop brand and contact metafields updated");
+  console.log("  Verify: pnpm verify:shopify\n");
+}
+
 async function seedPoliciesOnly() {
   console.log("Shopify legal policies seed\n");
   console.log(`Store:  ${storeDomain}`);
@@ -1277,6 +1303,11 @@ async function seedCheckoutBrandingOnly() {
 }
 
 async function main() {
+  if (brandOnly) {
+    await seedBrandOnly();
+    return;
+  }
+
   if (policiesOnly) {
     await seedPoliciesOnly();
     return;
